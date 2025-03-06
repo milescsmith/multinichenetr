@@ -51,7 +51,10 @@ Imports:
     factoextra,
     viridis,
     foreach,
-    doParallel
+    doParallel,
+    furrr,
+    cli,
+    carrier
 Suggests: 
     knitr,
     testthat,
