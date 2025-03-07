@@ -30,31 +30,38 @@ Gene expression dotplot list: pseudobulk version and single-cell version
 \examples{
 \dontrun{
 library(dplyr)
-lr_network = readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-lr_network = lr_network \%>\% dplyr::rename(ligand = from, receptor = to) \%>\% dplyr::distinct(ligand, receptor)
-ligand_target_matrix = readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-contrasts_oi = c("'High-Low','Low-High'")
-contrast_tbl = tibble(contrast = c("High-Low","Low-High"), group = c("High","Low"))
-output = multi_nichenet_analysis(
-     sce = sce, 
-     celltype_id = celltype_id, 
-     sample_id = sample_id, 
-     group_id = group_id,
-     batches = batches,
-     lr_network = lr_network, 
-     ligand_target_matrix = ligand_target_matrix, 
-     contrasts_oi = contrasts_oi, 
-     contrast_tbl = contrast_tbl
-     
-     )
-group_oi = "High"
-receiver_oi = "Malignant"
-targets_oi = output$ligand_activities_targets_DEgenes$de_genes_df \%>\% inner_join(contrast_tbl) \%>\% filter(group == group_oi) \%>\% arrange(p_val) \%>\% filter(receiver == receiver_oi) \%>\% pull(gene) \%>\% unique()
-p_target = make_DEgene_dotplot_pseudobulk_reversed(genes_oi = targets_oi, celltype_info = output$celltype_info, prioritization_tables = output$prioritization_tables, celltype_oi = receiver_oi, output$grouping_tbl)
+lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
+lr_network <- lr_network \%>\%
+  dplyr::rename(ligand = from, receptor = to) \%>\%
+  dplyr::distinct(ligand, receptor)
+ligand_target_matrix <- readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+output <- multi_nichenet_analysis(
+  sce = sce,
+  celltype_id = celltype_id,
+  sample_id = sample_id,
+  group_id = group_id,
+  batches = batches,
+  lr_network = lr_network,
+  ligand_target_matrix = ligand_target_matrix,
+  contrasts_oi = contrasts_oi,
+  contrast_tbl = contrast_tbl
+)
+group_oi <- "High"
+receiver_oi <- "Malignant"
+targets_oi <- output$ligand_activities_targets_DEgenes$de_genes_df \%>\%
+  inner_join(contrast_tbl) \%>\%
+  filter(group == group_oi) \%>\%
+  arrange(p_val) \%>\%
+  filter(receiver == receiver_oi) \%>\%
+  pull(gene) \%>\%
+  unique()
+p_target <- make_DEgene_dotplot_pseudobulk_reversed(genes_oi = targets_oi, celltype_info = output$celltype_info, prioritization_tables = output$prioritization_tables, celltype_oi = receiver_oi, output$grouping_tbl)
 }
 
 }

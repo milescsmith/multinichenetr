@@ -32,10 +32,10 @@ List containing data frames with the fraction of expression per sample and per g
 \examples{
 \dontrun{
 library(dplyr)
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-frac_info = get_frac_exprs_sampleAgnostic(sce = sce, sample_id = sample_id, celltype_id =  celltype_id, group_id = group_id)
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+frac_info <- get_frac_exprs_sampleAgnostic(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id)
 }
 
 }

@@ -25,29 +25,36 @@ Heatmap of ligand activities (normal and scaled) of each group-receiver combinat
 \dontrun{
 
 library(dplyr)
-lr_network = readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-lr_network = lr_network \%>\% dplyr::rename(ligand = from, receptor = to) \%>\% dplyr::distinct(ligand, receptor)
-ligand_target_matrix = readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-contrasts_oi = c("'High-Low','Low-High'")
-contrast_tbl = tibble(contrast = c("High-Low","Low-High"), group = c("High","Low"))
-output = multi_nichenet_analysis(
-     sce = sce, 
-     celltype_id = celltype_id, 
-     sample_id = sample_id, 
-     group_id = group_id,
-     batches = batches,
-     lr_network = lr_network, 
-     ligand_target_matrix = ligand_target_matrix, 
-     contrasts_oi = contrasts_oi, 
-     contrast_tbl = contrast_tbl
-     
-     )
-ligands_oi = output$prioritization_tables$ligand_activities_target_de_tbl \%>\% inner_join(contrast_tbl) \%>\% group_by(group, receiver) \%>\% distinct(ligand, receiver, group, activity) \%>\% top_n(5, activity) \%>\% pull(ligand) \%>\% unique()
-plot_oi = make_ligand_activity_plots(output$prioritization_tables, ligands_oi, contrast_tbl)
+lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
+lr_network <- lr_network \%>\%
+  dplyr::rename(ligand = from, receptor = to) \%>\%
+  dplyr::distinct(ligand, receptor)
+ligand_target_matrix <- readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+output <- multi_nichenet_analysis(
+  sce = sce,
+  celltype_id = celltype_id,
+  sample_id = sample_id,
+  group_id = group_id,
+  batches = batches,
+  lr_network = lr_network,
+  ligand_target_matrix = ligand_target_matrix,
+  contrasts_oi = contrasts_oi,
+  contrast_tbl = contrast_tbl
+)
+ligands_oi <- output$prioritization_tables$ligand_activities_target_de_tbl \%>\%
+  inner_join(contrast_tbl) \%>\%
+  group_by(group, receiver) \%>\%
+  distinct(ligand, receiver, group, activity) \%>\%
+  top_n(5, activity) \%>\%
+  pull(ligand) \%>\%
+  unique()
+plot_oi <- make_ligand_activity_plots(output$prioritization_tables, ligands_oi, contrast_tbl)
 plot_oi
 }
 

@@ -17,7 +17,7 @@ SingleCellExperiment Object
 }
 \examples{
 \dontrun{
-sce = sce \%>\% makenames_SCE()
+sce <- sce |> makenames_SCE()
 }
 
 }

@@ -24,10 +24,10 @@ List with two dataframes: one with fraction of cells in a cell type expressing a
 \examples{
 \dontrun{
 library(dplyr)
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-muscat_exprs_frac = get_muscat_exprs_frac(sce = sce, sample_id = sample_id, celltype_id =  celltype_id, group_id = group_id)
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+muscat_exprs_frac <- get_muscat_exprs_frac(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id)
 }
 
 }

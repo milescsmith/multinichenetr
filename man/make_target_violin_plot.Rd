@@ -34,29 +34,31 @@ ggplot object: Violin plot of a target gene of interest: per sample, and samples
 \examples{
 \dontrun{
 library(dplyr)
-lr_network = readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-lr_network = lr_network \%>\% dplyr::rename(ligand = from, receptor = to) \%>\% dplyr::distinct(ligand, receptor)
-ligand_target_matrix = readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-contrasts_oi = c("'High-Low','Low-High'")
-contrast_tbl = tibble(contrast = c("High-Low","Low-High"), group = c("High","Low"))
-output = multi_nichenet_analysis(
-     sce = sce, 
-     celltype_id = celltype_id, 
-     sample_id = sample_id, 
-     group_id = group_id,
-     batches = batches,
-     lr_network = lr_network, 
-     ligand_target_matrix = ligand_target_matrix, 
-     contrasts_oi = contrasts_oi, 
-     contrast_tbl = contrast_tbl
-     )
-receiver_oi = "Malignant"
-group_oi = "High"
-target_oi = "RAB31"
-p_violin_target = make_target_violin_plot(sce = sce, target_oi = target_oi, receiver_oi = receiver_oi, group_oi = group_oi, group_id = group_id, sample_id, celltype_id = celltype_id)
+lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
+lr_network <- lr_network \%>\%
+  dplyr::rename(ligand = from, receptor = to) \%>\%
+  dplyr::distinct(ligand, receptor)
+ligand_target_matrix <- readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+output <- multi_nichenet_analysis(
+  sce = sce,
+  celltype_id = celltype_id,
+  sample_id = sample_id,
+  group_id = group_id,
+  batches = batches,
+  lr_network = lr_network,
+  ligand_target_matrix = ligand_target_matrix,
+  contrasts_oi = contrasts_oi,
+  contrast_tbl = contrast_tbl
+)
+receiver_oi <- "Malignant"
+group_oi <- "High"
+target_oi <- "RAB31"
+p_violin_target <- make_target_violin_plot(sce = sce, target_oi = target_oi, receiver_oi = receiver_oi, group_oi = group_oi, group_id = group_id, sample_id, celltype_id = celltype_id)
 }
 }

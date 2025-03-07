@@ -26,27 +26,31 @@ Tibble indicating the nr of up- and down genes per contrast/cell type combinatio
 \examples{
 \dontrun{
 library(dplyr)
-lr_network = readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-lr_network = lr_network \%>\% dplyr::rename(ligand = from, receptor = to) \%>\% dplyr::distinct(ligand, receptor)
-ligand_target_matrix = readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-contrasts_oi = c("'High-Low','Low-High'")
-contrast_tbl = tibble(contrast = c("High-Low","Low-High"), group = c("High","Low"))
-receivers_oi = SummarizedExperiment::colData(sce)[,celltype_id] \%>\% unique() 
-celltype_info = get_avg_frac_exprs_abund(sce = sce, sample_id = sample_id, celltype_id =  celltype_id, group_id = group_id)
-celltype_de = perform_muscat_de_analysis(
-   sce = sce,
-   sample_id = sample_id,
-   celltype_id = celltype_id,
-   group_id = group_id,
-   batches = batches,
-   contrasts = contrasts_oi)
-receiver_de = celltype_de$de_output_tidy
-geneset_assessment = contrast_tbl$contrast \%>\% 
-lapply(process_geneset_data, receiver_de) \%>\% bind_rows() 
+lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
+lr_network <- lr_network \%>\%
+  dplyr::rename(ligand = from, receptor = to) \%>\%
+  dplyr::distinct(ligand, receptor)
+ligand_target_matrix <- readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] \%>\% unique()
+celltype_info <- get_avg_frac_exprs_abund(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id)
+celltype_de <- perform_muscat_de_analysis(
+  sce = sce,
+  sample_id = sample_id,
+  celltype_id = celltype_id,
+  group_id = group_id,
+  batches = batches,
+  contrasts = contrasts_oi
+)
+receiver_de <- celltype_de$de_output_tidy
+geneset_assessment <- contrast_tbl$contrast \%>\%
+  lapply(process_geneset_data, receiver_de) \%>\%
+  bind_rows()
 }
 
 }

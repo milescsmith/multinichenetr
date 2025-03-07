@@ -19,7 +19,7 @@ get_DE_info(sce, sample_id, group_id, celltype_id, batches, covariates, contrast
 
 \item{covariates}{NA if no covariates should be corrected for. If there should be corrected for covariates uring DE analysis, this argument should be the name(s) of the columns in the meta data that indicate the covariate(s). Can both be categorical and continuous. Pseudobulk expression values will not be corrected for the first element of this vector.}
 
-\item{contrasts_oi}{String indicating the contrasts of interest (= which groups/conditions will be compared) for the differential expression and MultiNicheNet analysis. 
+\item{contrasts_oi}{String indicating the contrasts of interest (= which groups/conditions will be compared) for the differential expression and MultiNicheNet analysis.
 We will demonstrate here a few examples to indicate how to write this. Check the limma package manuals for more information about defining design matrices and contrasts for differential expression analysis. \cr
 If wanting to compare group A vs B: `contrasts_oi = c("'A-B'")` \cr
 If wanting to compare group A vs B & B vs A: `contrasts_oi = c("'A-B','B-A'")` \cr
@@ -52,22 +52,23 @@ List with output of the differential expression analysis in 1) default format(`m
 \examples{
 \dontrun{
 library(dplyr)
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-covariates = NA
-contrasts_oi = c("'High-Low','Low-High'")
-frq_list = get_frac_exprs(sce = sce, sample_id = sample_id, celltype_id =  celltype_id, group_id = group_id)
-DE_info = get_DE_info(
-   sce = sce,
-   sample_id = sample_id,
-   celltype_id = celltype_id,
-   group_id = group_id,
-   batches = batches,
-   covariates = covariates,
-   contrasts = contrasts_oi,
-   expressed_df = frq_list$expressed_df)
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+covariates <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+frq_list <- get_frac_exprs(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id)
+DE_info <- get_DE_info(
+  sce = sce,
+  sample_id = sample_id,
+  celltype_id = celltype_id,
+  group_id = group_id,
+  batches = batches,
+  covariates = covariates,
+  contrasts = contrasts_oi,
+  expressed_df = frq_list$expressed_df
+)
 }
 
 }

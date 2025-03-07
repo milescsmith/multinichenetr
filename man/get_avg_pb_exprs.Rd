@@ -28,10 +28,10 @@ List containing data frames with average and normalized pseudobulk of expression
 \examples{
 \dontrun{
 library(dplyr)
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-celltype_info = get_avg_pb_exprs(sce = sce, sample_id = sample_id, celltype_id =  celltype_id, group_id = group_id)
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+celltype_info <- get_avg_pb_exprs(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id)
 }
 
 }

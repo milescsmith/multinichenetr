@@ -20,28 +20,30 @@ ggplot object with plot of LR-->Target links
 \examples{
 \dontrun{
 library(dplyr)
-lr_network = readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-lr_network = lr_network \%>\% dplyr::rename(ligand = from, receptor = to) \%>\% dplyr::distinct(ligand, receptor)
-ligand_target_matrix = readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-contrasts_oi = c("'High-Low','Low-High'")
-contrast_tbl = tibble(contrast = c("High-Low","Low-High"), group = c("High","Low"))
-output = multi_nichenet_analysis(
-     sce = sce, 
-     celltype_id = celltype_id, 
-     sample_id = sample_id, 
-     group_id = group_id,
-     batches = batches,
-     lr_network = lr_network, 
-     ligand_target_matrix = ligand_target_matrix, 
-     contrasts_oi = contrasts_oi, 
-     contrast_tbl = contrast_tbl
-     )
-lr_target_prior_cor_filtered = output$lr_target_prior_cor \%>\% filter(scaled_prior_score > 0.50 & (pearson > 0.66 | spearman > 0.66))
-lr_target_prior_cor_heatmap = make_lr_target_prior_cor_heatmap(lr_target_prior_cor_filtered) 
+lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
+lr_network <- lr_network \%>\%
+  dplyr::rename(ligand = from, receptor = to) \%>\%
+  dplyr::distinct(ligand, receptor)
+ligand_target_matrix <- readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+output <- multi_nichenet_analysis(
+  sce = sce,
+  celltype_id = celltype_id,
+  sample_id = sample_id,
+  group_id = group_id,
+  batches = batches,
+  lr_network = lr_network,
+  ligand_target_matrix = ligand_target_matrix,
+  contrasts_oi = contrasts_oi,
+  contrast_tbl = contrast_tbl
+)
+lr_target_prior_cor_filtered <- output$lr_target_prior_cor \%>\% filter(scaled_prior_score > 0.50 & (pearson > 0.66 | spearman > 0.66))
+lr_target_prior_cor_heatmap <- make_lr_target_prior_cor_heatmap(lr_target_prior_cor_filtered)
 }
 
 }

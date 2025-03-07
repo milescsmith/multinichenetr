@@ -13,7 +13,7 @@ generate_prioritization_tables(sender_receiver_info, sender_receiver_de, ligand_
 
 \item{ligand_activities_targets_DEgenes}{Output of `get_ligand_activities_targets_DEgenes`}
 
-\item{contrast_tbl}{Data frame providing names for each of the contrasts in contrasts_oi in the 'contrast' column, and the corresponding group of interest in the 'group' column. Entries in the 'group' column should thus be present in the group_id column in the metadata. 
+\item{contrast_tbl}{Data frame providing names for each of the contrasts in contrasts_oi in the 'contrast' column, and the corresponding group of interest in the 'group' column. Entries in the 'group' column should thus be present in the group_id column in the metadata.
 Example for `contrasts_oi = c("'A-(B+C+D)/3', 'B-(A+C+D)/3'")`:
 `contrast_tbl = tibble(contrast = c("A-(B+C+D)/3","B-(A+C+D)/3"), group = c("A","B"))`}
 
@@ -35,73 +35,87 @@ Example for `contrasts_oi = c("'A-(B+C+D)/3', 'B-(A+C+D)/3'")`:
 List containing multiple data frames of prioritized senderLigand-receiverReceptor interactions (with sample- and group-based expression information), ligand activities and ligand-target links.
 }
 \description{
-\code{generate_prioritization_tables}  Perform the MultiNicheNet prioritization of cell-cell interactions. 
+\code{generate_prioritization_tables}  Perform the MultiNicheNet prioritization of cell-cell interactions.
 Combine the following prioritization criteria in a single aggregated prioritization score: differential expression of ligand and receptor, cell-type-condition-specificity of expression of ligand and receptor, NicheNet ligand activity, fraction of samples in a group that express a senderLigand-receiverReceptor pair.
 }
 \examples{
 \dontrun{
 library(dplyr)
-lr_network = readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-lr_network = lr_network \%>\% dplyr::rename(ligand = from, receptor = to) \%>\% dplyr::distinct(ligand, receptor)
-ligand_target_matrix = readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-contrasts_oi = c("'High-Low','Low-High'")
-contrast_tbl = tibble(contrast = c("High-Low","Low-High"), group = c("High","Low"))
-min_cells = 10
-metadata_abundance = SummarizedExperiment::colData(sce)[,c(sample_id, group_id, celltype_id)] 
-colnames(metadata_abundance) =c("sample_id", "group_id", "celltype_id")
-abundance_data = metadata_abundance \%>\% tibble::as_tibble() \%>\% dplyr::group_by(sample_id , celltype_id) \%>\% dplyr::count() \%>\% dplyr::inner_join(metadata_abundance \%>\% tibble::as_tibble() \%>\% dplyr::distinct(sample_id , group_id ))
-abundance_data = abundance_data \%>\% dplyr::mutate(keep = n >= min_cells) \%>\% dplyr::mutate(keep = factor(keep, levels = c(TRUE,FALSE)))
-abundance_data_receiver = process_info_to_ic(abund_data = abundance_data, ic_type = "receiver")
-abundance_data_sender = process_info_to_ic(abund_data = abundance_data, ic_type = "sender")
+lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
+lr_network <- lr_network \%>\%
+  dplyr::rename(ligand = from, receptor = to) \%>\%
+  dplyr::distinct(ligand, receptor)
+ligand_target_matrix <- readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+min_cells <- 10
+metadata_abundance <- SummarizedExperiment::colData(sce)[, c(sample_id, group_id, celltype_id)]
+colnames(metadata_abundance) <- c("sample_id", "group_id", "celltype_id")
+abundance_data <- metadata_abundance \%>\%
+  tibble::as_tibble() \%>\%
+  dplyr::group_by(sample_id, celltype_id) \%>\%
+  dplyr::count() \%>\%
+  dplyr::inner_join(metadata_abundance \%>\% tibble::as_tibble() \%>\% dplyr::distinct(sample_id, group_id))
+abundance_data <- abundance_data \%>\%
+  dplyr::mutate(keep = n >= min_cells) \%>\%
+  dplyr::mutate(keep = factor(keep, levels = c(TRUE, FALSE)))
+abundance_data_receiver <- process_info_to_ic(abund_data = abundance_data, ic_type = "receiver")
+abundance_data_sender <- process_info_to_ic(abund_data = abundance_data, ic_type = "sender")
 
-celltype_info = get_avg_frac_exprs_abund(sce = sce, sample_id = sample_id, celltype_id =  celltype_id, group_id = group_id)
+celltype_info <- get_avg_frac_exprs_abund(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id)
 
-receiver_info_ic = process_info_to_ic(info_object = celltype_info, ic_type = "receiver", lr_network = lr_network)
-sender_info_ic = process_info_to_ic(info_object = celltype_info, ic_type = "sender", lr_network = lr_network)
-senders_oi = SummarizedExperiment::colData(sce)[,celltype_id] \%>\% unique()
-receivers_oi = SummarizedExperiment::colData(sce)[,celltype_id] \%>\% unique()
-sender_receiver_info = combine_sender_receiver_info_ic(sender_info = sender_info_ic,receiver_info = receiver_info_ic,senders_oi = senders_oi,receivers_oi = receivers_oi,lr_network = lr_network)
+receiver_info_ic <- process_info_to_ic(info_object = celltype_info, ic_type = "receiver", lr_network = lr_network)
+sender_info_ic <- process_info_to_ic(info_object = celltype_info, ic_type = "sender", lr_network = lr_network)
+senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] \%>\% unique()
+receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] \%>\% unique()
+sender_receiver_info <- combine_sender_receiver_info_ic(sender_info = sender_info_ic, receiver_info = receiver_info_ic, senders_oi = senders_oi, receivers_oi = receivers_oi, lr_network = lr_network)
 
-celltype_de = perform_muscat_de_analysis(
-   sce = sce,
-   sample_id = sample_id,
-   celltype_id = celltype_id,
-   group_id = group_id,
-   batches = batches,
-   contrasts = contrasts_oi)
-   
-sender_receiver_de = combine_sender_receiver_de(
- sender_de = celltype_de,
- receiver_de = celltype_de,
- senders_oi = senders_oi,
- receivers_oi = receivers_oi,
- lr_network = lr_network)
- 
-ligand_activities_targets_DEgenes = get_ligand_activities_targets_DEgenes(
-   receiver_de = celltype_de,
-   receivers_oi = receivers_oi,
-   receiver_frq_df_group = celltype_info$frq_df_group,
-   ligand_target_matrix = ligand_target_matrix)
+celltype_de <- perform_muscat_de_analysis(
+  sce = sce,
+  sample_id = sample_id,
+  celltype_id = celltype_id,
+  group_id = group_id,
+  batches = batches,
+  contrasts = contrasts_oi
+)
+
+sender_receiver_de <- combine_sender_receiver_de(
+  sender_de = celltype_de,
+  receiver_de = celltype_de,
+  senders_oi = senders_oi,
+  receivers_oi = receivers_oi,
+  lr_network = lr_network
+)
+
+ligand_activities_targets_DEgenes <- get_ligand_activities_targets_DEgenes(
+  receiver_de = celltype_de,
+  receivers_oi = receivers_oi,
+  receiver_frq_df_group = celltype_info$frq_df_group,
+  ligand_target_matrix = ligand_target_matrix
+)
 
 
-sender_receiver_tbl = sender_receiver_de \%>\% dplyr::distinct(sender, receiver)
-metadata_combined = SummarizedExperiment::colData(sce) \%>\% tibble::as_tibble() 
-grouping_tbl = metadata_combined[,c(sample_id, group_id)] \%>\% tibble::as_tibble() \%>\% dplyr::distinct()
-colnames(grouping_tbl) = c("sample","group") 
+sender_receiver_tbl <- sender_receiver_de \%>\% dplyr::distinct(sender, receiver)
+metadata_combined <- SummarizedExperiment::colData(sce) \%>\% tibble::as_tibble()
+grouping_tbl <- metadata_combined[, c(sample_id, group_id)] \%>\%
+  tibble::as_tibble() \%>\%
+  dplyr::distinct()
+colnames(grouping_tbl) <- c("sample", "group")
 
-frac_cutoff = 0.05
-prioritization_tables = generate_prioritization_tables(
-    sender_receiver_info = sender_receiver_info,
-    sender_receiver_de = sender_receiver_de,
-    ligand_activities_targets_DEgenes = ligand_activities_targets_DEgenes,
-    contrast_tbl = contrast_tbl,
-    sender_receiver_tbl = sender_receiver_tbl,
-    grouping_tbl = grouping_tbl,
-    fraction_cutoff = frac_cutoff, abundance_data_receiver, abundance_data_sender)
+frac_cutoff <- 0.05
+prioritization_tables <- generate_prioritization_tables(
+  sender_receiver_info = sender_receiver_info,
+  sender_receiver_de = sender_receiver_de,
+  ligand_activities_targets_DEgenes = ligand_activities_targets_DEgenes,
+  contrast_tbl = contrast_tbl,
+  sender_receiver_tbl = sender_receiver_tbl,
+  grouping_tbl = grouping_tbl,
+  fraction_cutoff = frac_cutoff, abundance_data_receiver, abundance_data_sender
+)
 }
 
 }

@@ -20,16 +20,22 @@ Data frame with number of cells per cell type - sample combination; but now adap
 \examples{
 \dontrun{
 library(dplyr)
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-min_cells = 10
-metadata_abundance = SummarizedExperiment::colData(sce)[,c(sample_id, group_id, celltype_id)]
-colnames(metadata_abundance) =c("sample_id", "group_id", "celltype_id")
-abundance_data = metadata_abundance \%>\% tibble::as_tibble() \%>\% dplyr::group_by(sample_id , celltype_id) \%>\% dplyr::count() \%>\% dplyr::inner_join(metadata_abundance \%>\% dplyr::distinct(sample_id , group_id ))
-abundance_data = abundance_data \%>\% dplyr::mutate(keep = n >= min_cells) \%>\% dplyr::mutate(keep = factor(keep, levels = c(TRUE,FALSE)))
-receiver_abundance_data = process_info_to_ic(abund_data = abundance_data, ic_type = "receiver")
-sender_abundance_data = process_info_to_ic(abund_data = abundance_data, ic_type = "sender")
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+min_cells <- 10
+metadata_abundance <- SummarizedExperiment::colData(sce)[, c(sample_id, group_id, celltype_id)]
+colnames(metadata_abundance) <- c("sample_id", "group_id", "celltype_id")
+abundance_data <- metadata_abundance |>
+  tibble::as_tibble() |>
+  dplyr::group_by(sample_id, celltype_id) |>
+  dplyr::count() |>
+  dplyr::inner_join(metadata_abundance |> dplyr::distinct(sample_id, group_id))
+abundance_data <- abundance_data |>
+  dplyr::mutate(keep = n >= min_cells) |>
+  dplyr::mutate(keep = factor(keep, levels = c(TRUE, FALSE)))
+receiver_abundance_data <- process_info_to_ic(abund_data = abundance_data, ic_type = "receiver")
+sender_abundance_data <- process_info_to_ic(abund_data = abundance_data, ic_type = "sender")
 }
 
 }

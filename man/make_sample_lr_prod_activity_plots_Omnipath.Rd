@@ -22,31 +22,35 @@ Ligand-Receptor Expression Product & Ligand Activities Dotplot/Heatmap
 \examples{
 \dontrun{
 library(dplyr)
-lr_network = readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-lr_network = lr_network \%>\% dplyr::rename(ligand = from, receptor = to) \%>\% dplyr::distinct(ligand, receptor)
-lr_network_all = readRDS("../../../NicheNet_V2/networks/data/ligand_receptor/lr_network_human_allInfo_30112033.rds") \%>\% mutate(ligand = convert_alias_to_symbols(ligand, organism = "human"), receptor = convert_alias_to_symbols(receptor, organism = "human"))
-ligand_target_matrix = readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-contrasts_oi = c("'High-Low','Low-High'")
-contrast_tbl = tibble(contrast = c("High-Low","Low-High"), group = c("High","Low"))
-output = multi_nichenet_analysis(
-     sce = sce, 
-     celltype_id = celltype_id, 
-     sample_id = sample_id, 
-     group_id = group_id,
-     batches = batches,
-     lr_network = lr_network, 
-     ligand_target_matrix = ligand_target_matrix, 
-     contrasts_oi = contrasts_oi, 
-     contrast_tbl = contrast_tbl
-     
-     )
-group_oi = "High"
-prioritized_tbl_oi = output$prioritization_tables$group_prioritization_tbl \%>\% filter(fraction_expressing_ligand_receptor > 0) \%>\% filter(group == group_oi) \%>\% top_n(50, prioritization_score) 
-plot_oi = make_sample_lr_prod_activity_plots_Omnipath(output$prioritization_tables, prioritized_tbl_oi \%>\% inner_join(lr_network_all))
+lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
+lr_network <- lr_network \%>\%
+  dplyr::rename(ligand = from, receptor = to) \%>\%
+  dplyr::distinct(ligand, receptor)
+lr_network_all <- readRDS("../../../NicheNet_V2/networks/data/ligand_receptor/lr_network_human_allInfo_30112033.rds") \%>\% mutate(ligand = convert_alias_to_symbols(ligand, organism = "human"), receptor = convert_alias_to_symbols(receptor, organism = "human"))
+ligand_target_matrix <- readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+output <- multi_nichenet_analysis(
+  sce = sce,
+  celltype_id = celltype_id,
+  sample_id = sample_id,
+  group_id = group_id,
+  batches = batches,
+  lr_network = lr_network,
+  ligand_target_matrix = ligand_target_matrix,
+  contrasts_oi = contrasts_oi,
+  contrast_tbl = contrast_tbl
+)
+group_oi <- "High"
+prioritized_tbl_oi <- output$prioritization_tables$group_prioritization_tbl \%>\%
+  filter(fraction_expressing_ligand_receptor > 0) \%>\%
+  filter(group == group_oi) \%>\%
+  top_n(50, prioritization_score)
+plot_oi <- make_sample_lr_prod_activity_plots_Omnipath(output$prioritization_tables, prioritized_tbl_oi \%>\% inner_join(lr_network_all))
 plot_oi
 }
 

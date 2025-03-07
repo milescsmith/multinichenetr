@@ -13,7 +13,7 @@ get_DE_info_sampleAgnostic(sce, group_id, celltype_id, contrasts_oi, expressed_d
 
 \item{celltype_id}{Name of the column in the meta data of sce that indicates the cell type of a cell.}
 
-\item{contrasts_oi}{String indicating the contrasts of interest (= which groups/conditions will be compared) for the differential expression and MultiNicheNet analysis. 
+\item{contrasts_oi}{String indicating the contrasts of interest (= which groups/conditions will be compared) for the differential expression and MultiNicheNet analysis.
 We will demonstrate here a few examples to indicate how to write this. Check the limma package manuals for more information about defining design matrices and contrasts for differential expression analysis. \cr
 If wanting to compare group A vs B: `contrasts_oi = c("'A-B'")` \cr
 If wanting to compare group A vs B & B vs A: `contrasts_oi = c("'A-B','B-A'")` \cr
@@ -38,21 +38,22 @@ List with output of the differential expression analysis in 1) default format(`m
 \examples{
 \dontrun{
 library(dplyr)
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-covariates = NA
-contrasts_oi = c("'High-Low','Low-High'")
-contrast_tbl = tibble(contrast = c("High-Low","Low-High"), group = c("High","Low"))
-frq_list = get_frac_exprs_sampleAgnostic(sce = sce, sample_id = sample_id, celltype_id =  celltype_id, group_id = group_id)
-DE_info = get_DE_info_sampleAgnostic(
-   sce = sce,
-   celltype_id = celltype_id,
-   group_id = group_id,
-   contrasts = contrasts_oi,
-   expressed_df = frq_list$expressed_df,
-   contrast_tbl = contrast_tbl)
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+covariates <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+frq_list <- get_frac_exprs_sampleAgnostic(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id)
+DE_info <- get_DE_info_sampleAgnostic(
+  sce = sce,
+  celltype_id = celltype_id,
+  group_id = group_id,
+  contrasts = contrasts_oi,
+  expressed_df = frq_list$expressed_df,
+  contrast_tbl = contrast_tbl
+)
 }
 
 }

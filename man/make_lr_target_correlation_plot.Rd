@@ -34,33 +34,41 @@ ggplot object with a combined plot of LR expression vs target expression
 \examples{
 \dontrun{
 library(dplyr)
-lr_network = readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-lr_network = lr_network \%>\% dplyr::rename(ligand = from, receptor = to) \%>\% dplyr::distinct(ligand, receptor)
-ligand_target_matrix = readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-contrasts_oi = c("'High-Low','Low-High'")
-contrast_tbl = tibble(contrast = c("High-Low","Low-High"), group = c("High","Low"))
-output = multi_nichenet_analysis(
-     sce = sce, 
-     celltype_id = celltype_id, 
-     sample_id = sample_id, 
-     group_id = group_id,
-     batches = batches,
-     lr_network = lr_network, 
-     ligand_target_matrix = ligand_target_matrix, 
-     contrasts_oi = contrasts_oi, 
-     contrast_tbl = contrast_tbl
-     )
-group_oi = "High"
-receiver_oi = "Malignant"
-prioritized_tbl_oi = output$prioritization_tables$group_prioritization_tbl \%>\% distinct(id, ligand, receptor, sender, receiver, lr_interaction, group, ligand_receptor_lfc_avg, activity_scaled, fraction_expressing_ligand_receptor,  prioritization_score) \%>\% filter(fraction_expressing_ligand_receptor > 0 & ligand_receptor_lfc_avg > 0) \%>\% filter(group == group_oi & receiver == receiver_oi) \%>\% top_n(250, prioritization_score) 
-lr_target_prior_cor_filtered = output$lr_target_prior_cor \%>\% filter(scaled_prior_score > 0.50 & (pearson > 0.66 | spearman > 0.66))
-prioritized_tbl_oi = prioritized_tbl_oi \%>\% filter(id \%in\% lr_target_prior_cor_filtered$id)
-prioritized_tbl_oi = prioritized_tbl_oi \%>\% group_by(ligand, sender, group) \%>\% top_n(2, prioritization_score)
-lr_target_correlation_plot = make_lr_target_correlation_plot(output$prioritization_tables, prioritized_tbl_oi, lr_target_prior_cor_filtered, output$grouping_tbl, output$celltype_info, receiver_oi) 
+lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
+lr_network <- lr_network \%>\%
+  dplyr::rename(ligand = from, receptor = to) \%>\%
+  dplyr::distinct(ligand, receptor)
+ligand_target_matrix <- readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+output <- multi_nichenet_analysis(
+  sce = sce,
+  celltype_id = celltype_id,
+  sample_id = sample_id,
+  group_id = group_id,
+  batches = batches,
+  lr_network = lr_network,
+  ligand_target_matrix = ligand_target_matrix,
+  contrasts_oi = contrasts_oi,
+  contrast_tbl = contrast_tbl
+)
+group_oi <- "High"
+receiver_oi <- "Malignant"
+prioritized_tbl_oi <- output$prioritization_tables$group_prioritization_tbl \%>\%
+  distinct(id, ligand, receptor, sender, receiver, lr_interaction, group, ligand_receptor_lfc_avg, activity_scaled, fraction_expressing_ligand_receptor, prioritization_score) \%>\%
+  filter(fraction_expressing_ligand_receptor > 0 & ligand_receptor_lfc_avg > 0) \%>\%
+  filter(group == group_oi & receiver == receiver_oi) \%>\%
+  top_n(250, prioritization_score)
+lr_target_prior_cor_filtered <- output$lr_target_prior_cor \%>\% filter(scaled_prior_score > 0.50 & (pearson > 0.66 | spearman > 0.66))
+prioritized_tbl_oi <- prioritized_tbl_oi \%>\% filter(id \%in\% lr_target_prior_cor_filtered$id)
+prioritized_tbl_oi <- prioritized_tbl_oi \%>\%
+  group_by(ligand, sender, group) \%>\%
+  top_n(2, prioritization_score)
+lr_target_correlation_plot <- make_lr_target_correlation_plot(output$prioritization_tables, prioritized_tbl_oi, lr_target_prior_cor_filtered, output$grouping_tbl, output$celltype_info, receiver_oi)
 }
 
 }

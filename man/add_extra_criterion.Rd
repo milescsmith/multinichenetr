@@ -24,73 +24,87 @@ prioritization_tables with updated aggregated prioritization score based on the 
 \examples{
 \dontrun{
 library(dplyr)
-lr_network = readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-lr_network = lr_network \%>\% dplyr::rename(ligand = from, receptor = to) \%>\% dplyr::distinct(ligand, receptor)
-ligand_target_matrix = readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-contrasts_oi = c("'High-Low','Low-High'")
-contrast_tbl = tibble(contrast = c("High-Low","Low-High"), group = c("High","Low"))
-min_cells = 10
-metadata_abundance = SummarizedExperiment::colData(sce)[,c(sample_id, group_id, celltype_id)] 
-colnames(metadata_abundance) =c("sample_id", "group_id", "celltype_id")
-abundance_data = metadata_abundance \%>\% tibble::as_tibble() \%>\% dplyr::group_by(sample_id , celltype_id) \%>\% dplyr::count() \%>\% dplyr::inner_join(metadata_abundance \%>\% tibble::as_tibble() \%>\% dplyr::distinct(sample_id , group_id ))
-abundance_data = abundance_data \%>\% dplyr::mutate(keep = n >= min_cells) \%>\% dplyr::mutate(keep = factor(keep, levels = c(TRUE,FALSE)))
-abundance_data_receiver = process_info_to_ic(abund_data = abundance_data, ic_type = "receiver")
-abundance_data_sender = process_info_to_ic(abund_data = abundance_data, ic_type = "sender")
+lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
+lr_network <- lr_network \%>\%
+  dplyr::rename(ligand = from, receptor = to) \%>\%
+  dplyr::distinct(ligand, receptor)
+ligand_target_matrix <- readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+min_cells <- 10
+metadata_abundance <- SummarizedExperiment::colData(sce)[, c(sample_id, group_id, celltype_id)]
+colnames(metadata_abundance) <- c("sample_id", "group_id", "celltype_id")
+abundance_data <- metadata_abundance \%>\%
+  tibble::as_tibble() \%>\%
+  dplyr::group_by(sample_id, celltype_id) \%>\%
+  dplyr::count() \%>\%
+  dplyr::inner_join(metadata_abundance \%>\% tibble::as_tibble() \%>\% dplyr::distinct(sample_id, group_id))
+abundance_data <- abundance_data \%>\%
+  dplyr::mutate(keep = n >= min_cells) \%>\%
+  dplyr::mutate(keep = factor(keep, levels = c(TRUE, FALSE)))
+abundance_data_receiver <- process_info_to_ic(abund_data = abundance_data, ic_type = "receiver")
+abundance_data_sender <- process_info_to_ic(abund_data = abundance_data, ic_type = "sender")
 
-celltype_info = get_avg_frac_exprs_abund(sce = sce, sample_id = sample_id, celltype_id =  celltype_id, group_id = group_id)
+celltype_info <- get_avg_frac_exprs_abund(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id)
 
-receiver_info_ic = process_info_to_ic(info_object = celltype_info, ic_type = "receiver", lr_network = lr_network)
-sender_info_ic = process_info_to_ic(info_object = celltype_info, ic_type = "sender", lr_network = lr_network)
-senders_oi = SummarizedExperiment::colData(sce)[,celltype_id] \%>\% unique()
-receivers_oi = SummarizedExperiment::colData(sce)[,celltype_id] \%>\% unique()
-sender_receiver_info = combine_sender_receiver_info_ic(sender_info = sender_info_ic,receiver_info = receiver_info_ic,senders_oi = senders_oi,receivers_oi = receivers_oi,lr_network = lr_network)
+receiver_info_ic <- process_info_to_ic(info_object = celltype_info, ic_type = "receiver", lr_network = lr_network)
+sender_info_ic <- process_info_to_ic(info_object = celltype_info, ic_type = "sender", lr_network = lr_network)
+senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] \%>\% unique()
+receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] \%>\% unique()
+sender_receiver_info <- combine_sender_receiver_info_ic(sender_info = sender_info_ic, receiver_info = receiver_info_ic, senders_oi = senders_oi, receivers_oi = receivers_oi, lr_network = lr_network)
 
-celltype_de = perform_muscat_de_analysis(
-   sce = sce,
-   sample_id = sample_id,
-   celltype_id = celltype_id,
-   group_id = group_id,
-   batches = batches,
-   contrasts = contrasts_oi)
-   
-sender_receiver_de = combine_sender_receiver_de(
- sender_de = celltype_de,
- receiver_de = celltype_de,
- senders_oi = senders_oi,
- receivers_oi = receivers_oi,
- lr_network = lr_network)
- 
-ligand_activities_targets_DEgenes = get_ligand_activities_targets_DEgenes(
-   receiver_de = celltype_de,
-   receivers_oi = receivers_oi,
-   receiver_frq_df_group = celltype_info$frq_df_group,
-   ligand_target_matrix = ligand_target_matrix)
+celltype_de <- perform_muscat_de_analysis(
+  sce = sce,
+  sample_id = sample_id,
+  celltype_id = celltype_id,
+  group_id = group_id,
+  batches = batches,
+  contrasts = contrasts_oi
+)
+
+sender_receiver_de <- combine_sender_receiver_de(
+  sender_de = celltype_de,
+  receiver_de = celltype_de,
+  senders_oi = senders_oi,
+  receivers_oi = receivers_oi,
+  lr_network = lr_network
+)
+
+ligand_activities_targets_DEgenes <- get_ligand_activities_targets_DEgenes(
+  receiver_de = celltype_de,
+  receivers_oi = receivers_oi,
+  receiver_frq_df_group = celltype_info$frq_df_group,
+  ligand_target_matrix = ligand_target_matrix
+)
 
 
-sender_receiver_tbl = sender_receiver_de \%>\% dplyr::distinct(sender, receiver)
-metadata_combined = SummarizedExperiment::colData(sce) \%>\% tibble::as_tibble() 
-grouping_tbl = metadata_combined[,c(sample_id, group_id)] \%>\% tibble::as_tibble() \%>\% dplyr::distinct()
-colnames(grouping_tbl) = c("sample","group") 
+sender_receiver_tbl <- sender_receiver_de \%>\% dplyr::distinct(sender, receiver)
+metadata_combined <- SummarizedExperiment::colData(sce) \%>\% tibble::as_tibble()
+grouping_tbl <- metadata_combined[, c(sample_id, group_id)] \%>\%
+  tibble::as_tibble() \%>\%
+  dplyr::distinct()
+colnames(grouping_tbl) <- c("sample", "group")
 
-frac_cutoff = 0.05
-prioritization_tables = generate_prioritization_tables(
-    sender_receiver_info = sender_receiver_info,
-    sender_receiver_de = sender_receiver_de,
-    ligand_activities_targets_DEgenes = ligand_activities_targets_DEgenes,
-    contrast_tbl = contrast_tbl,
-    sender_receiver_tbl = sender_receiver_tbl,
-    grouping_tbl = grouping_tbl,
-    fraction_cutoff = frac_cutoff, abundance_data_receiver, abundance_data_sender)
-    
-new_criteria_data = readRDS("data/additional_data_modality.rds")
-prioritization_tables$group_prioritization_tbl = prioritization_tables$group_prioritization_tbl \%>\% inner_join(new_criteria_data)
-regular_criteria_tbl = tibble(criterion = c("scaled_lfc_ligand","scaled_p_val_ligand_adapted","scaled_lfc_receptor","scaled_p_val_receptor_adapted", "max_scaled_activity", "scaled_pb_ligand", "scaled_pb_receptor", "fraction_expressing_ligand_receptor"), weight = NA, regularization_factor = c(0.5, 0.5, 0.5, 0.5, 1, 1, 1, 1)) # do not change this
-new_criteria_tbl = tibble(criterion = c("new_criterion1","new_criterion2"), weight = c(1,1), regularization_factor = c(0.5, 0.5)) # 
-prioritization_tables = add_extra_criterion(prioritization_tables, new_criteria_tbl, regular_criteria_tbl, scenario = "regular") 
+frac_cutoff <- 0.05
+prioritization_tables <- generate_prioritization_tables(
+  sender_receiver_info = sender_receiver_info,
+  sender_receiver_de = sender_receiver_de,
+  ligand_activities_targets_DEgenes = ligand_activities_targets_DEgenes,
+  contrast_tbl = contrast_tbl,
+  sender_receiver_tbl = sender_receiver_tbl,
+  grouping_tbl = grouping_tbl,
+  fraction_cutoff = frac_cutoff, abundance_data_receiver, abundance_data_sender
+)
+
+new_criteria_data <- readRDS("data/additional_data_modality.rds")
+prioritization_tables$group_prioritization_tbl <- prioritization_tables$group_prioritization_tbl \%>\% inner_join(new_criteria_data)
+regular_criteria_tbl <- tibble(criterion = c("scaled_lfc_ligand", "scaled_p_val_ligand_adapted", "scaled_lfc_receptor", "scaled_p_val_receptor_adapted", "max_scaled_activity", "scaled_pb_ligand", "scaled_pb_receptor", "fraction_expressing_ligand_receptor"), weight = NA, regularization_factor = c(0.5, 0.5, 0.5, 0.5, 1, 1, 1, 1)) # do not change this
+new_criteria_tbl <- tibble(criterion = c("new_criterion1", "new_criterion2"), weight = c(1, 1), regularization_factor = c(0.5, 0.5)) #
+prioritization_tables <- add_extra_criterion(prioritization_tables, new_criteria_tbl, regular_criteria_tbl, scenario = "regular")
 }
 
 }

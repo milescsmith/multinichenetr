@@ -24,10 +24,10 @@ Data frame with average gene expression per sample and per group.
 \examples{
 \dontrun{
 library(dplyr)
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-muscat_exprs_avg = get_muscat_exprs_avg(sce = sce, sample_id = sample_id, celltype_id =  celltype_id, group_id = group_id)
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+muscat_exprs_avg <- get_muscat_exprs_avg(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id)
 }
 
 }

@@ -30,10 +30,10 @@ Data frame with logCPM-like values of the library-size corrected pseudobulked co
 \examples{
 \dontrun{
 library(dplyr)
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-pseudobulk_logCPM_exprs = get_pseudobulk_logCPM_exprs(sce = sce, sample_id = sample_id, celltype_id =  celltype_id, group_id = group_id)
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+pseudobulk_logCPM_exprs <- get_pseudobulk_logCPM_exprs(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id)
 }
 
 }

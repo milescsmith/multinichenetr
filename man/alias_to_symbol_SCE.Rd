@@ -19,7 +19,7 @@ SingleCellExperiment Object
 }
 \examples{
 \dontrun{
-sce = sce \%>\% alias_to_symbol_SCE("human")
+sce <- sce |> alias_to_symbol_SCE("human")
 }
 
 }

@@ -20,24 +20,27 @@ de_output_tidy dataframe with two columns added: p_emp and p_adj_emp.
 \examples{
 \dontrun{
 library(dplyr)
-lr_network = readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-lr_network = lr_network \%>\% dplyr::rename(ligand = from, receptor = to) \%>\% dplyr::distinct(ligand, receptor)
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-contrasts_oi = c("'High-Low','Low-High'")
-senders_oi = SummarizedExperiment::colData(sce)[,celltype_id] \%>\% unique()
-receivers_oi = SummarizedExperiment::colData(sce)[,celltype_id] \%>\% unique()
-celltype_de = perform_muscat_de_analysis(
-   sce = sce,
-   sample_id = sample_id,
-   celltype_id = celltype_id,
-   group_id = group_id,
-   batches = batches,
-   contrasts = contrasts_oi)
-de_output_tidy = muscat::resDS(celltype_de$sce, celltype_de$de_output, bind = "row", cpm = FALSE, frq = FALSE) \%>\% tibble::as_tibble()
-de_output_tidy = add_empirical_pval_fdr(de_output_tidy)
+lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
+lr_network <- lr_network \%>\%
+  dplyr::rename(ligand = from, receptor = to) \%>\%
+  dplyr::distinct(ligand, receptor)
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] \%>\% unique()
+receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] \%>\% unique()
+celltype_de <- perform_muscat_de_analysis(
+  sce = sce,
+  sample_id = sample_id,
+  celltype_id = celltype_id,
+  group_id = group_id,
+  batches = batches,
+  contrasts = contrasts_oi
+)
+de_output_tidy <- muscat::resDS(celltype_de$sce, celltype_de$de_output, bind = "row", cpm = FALSE, frq = FALSE) \%>\% tibble::as_tibble()
+de_output_tidy <- add_empirical_pval_fdr(de_output_tidy)
 }
 
 }

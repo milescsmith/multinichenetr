@@ -20,8 +20,7 @@ multinichenet output list (= result of `multi_nichenet_analysis()`), but now fil
 \examples{
 \dontrun{
 library(dplyr)
-multinichenet_output = multinichenet_output \%>\% make_lite_output()
-
+multinichenet_output <- multinichenet_output |> make_lite_output()
 }
 
 }

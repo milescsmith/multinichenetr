@@ -25,7 +25,7 @@ assay_oi_pb ="counts",fun_oi_pb = "sum",de_method_oi = "edgeR",min_cells = 10,lo
 
 \item{ligand_target_matrix}{Prior knowledge model of ligand-target regulatory potential (matrix with ligands in columns and targets in rows). See https://github.com/saeyslab/nichenetr.}
 
-\item{contrasts_oi}{String indicating the contrasts of interest (= which groups/conditions will be compared) for the differential expression and MultiNicheNet analysis. 
+\item{contrasts_oi}{String indicating the contrasts of interest (= which groups/conditions will be compared) for the differential expression and MultiNicheNet analysis.
 We will demonstrate here a few examples to indicate how to write this. Check the limma package manuals for more information about defining design matrices and contrasts for differential expression analysis. \cr
 If wanting to compare group A vs B: `contrasts_oi = c("'A-B'")` \cr
 If wanting to compare group A vs B & B vs A: `contrasts_oi = c("'A-B','B-A'")` \cr
@@ -35,7 +35,7 @@ If wanting to compare group A vs B, C and D: `contrasts_oi = c("'A-(B+C+D)/3'")`
 If wanting to compare group A vs B, C and D & B vs A,C,D: `contrasts_oi = c("'A-(B+C+D)/3', 'B-(A+C+D)/3'")` \cr
 Note that the groups A, B, ... should be present in the meta data column 'group_id'.}
 
-\item{contrast_tbl}{Data frame providing names for each of the contrasts in contrasts_oi in the 'contrast' column, and the corresponding group of interest in the 'group' column. Entries in the 'group' column should thus be present in the group_id column in the metadata. 
+\item{contrast_tbl}{Data frame providing names for each of the contrasts in contrasts_oi in the 'contrast' column, and the corresponding group of interest in the 'group' column. Entries in the 'group' column should thus be present in the group_id column in the metadata.
 Example for `contrasts_oi = c("'A-(B+C+D)/3', 'B-(A+C+D)/3'")`:
 `contrast_tbl = tibble(contrast = c("A-(B+C+D)/3","B-(A+C+D)/3"), group = c("A","B"))`}
 
@@ -82,13 +82,13 @@ Example for `contrasts_oi = c("'A-(B+C+D)/3', 'B-(A+C+D)/3'")`:
 \value{
 List containing information and output of the MultiNicheNet analysis.
 celltype_info: contains average expression value and fraction of each cell type - sample combination,
-celltype_de: contains output of the differential expression analysis, 
-sender_receiver_info: links the expression information of the ligand in the sender cell types to the expression of the receptor in the receiver cell types, 
+celltype_de: contains output of the differential expression analysis,
+sender_receiver_info: links the expression information of the ligand in the sender cell types to the expression of the receptor in the receiver cell types,
 sender_receiver_de: links the differential information of the ligand in the sender cell types to the expression of the receptor in the receiver cell types
 ligand_activities_targets_DEgenes: contains the output of the NicheNet ligand activity analysis, and the NicheNet ligand-target inference
 prioritization_tables: contains the tables with the final prioritization scores
 lr_prod_mat: matrix of the ligand-receptor expression product of the expressed senderLigand-receiverReceptor pairs,
-grouping_tbl: data frame showing the group per sample 
+grouping_tbl: data frame showing the group per sample
 lr_target_prior_cor: data frame showing the expression correlation between ligand-receptor pairs and DE genes + NicheNet regulatory potential scores indicating the amount of prior knowledge supporting a LR-target regulatory link
 }
 \description{
@@ -97,27 +97,30 @@ lr_target_prior_cor: data frame showing the expression correlation between ligan
 \examples{
 \dontrun{
 library(dplyr)
-lr_network = readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-lr_network = lr_network \%>\% dplyr::rename(ligand = from, receptor = to) \%>\% dplyr::distinct(ligand, receptor)
-ligand_target_matrix = readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-covariates = NA
-contrasts_oi = c("'High-Low','Low-High'")
-contrast_tbl = tibble(contrast = c("High-Low","Low-High"), group = c("High","Low"))
-output = multi_nichenet_analysis(
-     sce = sce, 
-     celltype_id = celltype_id, 
-     sample_id = sample_id, 
-     group_id = group_id, 
-     batches = batches,
-     covariates = covariates,
-     lr_network = lr_network, 
-     ligand_target_matrix = ligand_target_matrix, 
-     contrasts_oi = contrasts_oi, 
-     contrast_tbl = contrast_tbl)
+lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
+lr_network <- lr_network \%>\%
+  dplyr::rename(ligand = from, receptor = to) \%>\%
+  dplyr::distinct(ligand, receptor)
+ligand_target_matrix <- readRDS(url("https://zenodo.org/record/3260758/files/ligand_target_matrix.rds"))
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+covariates <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+output <- multi_nichenet_analysis(
+  sce = sce,
+  celltype_id = celltype_id,
+  sample_id = sample_id,
+  group_id = group_id,
+  batches = batches,
+  covariates = covariates,
+  lr_network = lr_network,
+  ligand_target_matrix = ligand_target_matrix,
+  contrasts_oi = contrasts_oi,
+  contrast_tbl = contrast_tbl
+)
 }
 
 }

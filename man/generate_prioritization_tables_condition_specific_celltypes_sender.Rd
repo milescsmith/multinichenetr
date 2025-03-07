@@ -13,7 +13,7 @@ generate_prioritization_tables_condition_specific_celltypes_sender(sender_receiv
 
 \item{ligand_activities_targets_DEgenes}{Output of `get_ligand_activities_targets_DEgenes`}
 
-\item{contrast_tbl}{Data frame providing names for each of the contrasts in contrasts_oi in the 'contrast' column, and the corresponding group of interest in the 'group' column. Entries in the 'group' column should thus be present in the group_id column in the metadata. 
+\item{contrast_tbl}{Data frame providing names for each of the contrasts in contrasts_oi in the 'contrast' column, and the corresponding group of interest in the 'group' column. Entries in the 'group' column should thus be present in the group_id column in the metadata.
 Example for `contrasts_oi = c("'A-(B+C+D)/3', 'B-(A+C+D)/3'")`:
 `contrast_tbl = tibble(contrast = c("A-(B+C+D)/3","B-(A+C+D)/3"), group = c("A","B"))`}
 
@@ -35,7 +35,7 @@ Example for `contrasts_oi = c("'A-(B+C+D)/3', 'B-(A+C+D)/3'")`:
 List containing multiple data frames of prioritized senderLigand-receiverReceptor interactions (with sample- and group-based expression information), ligand activities and ligand-target links.
 }
 \description{
-\code{generate_prioritization_tables_condition_specific_celltypes_sender}  Perform the MultiNicheNet prioritization of cell-cell interactions. Focus on including condition-specific cell types as sender cells. This implies no DE information will be used for prioritization of ligands. 
+\code{generate_prioritization_tables_condition_specific_celltypes_sender}  Perform the MultiNicheNet prioritization of cell-cell interactions. Focus on including condition-specific cell types as sender cells. This implies no DE information will be used for prioritization of ligands.
 Combine the following prioritization criteria in a single aggregated prioritization score: differential expression of ligand and receptor, cell-type-condition-specificity of expression of ligand and receptor, NicheNet ligand activity, fraction of samples in a group that express a senderLigand-receiverReceptor pair.
 }
 \examples{
@@ -51,7 +51,7 @@ batches = NA
 contrasts_oi = c("'High-Low','Low-High'")
 contrast_tbl = tibble(contrast = c("High-Low","Low-High"), group = c("High","Low"))
 min_cells = 10
-metadata_abundance = SummarizedExperiment::colData(sce)[,c(sample_id, group_id, celltype_id)] 
+metadata_abundance = SummarizedExperiment::colData(sce)[,c(sample_id, group_id, celltype_id)]
 colnames(metadata_abundance) =c("sample_id", "group_id", "celltype_id")
 abundance_data = metadata_abundance \%>\% tibble::as_tibble() \%>\% dplyr::group_by(sample_id , celltype_id) \%>\% dplyr::count() \%>\% dplyr::inner_join(metadata_abundance \%>\% tibble::as_tibble() \%>\% dplyr::distinct(sample_id , group_id ))
 abundance_data = abundance_data \%>\% dplyr::mutate(keep = n >= min_cells) \%>\% dplyr::mutate(keep = factor(keep, levels = c(TRUE,FALSE)))
@@ -73,14 +73,14 @@ celltype_de = perform_muscat_de_analysis(
    group_id = group_id,
    batches = batches,
    contrasts = contrasts_oi)
-   
+
 sender_receiver_de = combine_sender_receiver_de(
  sender_de = celltype_de,
  receiver_de = celltype_de,
  senders_oi = senders_oi,
  receivers_oi = receivers_oi,
  lr_network = lr_network)
- 
+
 ligand_activities_targets_DEgenes = get_ligand_activities_targets_DEgenes(
    receiver_de = celltype_de,
    receivers_oi = receivers_oi,
@@ -89,9 +89,9 @@ ligand_activities_targets_DEgenes = get_ligand_activities_targets_DEgenes(
 
 
 sender_receiver_tbl = sender_receiver_de \%>\% dplyr::distinct(sender, receiver)
-metadata_combined = SummarizedExperiment::colData(sce) \%>\% tibble::as_tibble() 
+metadata_combined = SummarizedExperiment::colData(sce) \%>\% tibble::as_tibble()
 grouping_tbl = metadata_combined[,c(sample_id, group_id)] \%>\% tibble::as_tibble() \%>\% dplyr::distinct()
-colnames(grouping_tbl) = c("sample","group") 
+colnames(grouping_tbl) = c("sample","group")
 
 frac_cutoff = 0.05
 prioritization_tables = generate_prioritization_tables_condition_specific_celltypes_sender(

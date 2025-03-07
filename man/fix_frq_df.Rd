@@ -20,13 +20,13 @@ Fixed data frame with fraction of cells expressing a gene.
 \examples{
 \dontrun{
 library(dplyr)
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-frq_df = get_muscat_exprs_frac(sce, sample_id = sample_id, celltype_id =  celltype_id, group_id = group_id) \%>\% .$frq_celltype_samples
-if(nrow(frq_df \%>\% dplyr::filter(is.na(fraction_sample))) > 0 | nrow(frq_df \%>\% dplyr::filter(is.nan(fraction_sample))) > 0) {
-  frq_df = fix_frq_df(sce, frq_df)
-  }
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+frq_df <- get_muscat_exprs_frac(sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id) \%>\% .$frq_celltype_samples
+if (nrow(frq_df \%>\% dplyr::filter(is.na(fraction_sample))) > 0 | nrow(frq_df \%>\% dplyr::filter(is.nan(fraction_sample))) > 0) {
+  frq_df <- fix_frq_df(sce, frq_df)
+}
 }
 
 }

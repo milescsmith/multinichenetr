@@ -26,24 +26,27 @@ List with empirical p-values and adjusted p-values + ggplot output and estimated
 \examples{
 \dontrun{
 library(dplyr)
-lr_network = readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-lr_network = lr_network \%>\% dplyr::rename(ligand = from, receptor = to) \%>\% dplyr::distinct(ligand, receptor)
-sample_id = "tumor"
-group_id = "pEMT"
-celltype_id = "celltype"
-batches = NA
-contrasts_oi = c("'High-Low','Low-High'")
-senders_oi = SummarizedExperiment::colData(sce)[,celltype_id] \%>\% unique()
-receivers_oi = SummarizedExperiment::colData(sce)[,celltype_id] \%>\% unique()
-celltype_de = perform_muscat_de_analysis(
-   sce = sce,
-   sample_id = sample_id,
-   celltype_id = celltype_id,
-   group_id = group_id,
-   batches = batches,
-   contrasts = contrasts_oi)
-de_output_tidy = muscat::resDS(celltype_de$sce, celltype_de$de_output, bind = "row", cpm = FALSE, frq = FALSE) \%>\% tibble::as_tibble()
-emp_res = p.adjust_empirical(de_output_tidy \%>\% pull(p_val), de_output_tidy  \%>\% pull(p_val), plot = T)
+lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
+lr_network <- lr_network \%>\%
+  dplyr::rename(ligand = from, receptor = to) \%>\%
+  dplyr::distinct(ligand, receptor)
+sample_id <- "tumor"
+group_id <- "pEMT"
+celltype_id <- "celltype"
+batches <- NA
+contrasts_oi <- c("'High-Low','Low-High'")
+senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] \%>\% unique()
+receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] \%>\% unique()
+celltype_de <- perform_muscat_de_analysis(
+  sce = sce,
+  sample_id = sample_id,
+  celltype_id = celltype_id,
+  group_id = group_id,
+  batches = batches,
+  contrasts = contrasts_oi
+)
+de_output_tidy <- muscat::resDS(celltype_de$sce, celltype_de$de_output, bind = "row", cpm = FALSE, frq = FALSE) \%>\% tibble::as_tibble()
+emp_res <- p.adjust_empirical(de_output_tidy \%>\% pull(p_val), de_output_tidy \%>\% pull(p_val), plot = T)
 }
 
 }
