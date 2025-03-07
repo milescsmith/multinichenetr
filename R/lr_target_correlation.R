@@ -107,11 +107,27 @@
 #'
 #' @export
 #'
-lr_target_prior_cor_inference <- function(receivers_oi, abundance_expression_info, celltype_de, grouping_tbl, prioritization_tables, ligand_target_matrix, logFC_threshold = 0.25, p_val_threshold = 0.05, p_val_adj = FALSE, top_n_LR = 2500) {
+lr_target_prior_cor_inference <- function(
+  receivers_oi,
+  abundance_expression_info,
+  celltype_de,
+  grouping_tbl,
+  prioritization_tables,
+  ligand_target_matrix,
+  logFC_threshold = 0.25,
+  p_val_threshold = 0.05,
+  p_val_adj = FALSE,
+  top_n_LR = 2500
+) {
   requireNamespace("dplyr")
 
   # add sender-receiver presence to grouping_tbl
-  grouping_tbl <- grouping_tbl %>% dplyr::inner_join(prioritization_tables$sample_prioritization_tbl %>% dplyr::distinct(sample, sender, receiver, keep_receiver, keep_sender), by = "sample")
+  grouping_tbl <- grouping_tbl %>%
+    dplyr::inner_join(
+      prioritization_tables$sample_prioritization_tbl %>%
+        dplyr::distinct(sample, sender, receiver, keep_receiver, keep_sender),
+      by = "sample"
+    )
 
   # Step1: calculate LR prod matrix for the LR ids of interest
   if (is.na(top_n_LR)) {
@@ -120,7 +136,11 @@ lr_target_prior_cor_inference <- function(receivers_oi, abundance_expression_inf
       dplyr::pull(id) %>%
       unique()
   } else {
-    ids_oi <- get_top_n_lr_pairs(prioritization_tables, top_n_LR, rank_per_group = FALSE) %>%
+    ids_oi <- get_top_n_lr_pairs(
+      prioritization_tables,
+      top_n_LR,
+      rank_per_group = FALSE
+    ) %>%
       dplyr::pull(id) %>%
       unique() ## prioritization-based subset of IDs! -- only those interesting for correlation analyses with target genes
   }
@@ -168,9 +188,13 @@ lr_target_prior_cor_inference <- function(receivers_oi, abundance_expression_inf
     .[. == 0] %>%
     names()
 
-  lr_prod_mat <- lr_prod_mat %>% .[rownames(.) %>%
-    generics::setdiff(row_remove) %>%
-    generics::intersect(receiver_lr_id_mapping$id), colnames(.) %>% generics::setdiff(col_remove)]
+  lr_prod_mat <- lr_prod_mat %>%
+    .[
+      rownames(.) %>%
+        generics::setdiff(row_remove) %>%
+        generics::intersect(receiver_lr_id_mapping$id),
+      colnames(.) %>% generics::setdiff(col_remove)
+    ]
   # lr_prod_mat = lr_prod_mat %>% .[rownames(.) %>% generics::setdiff(row_remove), colnames(.) %>% generics::setdiff(col_remove)]
   # lr_prod_mat = lr_prod_mat[receiver_lr_id_mapping$id, ]
   #
@@ -178,21 +202,27 @@ lr_target_prior_cor_inference <- function(receivers_oi, abundance_expression_inf
   lr_target_cor <- receivers_oi %>%
     lapply(function(receiver_oi) {
       # subset lr_prod_mat
-      lr_prod_mat_oi <- lr_prod_mat[receiver_lr_id_mapping %>%
-        dplyr::filter(receiver == receiver_oi) %>%
-        dplyr::pull(id) %>%
-        generics::intersect(rownames(lr_prod_mat)), ]
+      lr_prod_mat_oi <- lr_prod_mat[
+        receiver_lr_id_mapping %>%
+          dplyr::filter(receiver == receiver_oi) %>%
+          dplyr::pull(id) %>%
+          generics::intersect(rownames(lr_prod_mat)),
+      ]
       # print(dim(lr_prod_mat_oi))
       # get DE genes
       if (p_val_adj == FALSE) {
         targets_oi <- celltype_de %>%
           dplyr::filter(cluster_id == receiver_oi) %>%
-          dplyr::filter(p_val <= p_val_threshold & abs(logFC) >= logFC_threshold) %>%
+          dplyr::filter(
+            p_val <= p_val_threshold & abs(logFC) >= logFC_threshold
+          ) %>%
           dplyr::pull(gene)
       } else {
         targets_oi <- celltype_de %>%
           dplyr::filter(cluster_id == receiver_oi) %>%
-          dplyr::filter(p_adj <= p_val_threshold & abs(logFC) >= logFC_threshold) %>%
+          dplyr::filter(
+            p_adj <= p_val_threshold & abs(logFC) >= logFC_threshold
+          ) %>%
           dplyr::pull(gene)
       }
 
@@ -232,18 +262,28 @@ lr_target_prior_cor_inference <- function(receivers_oi, abundance_expression_inf
         .[. == 0] %>%
         names()
 
-      target_mat <- target_mat %>% .[rownames(.) %>%
-        generics::setdiff(row_remove) %>%
-        generics::intersect(targets_oi), colnames(.) %>% generics::setdiff(col_remove)]
+      target_mat <- target_mat %>%
+        .[
+          rownames(.) %>%
+            generics::setdiff(row_remove) %>%
+            generics::intersect(targets_oi),
+          colnames(.) %>% generics::setdiff(col_remove)
+        ]
       # target_mat = target_mat %>% .[rownames(.) %>% generics::setdiff(row_remove) %>% generics::intersect(targets_oi),]
       # target_mat = target_mat[targets_oi, ]
       # print(dim(target_mat))
 
       #  calculate correlation between LR and Target expression
       # make sure the dimensions of both matrices are the same
-      common_samples <- intersect(colnames(lr_prod_mat_oi), colnames(target_mat))
+      common_samples <- intersect(
+        colnames(lr_prod_mat_oi),
+        colnames(target_mat)
+      )
       if (length(common_samples) < 5) {
-        warning(paste0("not enough samples for a correlation analysis for the celltype ", receiver_oi))
+        warning(paste0(
+          "not enough samples for a correlation analysis for the celltype ",
+          receiver_oi
+        ))
         cor_df <- NULL
       } else {
         lr_prod_mat_oi <- lr_prod_mat_oi[, common_samples]
@@ -266,7 +306,11 @@ lr_target_prior_cor_inference <- function(receivers_oi, abundance_expression_inf
           tibble::as_tibble()
 
         # spearman
-        cor_mat <- Hmisc::rcorr(lr_prod_mat_oi %>% t(), target_mat %>% t(), type = "spearman")
+        cor_mat <- Hmisc::rcorr(
+          lr_prod_mat_oi %>% t(),
+          target_mat %>% t(),
+          type = "spearman"
+        )
 
         cor_df_spearman <- cor_mat$r %>%
           .[, rownames(target_mat)] %>%
@@ -303,7 +347,9 @@ lr_target_prior_cor_inference <- function(receivers_oi, abundance_expression_inf
     tibble::as_tibble()
   ligand_target_df <- ligand_target_df %>%
     dplyr::group_by(ligand) %>%
-    dplyr::mutate(rank_of_target = rank(desc(prior_score), ties.method = "min")) %>%
+    dplyr::mutate(
+      rank_of_target = rank(desc(prior_score), ties.method = "min")
+    ) %>%
     dplyr::group_by(target) %>%
     dplyr::mutate(rank_of_ligand = rank(desc(prior_score), ties.method = "min"))
 
@@ -318,9 +364,10 @@ lr_target_prior_cor_inference <- function(receivers_oi, abundance_expression_inf
       dplyr::ungroup()
   } else {
     cor_prior_df <- tibble()
-    print("For no celltypes, sufficient samples (>= 5) were available for a correlation analysis. lr_target_prior_cor, the output of this function, will be NULL. As a result, not all types of downstream visualizations can be created.")
+    print(
+      "For no celltypes, sufficient samples (>= 5) were available for a correlation analysis. lr_target_prior_cor, the output of this function, will be NULL. As a result, not all types of downstream visualizations can be created."
+    )
   }
-
 
   # combine prior and correlation information
   # cor_prior_df = cor_prior_df %>% mutate(scaled_cor_score = 0.5*(scaled_pearson + scaled_target_pearson ))
@@ -382,17 +429,32 @@ lr_target_prior_cor_inference <- function(receivers_oi, abundance_expression_inf
 #'
 #' @export
 #'
-infer_intercellular_regulatory_network <- function(lr_target_df, prioritized_tbl_oi) {
+infer_intercellular_regulatory_network <- function(
+  lr_target_df,
+  prioritized_tbl_oi
+) {
   requireNamespace("dplyr")
 
-  lr_target_df <- lr_target_df %>% dplyr::inner_join(prioritized_tbl_oi, by = c("sender", "receiver", "ligand", "receptor", "id", "group"))
+  lr_target_df <- lr_target_df %>%
+    dplyr::inner_join(
+      prioritized_tbl_oi,
+      by = c("sender", "receiver", "ligand", "receptor", "id", "group")
+    )
 
   source_df_lr <- prioritized_tbl_oi %>%
     dplyr::mutate(
       celltype_ligand = paste(sender, ligand, sep = "_"),
       celltype_receptor = paste(receiver, receptor, sep = "_")
     ) %>%
-    dplyr::select(group, sender, receiver, celltype_ligand, celltype_receptor, ligand, receptor)
+    dplyr::select(
+      group,
+      sender,
+      receiver,
+      celltype_ligand,
+      celltype_receptor,
+      ligand,
+      receptor
+    )
 
   source_df_lrt <- lr_target_df %>%
     dplyr::mutate(
@@ -400,19 +462,57 @@ infer_intercellular_regulatory_network <- function(lr_target_df, prioritized_tbl
       celltype_target = paste(receiver, target, sep = "_"),
       celltype_receptor = paste(receiver, receptor, sep = "_")
     ) %>%
-    dplyr::select(group, sender, receiver, celltype_ligand, celltype_receptor, celltype_target, ligand, target, receptor, direction_regulation)
+    dplyr::select(
+      group,
+      sender,
+      receiver,
+      celltype_ligand,
+      celltype_receptor,
+      celltype_target,
+      ligand,
+      target,
+      receptor,
+      direction_regulation
+    )
 
   lr_gr_network <- dplyr::bind_rows(
-    source_df_lrt %>% dplyr::filter(celltype_target %in% source_df_lr$celltype_ligand & !celltype_target %in% source_df_lr$celltype_receptor) %>% dplyr::mutate(type_target = "ligand"),
-    source_df_lrt %>% dplyr::filter(celltype_target %in% source_df_lr$celltype_receptor & !celltype_target %in% source_df_lr$celltype_ligand) %>% dplyr::mutate(type_target = "receptor")
-  ) %>% dplyr::bind_rows(
-    source_df_lrt %>% dplyr::filter(celltype_target %in% source_df_lr$celltype_ligand & celltype_target %in% source_df_lr$celltype_receptor) %>% dplyr::mutate(type_target = "ligand/receptor")
-  )
+    source_df_lrt %>%
+      dplyr::filter(
+        celltype_target %in%
+          source_df_lr$celltype_ligand &
+          !celltype_target %in% source_df_lr$celltype_receptor
+      ) %>%
+      dplyr::mutate(type_target = "ligand"),
+    source_df_lrt %>%
+      dplyr::filter(
+        celltype_target %in%
+          source_df_lr$celltype_receptor &
+          !celltype_target %in% source_df_lr$celltype_ligand
+      ) %>%
+      dplyr::mutate(type_target = "receptor")
+  ) %>%
+    dplyr::bind_rows(
+      source_df_lrt %>%
+        dplyr::filter(
+          celltype_target %in%
+            source_df_lr$celltype_ligand &
+            celltype_target %in% source_df_lr$celltype_receptor
+        ) %>%
+        dplyr::mutate(type_target = "ligand/receptor")
+    )
 
   ligand_target_network <- lr_gr_network %>%
-    dplyr::select(celltype_ligand, celltype_target, direction_regulation, group) %>%
+    dplyr::select(
+      celltype_ligand,
+      celltype_target,
+      direction_regulation,
+      group
+    ) %>%
     dplyr::distinct() %>%
-    dplyr::rename(sender_ligand = celltype_ligand, receiver_target = celltype_target) %>%
+    dplyr::rename(
+      sender_ligand = celltype_ligand,
+      receiver_target = celltype_target
+    ) %>%
     dplyr::mutate(type = "Ligand-Target", weight = 1)
 
   nodes <-
@@ -421,13 +521,33 @@ infer_intercellular_regulatory_network <- function(lr_target_df, prioritized_tbl
     dplyr::rename(celltype = sender, node = celltype_ligand, gene = ligand) %>%
     dplyr::mutate(type_gene = "ligand") %>%
     dplyr::bind_rows(
-      lr_gr_network %>% dplyr::select(celltype_receptor, receiver, receptor) %>% dplyr::rename(celltype = receiver, node = celltype_receptor, gene = receptor) %>% dplyr::mutate(type_gene = "receptor")
+      lr_gr_network %>%
+        dplyr::select(celltype_receptor, receiver, receptor) %>%
+        dplyr::rename(
+          celltype = receiver,
+          node = celltype_receptor,
+          gene = receptor
+        ) %>%
+        dplyr::mutate(type_gene = "receptor")
     ) %>%
     dplyr::bind_rows(
-      lr_gr_network %>% dplyr::select(celltype_target, receiver, target, type_target) %>% dplyr::rename(celltype = receiver, node = celltype_target, gene = target, type_gene = type_target)
+      lr_gr_network %>%
+        dplyr::select(celltype_target, receiver, target, type_target) %>%
+        dplyr::rename(
+          celltype = receiver,
+          node = celltype_target,
+          gene = target,
+          type_gene = type_target
+        )
     ) %>%
     dplyr::distinct() %>%
-    dplyr::filter(node %in% c(ligand_target_network$sender_ligand, ligand_target_network$receiver_target))
+    dplyr::filter(
+      node %in%
+        c(
+          ligand_target_network$sender_ligand,
+          ligand_target_network$receiver_target
+        )
+    )
 
   double_nodes <- nodes %>%
     dplyr::group_by(node) %>%
@@ -435,9 +555,17 @@ infer_intercellular_regulatory_network <- function(lr_target_df, prioritized_tbl
     dplyr::filter(n > 1) %>%
     pull(node)
   nodes <- dplyr::bind_rows(
-    nodes %>% dplyr::filter(node %in% double_nodes) %>% dplyr::mutate(type_gene = "ligand/receptor"),
+    nodes %>%
+      dplyr::filter(node %in% double_nodes) %>%
+      dplyr::mutate(type_gene = "ligand/receptor"),
     nodes %>% dplyr::filter(!node %in% double_nodes)
-  ) %>% dplyr::distinct()
+  ) %>%
+    dplyr::distinct()
 
-  return(list(links = ligand_target_network, nodes = nodes, prioritized_lr_interactions = lr_gr_network %>% distinct(group, sender, receiver, ligand, receptor)))
+  return(list(
+    links = ligand_target_network,
+    nodes = nodes,
+    prioritized_lr_interactions = lr_gr_network %>%
+      distinct(group, sender, receiver, ligand, receptor)
+  ))
 }

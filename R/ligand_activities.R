@@ -50,7 +50,17 @@
 #'
 #' @export
 #'
-get_ligand_activities_targets_DEgenes <- function(receiver_de, receivers_oi, ligand_target_matrix, logFC_threshold = 0.50, p_val_threshold = 0.05, p_val_adj = FALSE, top_n_target = 250, verbose = FALSE, n.cores = 1) {
+get_ligand_activities_targets_DEgenes <- function(
+  receiver_de,
+  receivers_oi,
+  ligand_target_matrix,
+  logFC_threshold = 0.50,
+  p_val_threshold = 0.05,
+  p_val_adj = FALSE,
+  top_n_target = 250,
+  verbose = FALSE,
+  n.cores = 1
+) {
   requireNamespace("dplyr")
   receivers_oi <- receiver_de$cluster_id %>%
     unique() %>%
@@ -61,7 +71,20 @@ get_ligand_activities_targets_DEgenes <- function(receiver_de, receivers_oi, lig
   if (n.cores_oi > 1) {
     if (Sys.info()[["sysname"]] == "Windows") {
       clust <- parallel::makeCluster(n.cores_oi)
-      parallel::clusterExport(clust, c("receivers_oi", "receiver_de", "ligand_target_matrix", "verbose", "logFC_threshold", "p_val_threshold", "p_val_adj", "top_n_target"), envir = environment())
+      parallel::clusterExport(
+        clust,
+        c(
+          "receivers_oi",
+          "receiver_de",
+          "ligand_target_matrix",
+          "verbose",
+          "logFC_threshold",
+          "p_val_threshold",
+          "p_val_adj",
+          "top_n_target"
+        ),
+        envir = environment()
+      )
       parallel::clusterEvalQ(clust, library(dplyr))
       parallel::clusterEvalQ(clust, library(nichenetr))
       parallel::clusterEvalQ(clust, library(muscat))
@@ -73,7 +96,18 @@ get_ligand_activities_targets_DEgenes <- function(receiver_de, receivers_oi, lig
     }
 
     ligand_activities_targets_geneset_ALL <- parallel::parLapply(
-      clust, receivers_oi, function(receiver_oi, receiver_de, verbose, ligand_target_matrix, logFC_threshold, p_val_threshold, p_val_adj, top_n_target) {
+      clust,
+      receivers_oi,
+      function(
+        receiver_oi,
+        receiver_de,
+        verbose,
+        ligand_target_matrix,
+        logFC_threshold,
+        p_val_threshold,
+        p_val_adj,
+        top_n_target
+      ) {
         requireNamespace("dplyr")
 
         if (verbose == TRUE) {
@@ -90,7 +124,9 @@ get_ligand_activities_targets_DEgenes <- function(receiver_de, receivers_oi, lig
         background_expressed_genes <- de_output_tidy$gene %>%
           unique() %>%
           dplyr::intersect(rownames(ligand_target_matrix))
-        ligand_target_matrix <- ligand_target_matrix[rownames(ligand_target_matrix) %in% background_expressed_genes, ]
+        ligand_target_matrix <- ligand_target_matrix[
+          rownames(ligand_target_matrix) %in% background_expressed_genes,
+        ]
         ligands <- colnames(ligand_target_matrix)
         browser()
         geneset_vs_ligand_activities <- list()
@@ -110,7 +146,9 @@ get_ligand_activities_targets_DEgenes <- function(receiver_de, receivers_oi, lig
 
             de_tbl_geneset_down <- de_output_tidy %>%
               dplyr::filter(contrast == contrast_oi) %>%
-              dplyr::filter(logFC <= -1 * logFC_threshold & p_adj <= p_val_threshold)
+              dplyr::filter(
+                logFC <= -1 * logFC_threshold & p_adj <= p_val_threshold
+              )
             geneset_oi_down <- de_tbl_geneset_down %>%
               dplyr::pull(gene) %>%
               unique() %>%
@@ -126,7 +164,9 @@ get_ligand_activities_targets_DEgenes <- function(receiver_de, receivers_oi, lig
 
             de_tbl_geneset_down <- de_output_tidy %>%
               dplyr::filter(contrast == contrast_oi) %>%
-              dplyr::filter(logFC <= -1 * logFC_threshold & p_val <= p_val_threshold)
+              dplyr::filter(
+                logFC <= -1 * logFC_threshold & p_val <= p_val_threshold
+              )
             geneset_oi_down <- de_tbl_geneset_down %>%
               dplyr::pull(gene) %>%
               unique() %>%
@@ -146,10 +186,19 @@ get_ligand_activities_targets_DEgenes <- function(receiver_de, receivers_oi, lig
 
             geneset_id <- geneset_oi %>% paste(collapse = ".")
             if (geneset_id %in% names(geneset_vs_ligand_activities)) {
-              ligand_activities <- geneset_vs_ligand_activities[[geneset_id]]$ligand_activities_df
+              ligand_activities <- geneset_vs_ligand_activities[[
+                geneset_id
+              ]]$ligand_activities_df
             } else {
-              ligand_activities <- nichenetr::predict_ligand_activities(geneset = geneset_oi, background_expressed_genes = background_expressed_genes, ligand_target_matrix = ligand_target_matrix, potential_ligands = ligands)
-              geneset_vs_ligand_activities[[geneset_id]] <- list(ligand_activities_df = ligand_activities)
+              ligand_activities <- nichenetr::predict_ligand_activities(
+                geneset = geneset_oi,
+                background_expressed_genes = background_expressed_genes,
+                ligand_target_matrix = ligand_target_matrix,
+                potential_ligands = ligands
+              )
+              geneset_vs_ligand_activities[[geneset_id]] <- list(
+                ligand_activities_df = ligand_activities
+              )
             }
 
             ligand_activities <- ligand_activities %>%
@@ -160,18 +209,43 @@ get_ligand_activities_targets_DEgenes <- function(receiver_de, receivers_oi, lig
 
             ligand_target_df <- ligand_activities$ligand %>%
               unique() %>%
-              lapply(nichenetr::get_weighted_ligand_target_links, geneset_oi, ligand_target_matrix, top_n_target) %>%
+              lapply(
+                nichenetr::get_weighted_ligand_target_links,
+                geneset_oi,
+                ligand_target_matrix,
+                top_n_target
+              ) %>%
               dplyr::bind_rows() %>%
               dplyr::mutate(contrast = contrast_oi) %>%
               dplyr::rename(ligand_target_weight = weight)
             ligand_activities <- ligand_activities %>%
               dplyr::inner_join(ligand_target_df) %>%
-              dplyr::mutate(receiver = receiver_oi, direction_regulation = "up") %>%
+              dplyr::mutate(
+                receiver = receiver_oi,
+                direction_regulation = "up"
+              ) %>%
               dplyr::group_by(receiver, contrast) %>%
-              dplyr::mutate(activity_scaled = nichenetr::scaling_zscore(activity))
+              dplyr::mutate(
+                activity_scaled = nichenetr::scaling_zscore(activity)
+              )
           } else {
-            warning(paste0("For Celltype ", receiver_oi, " in condition ", contrast_oi, " there seem to be no upregulated DE genes - so ligand activities will be NA. Please check the DE output."))
-            ligand_activities <- tibble(ligand = ligands, activity = NA, contrast = contrast_oi, target = NA, direction_regulation = "up", ligand_target_weight = NA, receiver = receiver_oi, activity_scaled = NA)
+            warning(paste0(
+              "For Celltype ",
+              receiver_oi,
+              " in condition ",
+              contrast_oi,
+              " there seem to be no upregulated DE genes - so ligand activities will be NA. Please check the DE output."
+            ))
+            ligand_activities <- tibble(
+              ligand = ligands,
+              activity = NA,
+              contrast = contrast_oi,
+              target = NA,
+              direction_regulation = "up",
+              ligand_target_weight = NA,
+              receiver = receiver_oi,
+              activity_scaled = NA
+            )
           }
           if (length(geneset_oi_down) > 0) {
             if (verbose == TRUE) {
@@ -181,10 +255,19 @@ get_ligand_activities_targets_DEgenes <- function(receiver_de, receivers_oi, lig
 
             geneset_id <- geneset_oi_down %>% paste(collapse = ".")
             if (geneset_id %in% names(geneset_vs_ligand_activities)) {
-              ligand_activities_down <- geneset_vs_ligand_activities[[geneset_id]]$ligand_activities_df
+              ligand_activities_down <- geneset_vs_ligand_activities[[
+                geneset_id
+              ]]$ligand_activities_df
             } else {
-              ligand_activities_down <- nichenetr::predict_ligand_activities(geneset = geneset_oi_down, background_expressed_genes = background_expressed_genes, ligand_target_matrix = ligand_target_matrix, potential_ligands = ligands)
-              geneset_vs_ligand_activities[[geneset_id]] <- list(ligand_activities_df = ligand_activities_down)
+              ligand_activities_down <- nichenetr::predict_ligand_activities(
+                geneset = geneset_oi_down,
+                background_expressed_genes = background_expressed_genes,
+                ligand_target_matrix = ligand_target_matrix,
+                potential_ligands = ligands
+              )
+              geneset_vs_ligand_activities[[geneset_id]] <- list(
+                ligand_activities_df = ligand_activities_down
+              )
             }
 
             ligand_activities_down <- ligand_activities_down %>%
@@ -195,26 +278,55 @@ get_ligand_activities_targets_DEgenes <- function(receiver_de, receivers_oi, lig
 
             ligand_target_df <- ligand_activities_down$ligand %>%
               unique() %>%
-              lapply(nichenetr::get_weighted_ligand_target_links, geneset_oi_down, ligand_target_matrix, top_n_target) %>%
+              lapply(
+                nichenetr::get_weighted_ligand_target_links,
+                geneset_oi_down,
+                ligand_target_matrix,
+                top_n_target
+              ) %>%
               dplyr::bind_rows() %>%
               dplyr::mutate(contrast = contrast_oi) %>%
               dplyr::rename(ligand_target_weight = weight)
             ligand_activities_down <- ligand_activities_down %>%
               dplyr::inner_join(ligand_target_df) %>%
-              dplyr::mutate(receiver = receiver_oi, direction_regulation = "down") %>%
+              dplyr::mutate(
+                receiver = receiver_oi,
+                direction_regulation = "down"
+              ) %>%
               dplyr::group_by(receiver, contrast) %>%
-              dplyr::mutate(activity_scaled = nichenetr::scaling_zscore(activity))
+              dplyr::mutate(
+                activity_scaled = nichenetr::scaling_zscore(activity)
+              )
           } else {
-            warning(paste0("For Celltype ", receiver_oi, " in condition ", contrast_oi, " there seem to be no downregulated DE genes - so ligand activities will be NA. Please check the DE output."))
-            ligand_activities_down <- tibble(ligand = ligands, activity = NA, contrast = contrast_oi, target = NA, direction_regulation = "down", ligand_target_weight = NA, receiver = receiver_oi, activity_scaled = NA)
+            warning(paste0(
+              "For Celltype ",
+              receiver_oi,
+              " in condition ",
+              contrast_oi,
+              " there seem to be no downregulated DE genes - so ligand activities will be NA. Please check the DE output."
+            ))
+            ligand_activities_down <- tibble(
+              ligand = ligands,
+              activity = NA,
+              contrast = contrast_oi,
+              target = NA,
+              direction_regulation = "down",
+              ligand_target_weight = NA,
+              receiver = receiver_oi,
+              activity_scaled = NA
+            )
           }
-          ligand_activities <- ligand_activities %>% bind_rows(ligand_activities_down)
+          ligand_activities <- ligand_activities %>%
+            bind_rows(ligand_activities_down)
           de_genes_df <- de_tbl_geneset %>%
             bind_rows(de_tbl_geneset_down) %>%
             dplyr::mutate(contrast = contrast_oi) %>%
             dplyr::rename(receiver = cluster_id)
 
-          ligand_activities_targets_geneset[[i]] <- list(ligand_activities = ligand_activities, de_genes_df = de_genes_df)
+          ligand_activities_targets_geneset[[i]] <- list(
+            ligand_activities = ligand_activities,
+            de_genes_df = de_genes_df
+          )
         }
 
         ligand_activities <- ligand_activities_targets_geneset %>%
@@ -224,172 +336,285 @@ get_ligand_activities_targets_DEgenes <- function(receiver_de, receivers_oi, lig
           purrr::map("de_genes_df") %>%
           dplyr::bind_rows()
 
-        return(list(ligand_activities = ligand_activities, de_genes_df = de_genes_df))
+        return(list(
+          ligand_activities = ligand_activities,
+          de_genes_df = de_genes_df
+        ))
       },
-      receiver_de, verbose, ligand_target_matrix, logFC_threshold, p_val_threshold, p_val_adj, top_n_target
+      receiver_de,
+      verbose,
+      ligand_target_matrix,
+      logFC_threshold,
+      p_val_threshold,
+      p_val_adj,
+      top_n_target
     )
 
     parallel::stopCluster(clust)
   } else {
-    ligand_activities_targets_geneset_ALL <- lapply(receivers_oi, function(receiver_oi, receiver_de, verbose, ligand_target_matrix, logFC_threshold, p_val_threshold, p_val_adj, top_n_target) {
-      requireNamespace("dplyr")
-
-      if (verbose == TRUE) {
-        print("receiver_oi:")
-        print(receiver_oi %>% as.character())
-      }
-
-      browser()
-      de_output_tidy <- receiver_de
-      de_output_tidy <- de_output_tidy %>%
-        dplyr::filter(cluster_id == receiver_oi) %>%
-        dplyr::select(gene, cluster_id, logFC, p_val, p_adj, contrast)
-      background_expressed_genes <- de_output_tidy$gene %>%
-        unique() %>%
-        dplyr::intersect(rownames(ligand_target_matrix))
-      ligand_target_matrix <- ligand_target_matrix[rownames(ligand_target_matrix) %in% background_expressed_genes, ]
-      ligands <- colnames(ligand_target_matrix)
-
-      geneset_vs_ligand_activities <- list()
-      ligand_activities_targets_geneset <- list()
-      for (i in seq(length(de_output_tidy$contrast %>% unique()))) {
-        contrast_oi <- de_output_tidy$contrast %>%
-          unique() %>%
-          .[i]
-        if (p_val_adj == TRUE) {
-          de_tbl_geneset <- de_output_tidy %>%
-            dplyr::filter(contrast == contrast_oi) %>%
-            dplyr::filter(logFC >= logFC_threshold & p_adj <= p_val_threshold)
-          geneset_oi <- de_tbl_geneset %>%
-            dplyr::pull(gene) %>%
-            unique() %>%
-            dplyr::intersect(rownames(ligand_target_matrix))
-
-          de_tbl_geneset_down <- de_output_tidy %>%
-            dplyr::filter(contrast == contrast_oi) %>%
-            dplyr::filter(logFC <= -1 * logFC_threshold & p_adj <= p_val_threshold)
-          geneset_oi_down <- de_tbl_geneset_down %>%
-            dplyr::pull(gene) %>%
-            unique() %>%
-            dplyr::intersect(rownames(ligand_target_matrix))
-        } else {
-          de_tbl_geneset <- de_output_tidy %>%
-            dplyr::filter(contrast == contrast_oi) %>%
-            dplyr::filter(logFC >= logFC_threshold & p_val <= p_val_threshold)
-          geneset_oi <- de_tbl_geneset %>%
-            dplyr::pull(gene) %>%
-            unique() %>%
-            dplyr::intersect(rownames(ligand_target_matrix))
-
-          de_tbl_geneset_down <- de_output_tidy %>%
-            dplyr::filter(contrast == contrast_oi) %>%
-            dplyr::filter(logFC <= -1 * logFC_threshold & p_val <= p_val_threshold)
-          geneset_oi_down <- de_tbl_geneset_down %>%
-            dplyr::pull(gene) %>%
-            unique() %>%
-            dplyr::intersect(rownames(ligand_target_matrix))
-        }
+    ligand_activities_targets_geneset_ALL <- lapply(
+      receivers_oi,
+      function(
+        receiver_oi,
+        receiver_de,
+        verbose,
+        ligand_target_matrix,
+        logFC_threshold,
+        p_val_threshold,
+        p_val_adj,
+        top_n_target
+      ) {
+        requireNamespace("dplyr")
 
         if (verbose == TRUE) {
-          print("contrast_oi:")
-          print(contrast_oi)
+          print("receiver_oi:")
+          print(receiver_oi %>% as.character())
         }
 
-        if (length(geneset_oi) > 0) {
-          if (verbose == TRUE) {
-            print("Number of upregulated DE genes (gene set of interest): ")
-            print(length(geneset_oi))
-          }
+        browser()
+        de_output_tidy <- receiver_de
+        de_output_tidy <- de_output_tidy %>%
+          dplyr::filter(cluster_id == receiver_oi) %>%
+          dplyr::select(gene, cluster_id, logFC, p_val, p_adj, contrast)
+        background_expressed_genes <- de_output_tidy$gene %>%
+          unique() %>%
+          dplyr::intersect(rownames(ligand_target_matrix))
+        ligand_target_matrix <- ligand_target_matrix[
+          rownames(ligand_target_matrix) %in% background_expressed_genes,
+        ]
+        ligands <- colnames(ligand_target_matrix)
 
-          geneset_id <- geneset_oi %>% paste(collapse = ".")
-          if (geneset_id %in% names(geneset_vs_ligand_activities)) {
-            ligand_activities <- geneset_vs_ligand_activities[[geneset_id]]$ligand_activities_df
-          } else {
-            ligand_activities <- nichenetr::predict_ligand_activities(geneset = geneset_oi, background_expressed_genes = background_expressed_genes, ligand_target_matrix = ligand_target_matrix, potential_ligands = ligands)
-            geneset_vs_ligand_activities[[geneset_id]] <- list(ligand_activities_df = ligand_activities)
-          }
-
-          ligand_activities <- ligand_activities %>%
-            dplyr::mutate(contrast = contrast_oi) %>%
-            tidyr::drop_na() %>%
-            dplyr::rename(ligand = test_ligand, activity = aupr_corrected) %>%
-            dplyr::select(-pearson, -auroc, -aupr)
-
-          ligand_target_df <- ligand_activities$ligand %>%
+        geneset_vs_ligand_activities <- list()
+        ligand_activities_targets_geneset <- list()
+        for (i in seq(length(de_output_tidy$contrast %>% unique()))) {
+          contrast_oi <- de_output_tidy$contrast %>%
             unique() %>%
-            lapply(nichenetr::get_weighted_ligand_target_links, geneset_oi, ligand_target_matrix, top_n_target) %>%
-            dplyr::bind_rows() %>%
-            dplyr::mutate(contrast = contrast_oi) %>%
-            dplyr::rename(ligand_target_weight = weight)
-          ligand_activities <- ligand_activities %>%
-            dplyr::inner_join(ligand_target_df) %>%
-            dplyr::mutate(receiver = receiver_oi, direction_regulation = "up") %>%
-            dplyr::group_by(receiver, contrast) %>%
-            dplyr::mutate(activity_scaled = nichenetr::scaling_zscore(activity))
-        } else {
-          warning(paste0("For Celltype ", receiver_oi, " in condition ", contrast_oi, " there seem to be no upregulated DE genes - so ligand activities will be NA. Please check the DE output."))
-          ligand_activities <- tibble(ligand = ligands, activity = NA, contrast = contrast_oi, target = NA, direction_regulation = "up", ligand_target_weight = NA, receiver = receiver_oi, activity_scaled = NA)
-        }
-        if (length(geneset_oi_down) > 0) {
-          if (verbose == TRUE) {
-            print("Number of downregulated DE genes (gene set of interest): ")
-            print(length(geneset_oi_down))
-          }
+            .[i]
+          if (p_val_adj == TRUE) {
+            de_tbl_geneset <- de_output_tidy %>%
+              dplyr::filter(contrast == contrast_oi) %>%
+              dplyr::filter(logFC >= logFC_threshold & p_adj <= p_val_threshold)
+            geneset_oi <- de_tbl_geneset %>%
+              dplyr::pull(gene) %>%
+              unique() %>%
+              dplyr::intersect(rownames(ligand_target_matrix))
 
-          geneset_id <- geneset_oi_down %>% paste(collapse = ".")
-          if (geneset_id %in% names(geneset_vs_ligand_activities)) {
-            ligand_activities_down <- geneset_vs_ligand_activities[[geneset_id]]$ligand_activities_df
+            de_tbl_geneset_down <- de_output_tidy %>%
+              dplyr::filter(contrast == contrast_oi) %>%
+              dplyr::filter(
+                logFC <= -1 * logFC_threshold & p_adj <= p_val_threshold
+              )
+            geneset_oi_down <- de_tbl_geneset_down %>%
+              dplyr::pull(gene) %>%
+              unique() %>%
+              dplyr::intersect(rownames(ligand_target_matrix))
           } else {
-            ligand_activities_down <- nichenetr::predict_ligand_activities(geneset = geneset_oi_down, background_expressed_genes = background_expressed_genes, ligand_target_matrix = ligand_target_matrix, potential_ligands = ligands)
-            geneset_vs_ligand_activities[[geneset_id]] <- list(ligand_activities_df = ligand_activities_down)
+            de_tbl_geneset <- de_output_tidy %>%
+              dplyr::filter(contrast == contrast_oi) %>%
+              dplyr::filter(logFC >= logFC_threshold & p_val <= p_val_threshold)
+            geneset_oi <- de_tbl_geneset %>%
+              dplyr::pull(gene) %>%
+              unique() %>%
+              dplyr::intersect(rownames(ligand_target_matrix))
+
+            de_tbl_geneset_down <- de_output_tidy %>%
+              dplyr::filter(contrast == contrast_oi) %>%
+              dplyr::filter(
+                logFC <= -1 * logFC_threshold & p_val <= p_val_threshold
+              )
+            geneset_oi_down <- de_tbl_geneset_down %>%
+              dplyr::pull(gene) %>%
+              unique() %>%
+              dplyr::intersect(rownames(ligand_target_matrix))
           }
 
-          ligand_activities_down <- ligand_activities_down %>%
-            dplyr::mutate(contrast = contrast_oi) %>%
-            tidyr::drop_na() %>%
-            dplyr::rename(ligand = test_ligand, activity = aupr_corrected) %>%
-            dplyr::select(-pearson, -auroc, -aupr)
+          if (verbose == TRUE) {
+            print("contrast_oi:")
+            print(contrast_oi)
+          }
 
-          ligand_target_df <- ligand_activities_down$ligand %>%
-            unique() %>%
-            lapply(nichenetr::get_weighted_ligand_target_links, geneset_oi_down, ligand_target_matrix, top_n_target) %>%
-            dplyr::bind_rows() %>%
+          if (length(geneset_oi) > 0) {
+            if (verbose == TRUE) {
+              print("Number of upregulated DE genes (gene set of interest): ")
+              print(length(geneset_oi))
+            }
+
+            geneset_id <- geneset_oi %>% paste(collapse = ".")
+            if (geneset_id %in% names(geneset_vs_ligand_activities)) {
+              ligand_activities <- geneset_vs_ligand_activities[[
+                geneset_id
+              ]]$ligand_activities_df
+            } else {
+              ligand_activities <- nichenetr::predict_ligand_activities(
+                geneset = geneset_oi,
+                background_expressed_genes = background_expressed_genes,
+                ligand_target_matrix = ligand_target_matrix,
+                potential_ligands = ligands
+              )
+              geneset_vs_ligand_activities[[geneset_id]] <- list(
+                ligand_activities_df = ligand_activities
+              )
+            }
+
+            ligand_activities <- ligand_activities %>%
+              dplyr::mutate(contrast = contrast_oi) %>%
+              tidyr::drop_na() %>%
+              dplyr::rename(ligand = test_ligand, activity = aupr_corrected) %>%
+              dplyr::select(-pearson, -auroc, -aupr)
+
+            ligand_target_df <- ligand_activities$ligand %>%
+              unique() %>%
+              lapply(
+                nichenetr::get_weighted_ligand_target_links,
+                geneset_oi,
+                ligand_target_matrix,
+                top_n_target
+              ) %>%
+              dplyr::bind_rows() %>%
+              dplyr::mutate(contrast = contrast_oi) %>%
+              dplyr::rename(ligand_target_weight = weight)
+            ligand_activities <- ligand_activities %>%
+              dplyr::inner_join(ligand_target_df) %>%
+              dplyr::mutate(
+                receiver = receiver_oi,
+                direction_regulation = "up"
+              ) %>%
+              dplyr::group_by(receiver, contrast) %>%
+              dplyr::mutate(
+                activity_scaled = nichenetr::scaling_zscore(activity)
+              )
+          } else {
+            warning(paste0(
+              "For Celltype ",
+              receiver_oi,
+              " in condition ",
+              contrast_oi,
+              " there seem to be no upregulated DE genes - so ligand activities will be NA. Please check the DE output."
+            ))
+            ligand_activities <- tibble(
+              ligand = ligands,
+              activity = NA,
+              contrast = contrast_oi,
+              target = NA,
+              direction_regulation = "up",
+              ligand_target_weight = NA,
+              receiver = receiver_oi,
+              activity_scaled = NA
+            )
+          }
+          if (length(geneset_oi_down) > 0) {
+            if (verbose == TRUE) {
+              print("Number of downregulated DE genes (gene set of interest): ")
+              print(length(geneset_oi_down))
+            }
+
+            geneset_id <- geneset_oi_down %>% paste(collapse = ".")
+            if (geneset_id %in% names(geneset_vs_ligand_activities)) {
+              ligand_activities_down <- geneset_vs_ligand_activities[[
+                geneset_id
+              ]]$ligand_activities_df
+            } else {
+              ligand_activities_down <- nichenetr::predict_ligand_activities(
+                geneset = geneset_oi_down,
+                background_expressed_genes = background_expressed_genes,
+                ligand_target_matrix = ligand_target_matrix,
+                potential_ligands = ligands
+              )
+              geneset_vs_ligand_activities[[geneset_id]] <- list(
+                ligand_activities_df = ligand_activities_down
+              )
+            }
+
+            ligand_activities_down <- ligand_activities_down %>%
+              dplyr::mutate(contrast = contrast_oi) %>%
+              tidyr::drop_na() %>%
+              dplyr::rename(ligand = test_ligand, activity = aupr_corrected) %>%
+              dplyr::select(-pearson, -auroc, -aupr)
+
+            ligand_target_df <- ligand_activities_down$ligand %>%
+              unique() %>%
+              lapply(
+                nichenetr::get_weighted_ligand_target_links,
+                geneset_oi_down,
+                ligand_target_matrix,
+                top_n_target
+              ) %>%
+              dplyr::bind_rows() %>%
+              dplyr::mutate(contrast = contrast_oi) %>%
+              dplyr::rename(ligand_target_weight = weight)
+            ligand_activities_down <- ligand_activities_down %>%
+              dplyr::inner_join(ligand_target_df) %>%
+              dplyr::mutate(
+                receiver = receiver_oi,
+                direction_regulation = "down"
+              ) %>%
+              dplyr::group_by(receiver, contrast) %>%
+              dplyr::mutate(
+                activity_scaled = nichenetr::scaling_zscore(activity)
+              )
+          } else {
+            warning(paste0(
+              "For Celltype ",
+              receiver_oi,
+              " in condition ",
+              contrast_oi,
+              " there seem to be no downregulated DE genes - so ligand activities will be NA. Please check the DE output."
+            ))
+            ligand_activities_down <- tibble(
+              ligand = ligands,
+              activity = NA,
+              contrast = contrast_oi,
+              target = NA,
+              direction_regulation = "down",
+              ligand_target_weight = NA,
+              receiver = receiver_oi,
+              activity_scaled = NA
+            )
+          }
+          ligand_activities <- ligand_activities %>%
+            bind_rows(ligand_activities_down)
+          de_genes_df <- de_tbl_geneset %>%
+            bind_rows(de_tbl_geneset_down) %>%
             dplyr::mutate(contrast = contrast_oi) %>%
-            dplyr::rename(ligand_target_weight = weight)
-          ligand_activities_down <- ligand_activities_down %>%
-            dplyr::inner_join(ligand_target_df) %>%
-            dplyr::mutate(receiver = receiver_oi, direction_regulation = "down") %>%
-            dplyr::group_by(receiver, contrast) %>%
-            dplyr::mutate(activity_scaled = nichenetr::scaling_zscore(activity))
-        } else {
-          warning(paste0("For Celltype ", receiver_oi, " in condition ", contrast_oi, " there seem to be no downregulated DE genes - so ligand activities will be NA. Please check the DE output."))
-          ligand_activities_down <- tibble(ligand = ligands, activity = NA, contrast = contrast_oi, target = NA, direction_regulation = "down", ligand_target_weight = NA, receiver = receiver_oi, activity_scaled = NA)
+            dplyr::rename(receiver = cluster_id)
+
+          ligand_activities_targets_geneset[[i]] <- list(
+            ligand_activities = ligand_activities,
+            de_genes_df = de_genes_df
+          )
         }
-        ligand_activities <- ligand_activities %>% bind_rows(ligand_activities_down)
-        de_genes_df <- de_tbl_geneset %>%
-          bind_rows(de_tbl_geneset_down) %>%
-          dplyr::mutate(contrast = contrast_oi) %>%
-          dplyr::rename(receiver = cluster_id)
 
-        ligand_activities_targets_geneset[[i]] <- list(ligand_activities = ligand_activities, de_genes_df = de_genes_df)
-      }
+        ligand_activities <- ligand_activities_targets_geneset %>%
+          purrr::map("ligand_activities") %>%
+          dplyr::bind_rows()
+        de_genes_df <- ligand_activities_targets_geneset %>%
+          purrr::map("de_genes_df") %>%
+          dplyr::bind_rows()
 
-      ligand_activities <- ligand_activities_targets_geneset %>%
-        purrr::map("ligand_activities") %>%
-        dplyr::bind_rows()
-      de_genes_df <- ligand_activities_targets_geneset %>%
-        purrr::map("de_genes_df") %>%
-        dplyr::bind_rows()
-
-      return(list(ligand_activities = ligand_activities, de_genes_df = de_genes_df))
-    }, receiver_de, verbose, ligand_target_matrix, logFC_threshold, p_val_threshold, p_val_adj, top_n_target)
+        return(list(
+          ligand_activities = ligand_activities,
+          de_genes_df = de_genes_df
+        ))
+      },
+      receiver_de,
+      verbose,
+      ligand_target_matrix,
+      logFC_threshold,
+      p_val_threshold,
+      p_val_adj,
+      top_n_target
+    )
   }
-
 
   ligand_activities <- ligand_activities_targets_geneset_ALL %>%
     purrr::map("ligand_activities") %>%
     dplyr::bind_rows() %>%
-    dplyr::mutate(direction_regulation = factor(direction_regulation, levels = c("up", "down")))
+    dplyr::mutate(
+      direction_regulation = factor(
+        direction_regulation,
+        levels = c("up", "down")
+      )
+    )
   de_genes_df <- ligand_activities_targets_geneset_ALL %>%
     purrr::map("de_genes_df") %>%
     dplyr::bind_rows()
@@ -448,7 +673,17 @@ get_ligand_activities_targets_DEgenes <- function(receiver_de, receivers_oi, lig
 #'
 #' @export
 #'
-get_ligand_activities_targets_DEgenes_beta <- function(receiver_de, receivers_oi, ligand_target_matrix, logFC_threshold = 0.50, p_val_threshold = 0.05, p_val_adj = FALSE, top_n_target = 250, verbose = FALSE, n.cores = 1) {
+get_ligand_activities_targets_DEgenes_beta <- function(
+  receiver_de,
+  receivers_oi,
+  ligand_target_matrix,
+  logFC_threshold = 0.50,
+  p_val_threshold = 0.05,
+  p_val_adj = FALSE,
+  top_n_target = 250,
+  verbose = FALSE,
+  n.cores = 1
+) {
   requireNamespace("dplyr")
   requireNamespace("foreach")
   requireNamespace("doParallel")
@@ -464,320 +699,509 @@ get_ligand_activities_targets_DEgenes_beta <- function(receiver_de, receivers_oi
     clust <- parallel::makeCluster(n.cores_oi)
     doParallel::registerDoParallel(clust)
 
-    ligand_activities_targets_geneset_ALL <- foreach(i = 1:length(receivers_oi), .packages = c("dplyr", "nichenetr", "muscat", "tidyr", "tibble", "purrr")) %dopar% {
-      receiver_oi <- receivers_oi[i]
-
-      if (verbose == TRUE) {
-        print("receiver_oi:")
-        print(receiver_oi %>% as.character())
-      }
-
-      de_output_tidy <- receiver_de
-
-      de_output_tidy <- de_output_tidy %>%
-        dplyr::filter(cluster_id == receiver_oi) %>%
-        dplyr::select(gene, cluster_id, logFC, p_val, p_adj, contrast)
-
-      background_expressed_genes <- de_output_tidy$gene %>%
-        unique() %>%
-        dplyr::intersect(rownames(ligand_target_matrix))
-      ligand_target_matrix <- ligand_target_matrix[rownames(ligand_target_matrix) %in% background_expressed_genes, ]
-      ligands <- colnames(ligand_target_matrix)
-
-      geneset_vs_ligand_activities <- list()
-      ligand_activities_targets_geneset <- list()
-      for (i in seq(length(de_output_tidy$contrast %>% unique()))) {
-        contrast_oi <- de_output_tidy$contrast %>%
-          unique() %>%
-          .[i]
-        if (p_val_adj == TRUE) {
-          de_tbl_geneset <- de_output_tidy %>%
-            dplyr::filter(contrast == contrast_oi) %>%
-            dplyr::filter(logFC >= logFC_threshold & p_adj <= p_val_threshold)
-          geneset_oi <- de_tbl_geneset %>%
-            dplyr::pull(gene) %>%
-            unique() %>%
-            dplyr::intersect(rownames(ligand_target_matrix))
-
-          de_tbl_geneset_down <- de_output_tidy %>%
-            dplyr::filter(contrast == contrast_oi) %>%
-            dplyr::filter(logFC <= -1 * logFC_threshold & p_adj <= p_val_threshold)
-          geneset_oi_down <- de_tbl_geneset_down %>%
-            dplyr::pull(gene) %>%
-            unique() %>%
-            dplyr::intersect(rownames(ligand_target_matrix))
-        } else {
-          de_tbl_geneset <- de_output_tidy %>%
-            dplyr::filter(contrast == contrast_oi) %>%
-            dplyr::filter(logFC >= logFC_threshold & p_val <= p_val_threshold)
-          geneset_oi <- de_tbl_geneset %>%
-            dplyr::pull(gene) %>%
-            unique() %>%
-            dplyr::intersect(rownames(ligand_target_matrix))
-
-          de_tbl_geneset_down <- de_output_tidy %>%
-            dplyr::filter(contrast == contrast_oi) %>%
-            dplyr::filter(logFC <= -1 * logFC_threshold & p_val <= p_val_threshold)
-          geneset_oi_down <- de_tbl_geneset_down %>%
-            dplyr::pull(gene) %>%
-            unique() %>%
-            dplyr::intersect(rownames(ligand_target_matrix))
-        }
+    ligand_activities_targets_geneset_ALL <- foreach(
+      i = 1:length(receivers_oi),
+      .packages = c("dplyr", "nichenetr", "muscat", "tidyr", "tibble", "purrr")
+    ) %dopar%
+      {
+        receiver_oi <- receivers_oi[i]
 
         if (verbose == TRUE) {
-          print("contrast_oi:")
-          print(contrast_oi)
+          print("receiver_oi:")
+          print(receiver_oi %>% as.character())
         }
 
-        if (length(geneset_oi) > 0) {
-          if (verbose == TRUE) {
-            print("Number of upregulated DE genes (gene set of interest): ")
-            print(length(geneset_oi))
-          }
+        de_output_tidy <- receiver_de
 
-          geneset_id <- geneset_oi %>% paste(collapse = ".")
-          if (geneset_id %in% names(geneset_vs_ligand_activities)) {
-            ligand_activities <- geneset_vs_ligand_activities[[geneset_id]]$ligand_activities_df
-          } else {
-            ligand_activities <- nichenetr::predict_ligand_activities(geneset = geneset_oi, background_expressed_genes = background_expressed_genes, ligand_target_matrix = ligand_target_matrix, potential_ligands = ligands)
-            geneset_vs_ligand_activities[[geneset_id]] <- list(ligand_activities_df = ligand_activities)
-          }
+        de_output_tidy <- de_output_tidy %>%
+          dplyr::filter(cluster_id == receiver_oi) %>%
+          dplyr::select(gene, cluster_id, logFC, p_val, p_adj, contrast)
 
-          ligand_activities <- ligand_activities %>%
-            dplyr::mutate(contrast = contrast_oi) %>%
-            tidyr::drop_na() %>%
-            dplyr::rename(ligand = test_ligand, activity = aupr_corrected) %>%
-            dplyr::select(-pearson, -auroc, -aupr)
+        background_expressed_genes <- de_output_tidy$gene %>%
+          unique() %>%
+          dplyr::intersect(rownames(ligand_target_matrix))
+        ligand_target_matrix <- ligand_target_matrix[
+          rownames(ligand_target_matrix) %in% background_expressed_genes,
+        ]
+        ligands <- colnames(ligand_target_matrix)
 
-          ligand_target_df <- ligand_activities$ligand %>%
+        geneset_vs_ligand_activities <- list()
+        ligand_activities_targets_geneset <- list()
+        for (i in seq(length(de_output_tidy$contrast %>% unique()))) {
+          contrast_oi <- de_output_tidy$contrast %>%
             unique() %>%
-            lapply(nichenetr::get_weighted_ligand_target_links, geneset_oi, ligand_target_matrix, top_n_target) %>%
-            dplyr::bind_rows() %>%
-            dplyr::mutate(contrast = contrast_oi) %>%
-            dplyr::rename(ligand_target_weight = weight)
-          ligand_activities <- ligand_activities %>%
-            dplyr::inner_join(ligand_target_df) %>%
-            dplyr::mutate(receiver = receiver_oi, direction_regulation = "up") %>%
-            dplyr::group_by(receiver, contrast) %>%
-            dplyr::mutate(activity_scaled = nichenetr::scaling_zscore(activity))
-        } else {
-          warning(paste0("For Celltype ", receiver_oi, " in condition ", contrast_oi, " there seem to be no upregulated DE genes - so ligand activities will be NA. Please check the DE output."))
-          ligand_activities <- tibble(ligand = ligands, activity = NA, contrast = contrast_oi, target = NA, direction_regulation = "up", ligand_target_weight = NA, receiver = receiver_oi, activity_scaled = NA)
-        }
-        if (length(geneset_oi_down) > 0) {
-          if (verbose == TRUE) {
-            print("Number of downregulated DE genes (gene set of interest): ")
-            print(length(geneset_oi_down))
-          }
+            .[i]
+          if (p_val_adj == TRUE) {
+            de_tbl_geneset <- de_output_tidy %>%
+              dplyr::filter(contrast == contrast_oi) %>%
+              dplyr::filter(logFC >= logFC_threshold & p_adj <= p_val_threshold)
+            geneset_oi <- de_tbl_geneset %>%
+              dplyr::pull(gene) %>%
+              unique() %>%
+              dplyr::intersect(rownames(ligand_target_matrix))
 
-          geneset_id <- geneset_oi_down %>% paste(collapse = ".")
-          if (geneset_id %in% names(geneset_vs_ligand_activities)) {
-            ligand_activities_down <- geneset_vs_ligand_activities[[geneset_id]]$ligand_activities_df
+            de_tbl_geneset_down <- de_output_tidy %>%
+              dplyr::filter(contrast == contrast_oi) %>%
+              dplyr::filter(
+                logFC <= -1 * logFC_threshold & p_adj <= p_val_threshold
+              )
+            geneset_oi_down <- de_tbl_geneset_down %>%
+              dplyr::pull(gene) %>%
+              unique() %>%
+              dplyr::intersect(rownames(ligand_target_matrix))
           } else {
-            ligand_activities_down <- nichenetr::predict_ligand_activities(geneset = geneset_oi_down, background_expressed_genes = background_expressed_genes, ligand_target_matrix = ligand_target_matrix, potential_ligands = ligands)
-            geneset_vs_ligand_activities[[geneset_id]] <- list(ligand_activities_df = ligand_activities_down)
+            de_tbl_geneset <- de_output_tidy %>%
+              dplyr::filter(contrast == contrast_oi) %>%
+              dplyr::filter(logFC >= logFC_threshold & p_val <= p_val_threshold)
+            geneset_oi <- de_tbl_geneset %>%
+              dplyr::pull(gene) %>%
+              unique() %>%
+              dplyr::intersect(rownames(ligand_target_matrix))
+
+            de_tbl_geneset_down <- de_output_tidy %>%
+              dplyr::filter(contrast == contrast_oi) %>%
+              dplyr::filter(
+                logFC <= -1 * logFC_threshold & p_val <= p_val_threshold
+              )
+            geneset_oi_down <- de_tbl_geneset_down %>%
+              dplyr::pull(gene) %>%
+              unique() %>%
+              dplyr::intersect(rownames(ligand_target_matrix))
           }
 
-          ligand_activities_down <- ligand_activities_down %>%
-            dplyr::mutate(contrast = contrast_oi) %>%
-            tidyr::drop_na() %>%
-            dplyr::rename(ligand = test_ligand, activity = aupr_corrected) %>%
-            dplyr::select(-pearson, -auroc, -aupr)
+          if (verbose == TRUE) {
+            print("contrast_oi:")
+            print(contrast_oi)
+          }
 
-          ligand_target_df <- ligand_activities_down$ligand %>%
-            unique() %>%
-            lapply(nichenetr::get_weighted_ligand_target_links, geneset_oi_down, ligand_target_matrix, top_n_target) %>%
-            dplyr::bind_rows() %>%
+          if (length(geneset_oi) > 0) {
+            if (verbose == TRUE) {
+              print("Number of upregulated DE genes (gene set of interest): ")
+              print(length(geneset_oi))
+            }
+
+            geneset_id <- geneset_oi %>% paste(collapse = ".")
+            if (geneset_id %in% names(geneset_vs_ligand_activities)) {
+              ligand_activities <- geneset_vs_ligand_activities[[
+                geneset_id
+              ]]$ligand_activities_df
+            } else {
+              ligand_activities <- nichenetr::predict_ligand_activities(
+                geneset = geneset_oi,
+                background_expressed_genes = background_expressed_genes,
+                ligand_target_matrix = ligand_target_matrix,
+                potential_ligands = ligands
+              )
+              geneset_vs_ligand_activities[[geneset_id]] <- list(
+                ligand_activities_df = ligand_activities
+              )
+            }
+
+            ligand_activities <- ligand_activities %>%
+              dplyr::mutate(contrast = contrast_oi) %>%
+              tidyr::drop_na() %>%
+              dplyr::rename(ligand = test_ligand, activity = aupr_corrected) %>%
+              dplyr::select(-pearson, -auroc, -aupr)
+
+            ligand_target_df <- ligand_activities$ligand %>%
+              unique() %>%
+              lapply(
+                nichenetr::get_weighted_ligand_target_links,
+                geneset_oi,
+                ligand_target_matrix,
+                top_n_target
+              ) %>%
+              dplyr::bind_rows() %>%
+              dplyr::mutate(contrast = contrast_oi) %>%
+              dplyr::rename(ligand_target_weight = weight)
+            ligand_activities <- ligand_activities %>%
+              dplyr::inner_join(ligand_target_df) %>%
+              dplyr::mutate(
+                receiver = receiver_oi,
+                direction_regulation = "up"
+              ) %>%
+              dplyr::group_by(receiver, contrast) %>%
+              dplyr::mutate(
+                activity_scaled = nichenetr::scaling_zscore(activity)
+              )
+          } else {
+            warning(paste0(
+              "For Celltype ",
+              receiver_oi,
+              " in condition ",
+              contrast_oi,
+              " there seem to be no upregulated DE genes - so ligand activities will be NA. Please check the DE output."
+            ))
+            ligand_activities <- tibble(
+              ligand = ligands,
+              activity = NA,
+              contrast = contrast_oi,
+              target = NA,
+              direction_regulation = "up",
+              ligand_target_weight = NA,
+              receiver = receiver_oi,
+              activity_scaled = NA
+            )
+          }
+          if (length(geneset_oi_down) > 0) {
+            if (verbose == TRUE) {
+              print("Number of downregulated DE genes (gene set of interest): ")
+              print(length(geneset_oi_down))
+            }
+
+            geneset_id <- geneset_oi_down %>% paste(collapse = ".")
+            if (geneset_id %in% names(geneset_vs_ligand_activities)) {
+              ligand_activities_down <- geneset_vs_ligand_activities[[
+                geneset_id
+              ]]$ligand_activities_df
+            } else {
+              ligand_activities_down <- nichenetr::predict_ligand_activities(
+                geneset = geneset_oi_down,
+                background_expressed_genes = background_expressed_genes,
+                ligand_target_matrix = ligand_target_matrix,
+                potential_ligands = ligands
+              )
+              geneset_vs_ligand_activities[[geneset_id]] <- list(
+                ligand_activities_df = ligand_activities_down
+              )
+            }
+
+            ligand_activities_down <- ligand_activities_down %>%
+              dplyr::mutate(contrast = contrast_oi) %>%
+              tidyr::drop_na() %>%
+              dplyr::rename(ligand = test_ligand, activity = aupr_corrected) %>%
+              dplyr::select(-pearson, -auroc, -aupr)
+
+            ligand_target_df <- ligand_activities_down$ligand %>%
+              unique() %>%
+              lapply(
+                nichenetr::get_weighted_ligand_target_links,
+                geneset_oi_down,
+                ligand_target_matrix,
+                top_n_target
+              ) %>%
+              dplyr::bind_rows() %>%
+              dplyr::mutate(contrast = contrast_oi) %>%
+              dplyr::rename(ligand_target_weight = weight)
+            ligand_activities_down <- ligand_activities_down %>%
+              dplyr::inner_join(ligand_target_df) %>%
+              dplyr::mutate(
+                receiver = receiver_oi,
+                direction_regulation = "down"
+              ) %>%
+              dplyr::group_by(receiver, contrast) %>%
+              dplyr::mutate(
+                activity_scaled = nichenetr::scaling_zscore(activity)
+              )
+          } else {
+            warning(paste0(
+              "For Celltype ",
+              receiver_oi,
+              " in condition ",
+              contrast_oi,
+              " there seem to be no downregulated DE genes - so ligand activities will be NA. Please check the DE output."
+            ))
+            ligand_activities_down <- tibble(
+              ligand = ligands,
+              activity = NA,
+              contrast = contrast_oi,
+              target = NA,
+              direction_regulation = "down",
+              ligand_target_weight = NA,
+              receiver = receiver_oi,
+              activity_scaled = NA
+            )
+          }
+          ligand_activities <- ligand_activities %>%
+            bind_rows(ligand_activities_down)
+          de_genes_df <- de_tbl_geneset %>%
+            bind_rows(de_tbl_geneset_down) %>%
             dplyr::mutate(contrast = contrast_oi) %>%
-            dplyr::rename(ligand_target_weight = weight)
-          ligand_activities_down <- ligand_activities_down %>%
-            dplyr::inner_join(ligand_target_df) %>%
-            dplyr::mutate(receiver = receiver_oi, direction_regulation = "down") %>%
-            dplyr::group_by(receiver, contrast) %>%
-            dplyr::mutate(activity_scaled = nichenetr::scaling_zscore(activity))
-        } else {
-          warning(paste0("For Celltype ", receiver_oi, " in condition ", contrast_oi, " there seem to be no downregulated DE genes - so ligand activities will be NA. Please check the DE output."))
-          ligand_activities_down <- tibble(ligand = ligands, activity = NA, contrast = contrast_oi, target = NA, direction_regulation = "down", ligand_target_weight = NA, receiver = receiver_oi, activity_scaled = NA)
+            dplyr::rename(receiver = cluster_id)
+
+          ligand_activities_targets_geneset[[i]] <- list(
+            ligand_activities = ligand_activities,
+            de_genes_df = de_genes_df
+          )
         }
-        ligand_activities <- ligand_activities %>% bind_rows(ligand_activities_down)
-        de_genes_df <- de_tbl_geneset %>%
-          bind_rows(de_tbl_geneset_down) %>%
-          dplyr::mutate(contrast = contrast_oi) %>%
-          dplyr::rename(receiver = cluster_id)
 
-        ligand_activities_targets_geneset[[i]] <- list(ligand_activities = ligand_activities, de_genes_df = de_genes_df)
+        ligand_activities <- ligand_activities_targets_geneset %>%
+          purrr::map("ligand_activities") %>%
+          dplyr::bind_rows()
+        de_genes_df <- ligand_activities_targets_geneset %>%
+          purrr::map("de_genes_df") %>%
+          dplyr::bind_rows()
+
+        return(list(
+          ligand_activities = ligand_activities,
+          de_genes_df = de_genes_df
+        ))
       }
-
-      ligand_activities <- ligand_activities_targets_geneset %>%
-        purrr::map("ligand_activities") %>%
-        dplyr::bind_rows()
-      de_genes_df <- ligand_activities_targets_geneset %>%
-        purrr::map("de_genes_df") %>%
-        dplyr::bind_rows()
-
-      return(list(ligand_activities = ligand_activities, de_genes_df = de_genes_df))
-    }
     parallel::stopCluster(clust)
   } else {
-    ligand_activities_targets_geneset_ALL <- lapply(receivers_oi, function(receiver_oi, receiver_de, verbose, ligand_target_matrix, logFC_threshold, p_val_threshold, p_val_adj, top_n_target) {
-      requireNamespace("dplyr")
-
-      if (verbose == TRUE) {
-        print("receiver_oi:")
-        print(receiver_oi %>% as.character())
-      }
-
-      de_output_tidy <- receiver_de
-      de_output_tidy <- de_output_tidy %>%
-        dplyr::filter(cluster_id == receiver_oi) %>%
-        dplyr::select(gene, cluster_id, logFC, p_val, p_adj, contrast)
-
-      background_expressed_genes <- de_output_tidy$gene %>%
-        unique() %>%
-        dplyr::intersect(rownames(ligand_target_matrix))
-      ligand_target_matrix <- ligand_target_matrix[rownames(ligand_target_matrix) %in% background_expressed_genes, ]
-      ligands <- colnames(ligand_target_matrix)
-
-      geneset_vs_ligand_activities <- list()
-      ligand_activities_targets_geneset <- list()
-      for (i in seq(length(de_output_tidy$contrast %>% unique()))) {
-        contrast_oi <- de_output_tidy$contrast %>%
-          unique() %>%
-          .[i]
-        if (p_val_adj == TRUE) {
-          de_tbl_geneset <- de_output_tidy %>%
-            dplyr::filter(contrast == contrast_oi) %>%
-            dplyr::filter(logFC >= logFC_threshold & p_adj <= p_val_threshold)
-          geneset_oi <- de_tbl_geneset %>%
-            dplyr::pull(gene) %>%
-            unique() %>%
-            dplyr::intersect(rownames(ligand_target_matrix))
-
-          de_tbl_geneset_down <- de_output_tidy %>%
-            dplyr::filter(contrast == contrast_oi) %>%
-            dplyr::filter(logFC <= -1 * logFC_threshold & p_adj <= p_val_threshold)
-          geneset_oi_down <- de_tbl_geneset_down %>%
-            dplyr::pull(gene) %>%
-            unique() %>%
-            dplyr::intersect(rownames(ligand_target_matrix))
-        } else {
-          de_tbl_geneset <- de_output_tidy %>%
-            dplyr::filter(contrast == contrast_oi) %>%
-            dplyr::filter(logFC >= logFC_threshold & p_val <= p_val_threshold)
-          geneset_oi <- de_tbl_geneset %>%
-            dplyr::pull(gene) %>%
-            unique() %>%
-            dplyr::intersect(rownames(ligand_target_matrix))
-
-          de_tbl_geneset_down <- de_output_tidy %>%
-            dplyr::filter(contrast == contrast_oi) %>%
-            dplyr::filter(logFC <= -1 * logFC_threshold & p_val <= p_val_threshold)
-          geneset_oi_down <- de_tbl_geneset_down %>%
-            dplyr::pull(gene) %>%
-            unique() %>%
-            dplyr::intersect(rownames(ligand_target_matrix))
-        }
+    ligand_activities_targets_geneset_ALL <- lapply(
+      receivers_oi,
+      function(
+        receiver_oi,
+        receiver_de,
+        verbose,
+        ligand_target_matrix,
+        logFC_threshold,
+        p_val_threshold,
+        p_val_adj,
+        top_n_target
+      ) {
+        requireNamespace("dplyr")
 
         if (verbose == TRUE) {
-          print("contrast_oi:")
-          print(contrast_oi)
+          print("receiver_oi:")
+          print(receiver_oi %>% as.character())
         }
 
-        if (length(geneset_oi) > 0) {
-          if (verbose == TRUE) {
-            print("Number of upregulated DE genes (gene set of interest): ")
-            print(length(geneset_oi))
-          }
+        de_output_tidy <- receiver_de
+        de_output_tidy <- de_output_tidy %>%
+          dplyr::filter(cluster_id == receiver_oi) %>%
+          dplyr::select(gene, cluster_id, logFC, p_val, p_adj, contrast)
 
-          geneset_id <- geneset_oi %>% paste(collapse = ".")
-          if (geneset_id %in% names(geneset_vs_ligand_activities)) {
-            ligand_activities <- geneset_vs_ligand_activities[[geneset_id]]$ligand_activities_df
-          } else {
-            ligand_activities <- nichenetr::predict_ligand_activities(geneset = geneset_oi, background_expressed_genes = background_expressed_genes, ligand_target_matrix = ligand_target_matrix, potential_ligands = ligands)
-            geneset_vs_ligand_activities[[geneset_id]] <- list(ligand_activities_df = ligand_activities)
-          }
+        background_expressed_genes <- de_output_tidy$gene %>%
+          unique() %>%
+          dplyr::intersect(rownames(ligand_target_matrix))
+        ligand_target_matrix <- ligand_target_matrix[
+          rownames(ligand_target_matrix) %in% background_expressed_genes,
+        ]
+        ligands <- colnames(ligand_target_matrix)
 
-          ligand_activities <- ligand_activities %>%
-            dplyr::mutate(contrast = contrast_oi) %>%
-            tidyr::drop_na() %>%
-            dplyr::rename(ligand = test_ligand, activity = aupr_corrected) %>%
-            dplyr::select(-pearson, -auroc, -aupr)
-
-          ligand_target_df <- ligand_activities$ligand %>%
+        geneset_vs_ligand_activities <- list()
+        ligand_activities_targets_geneset <- list()
+        for (i in seq(length(de_output_tidy$contrast %>% unique()))) {
+          contrast_oi <- de_output_tidy$contrast %>%
             unique() %>%
-            lapply(nichenetr::get_weighted_ligand_target_links, geneset_oi, ligand_target_matrix, top_n_target) %>%
-            dplyr::bind_rows() %>%
-            dplyr::mutate(contrast = contrast_oi) %>%
-            dplyr::rename(ligand_target_weight = weight)
-          ligand_activities <- ligand_activities %>%
-            dplyr::inner_join(ligand_target_df) %>%
-            dplyr::mutate(receiver = receiver_oi, direction_regulation = "up") %>%
-            dplyr::group_by(receiver, contrast) %>%
-            dplyr::mutate(activity_scaled = nichenetr::scaling_zscore(activity))
-        } else {
-          warning(paste0("For Celltype ", receiver_oi, " in condition ", contrast_oi, " there seem to be no upregulated DE genes - so ligand activities will be NA. Please check the DE output."))
-          ligand_activities <- tibble(ligand = ligands, activity = NA, contrast = contrast_oi, target = NA, direction_regulation = "up", ligand_target_weight = NA, receiver = receiver_oi, activity_scaled = NA)
-        }
-        if (length(geneset_oi_down) > 0) {
-          if (verbose == TRUE) {
-            print("Number of downregulated DE genes (gene set of interest): ")
-            print(length(geneset_oi_down))
-          }
+            .[i]
+          if (p_val_adj == TRUE) {
+            de_tbl_geneset <- de_output_tidy %>%
+              dplyr::filter(contrast == contrast_oi) %>%
+              dplyr::filter(logFC >= logFC_threshold & p_adj <= p_val_threshold)
+            geneset_oi <- de_tbl_geneset %>%
+              dplyr::pull(gene) %>%
+              unique() %>%
+              dplyr::intersect(rownames(ligand_target_matrix))
 
-          geneset_id <- geneset_oi_down %>% paste(collapse = ".")
-          if (geneset_id %in% names(geneset_vs_ligand_activities)) {
-            ligand_activities_down <- geneset_vs_ligand_activities[[geneset_id]]$ligand_activities_df
+            de_tbl_geneset_down <- de_output_tidy %>%
+              dplyr::filter(contrast == contrast_oi) %>%
+              dplyr::filter(
+                logFC <= -1 * logFC_threshold & p_adj <= p_val_threshold
+              )
+            geneset_oi_down <- de_tbl_geneset_down %>%
+              dplyr::pull(gene) %>%
+              unique() %>%
+              dplyr::intersect(rownames(ligand_target_matrix))
           } else {
-            ligand_activities_down <- nichenetr::predict_ligand_activities(geneset = geneset_oi_down, background_expressed_genes = background_expressed_genes, ligand_target_matrix = ligand_target_matrix, potential_ligands = ligands)
-            geneset_vs_ligand_activities[[geneset_id]] <- list(ligand_activities_df = ligand_activities_down)
+            de_tbl_geneset <- de_output_tidy %>%
+              dplyr::filter(contrast == contrast_oi) %>%
+              dplyr::filter(logFC >= logFC_threshold & p_val <= p_val_threshold)
+            geneset_oi <- de_tbl_geneset %>%
+              dplyr::pull(gene) %>%
+              unique() %>%
+              dplyr::intersect(rownames(ligand_target_matrix))
+
+            de_tbl_geneset_down <- de_output_tidy %>%
+              dplyr::filter(contrast == contrast_oi) %>%
+              dplyr::filter(
+                logFC <= -1 * logFC_threshold & p_val <= p_val_threshold
+              )
+            geneset_oi_down <- de_tbl_geneset_down %>%
+              dplyr::pull(gene) %>%
+              unique() %>%
+              dplyr::intersect(rownames(ligand_target_matrix))
           }
 
-          ligand_activities_down <- ligand_activities_down %>%
-            dplyr::mutate(contrast = contrast_oi) %>%
-            tidyr::drop_na() %>%
-            dplyr::rename(ligand = test_ligand, activity = aupr_corrected) %>%
-            dplyr::select(-pearson, -auroc, -aupr)
+          if (verbose == TRUE) {
+            print("contrast_oi:")
+            print(contrast_oi)
+          }
 
-          ligand_target_df <- ligand_activities_down$ligand %>%
-            unique() %>%
-            lapply(nichenetr::get_weighted_ligand_target_links, geneset_oi_down, ligand_target_matrix, top_n_target) %>%
-            dplyr::bind_rows() %>%
+          if (length(geneset_oi) > 0) {
+            if (verbose == TRUE) {
+              print("Number of upregulated DE genes (gene set of interest): ")
+              print(length(geneset_oi))
+            }
+
+            geneset_id <- geneset_oi %>% paste(collapse = ".")
+            if (geneset_id %in% names(geneset_vs_ligand_activities)) {
+              ligand_activities <- geneset_vs_ligand_activities[[
+                geneset_id
+              ]]$ligand_activities_df
+            } else {
+              ligand_activities <- nichenetr::predict_ligand_activities(
+                geneset = geneset_oi,
+                background_expressed_genes = background_expressed_genes,
+                ligand_target_matrix = ligand_target_matrix,
+                potential_ligands = ligands
+              )
+              geneset_vs_ligand_activities[[geneset_id]] <- list(
+                ligand_activities_df = ligand_activities
+              )
+            }
+
+            ligand_activities <- ligand_activities %>%
+              dplyr::mutate(contrast = contrast_oi) %>%
+              tidyr::drop_na() %>%
+              dplyr::rename(ligand = test_ligand, activity = aupr_corrected) %>%
+              dplyr::select(-pearson, -auroc, -aupr)
+
+            ligand_target_df <- ligand_activities$ligand %>%
+              unique() %>%
+              lapply(
+                nichenetr::get_weighted_ligand_target_links,
+                geneset_oi,
+                ligand_target_matrix,
+                top_n_target
+              ) %>%
+              dplyr::bind_rows() %>%
+              dplyr::mutate(contrast = contrast_oi) %>%
+              dplyr::rename(ligand_target_weight = weight)
+            ligand_activities <- ligand_activities %>%
+              dplyr::inner_join(ligand_target_df) %>%
+              dplyr::mutate(
+                receiver = receiver_oi,
+                direction_regulation = "up"
+              ) %>%
+              dplyr::group_by(receiver, contrast) %>%
+              dplyr::mutate(
+                activity_scaled = nichenetr::scaling_zscore(activity)
+              )
+          } else {
+            warning(paste0(
+              "For Celltype ",
+              receiver_oi,
+              " in condition ",
+              contrast_oi,
+              " there seem to be no upregulated DE genes - so ligand activities will be NA. Please check the DE output."
+            ))
+            ligand_activities <- tibble(
+              ligand = ligands,
+              activity = NA,
+              contrast = contrast_oi,
+              target = NA,
+              direction_regulation = "up",
+              ligand_target_weight = NA,
+              receiver = receiver_oi,
+              activity_scaled = NA
+            )
+          }
+          if (length(geneset_oi_down) > 0) {
+            if (verbose == TRUE) {
+              print("Number of downregulated DE genes (gene set of interest): ")
+              print(length(geneset_oi_down))
+            }
+
+            geneset_id <- geneset_oi_down %>% paste(collapse = ".")
+            if (geneset_id %in% names(geneset_vs_ligand_activities)) {
+              ligand_activities_down <- geneset_vs_ligand_activities[[
+                geneset_id
+              ]]$ligand_activities_df
+            } else {
+              ligand_activities_down <- nichenetr::predict_ligand_activities(
+                geneset = geneset_oi_down,
+                background_expressed_genes = background_expressed_genes,
+                ligand_target_matrix = ligand_target_matrix,
+                potential_ligands = ligands
+              )
+              geneset_vs_ligand_activities[[geneset_id]] <- list(
+                ligand_activities_df = ligand_activities_down
+              )
+            }
+
+            ligand_activities_down <- ligand_activities_down %>%
+              dplyr::mutate(contrast = contrast_oi) %>%
+              tidyr::drop_na() %>%
+              dplyr::rename(ligand = test_ligand, activity = aupr_corrected) %>%
+              dplyr::select(-pearson, -auroc, -aupr)
+
+            ligand_target_df <- ligand_activities_down$ligand %>%
+              unique() %>%
+              lapply(
+                nichenetr::get_weighted_ligand_target_links,
+                geneset_oi_down,
+                ligand_target_matrix,
+                top_n_target
+              ) %>%
+              dplyr::bind_rows() %>%
+              dplyr::mutate(contrast = contrast_oi) %>%
+              dplyr::rename(ligand_target_weight = weight)
+            ligand_activities_down <- ligand_activities_down %>%
+              dplyr::inner_join(ligand_target_df) %>%
+              dplyr::mutate(
+                receiver = receiver_oi,
+                direction_regulation = "down"
+              ) %>%
+              dplyr::group_by(receiver, contrast) %>%
+              dplyr::mutate(
+                activity_scaled = nichenetr::scaling_zscore(activity)
+              )
+          } else {
+            warning(paste0(
+              "For Celltype ",
+              receiver_oi,
+              " in condition ",
+              contrast_oi,
+              " there seem to be no downregulated DE genes - so ligand activities will be NA. Please check the DE output."
+            ))
+            ligand_activities_down <- tibble(
+              ligand = ligands,
+              activity = NA,
+              contrast = contrast_oi,
+              target = NA,
+              direction_regulation = "down",
+              ligand_target_weight = NA,
+              receiver = receiver_oi,
+              activity_scaled = NA
+            )
+          }
+          ligand_activities <- ligand_activities %>%
+            bind_rows(ligand_activities_down)
+          de_genes_df <- de_tbl_geneset %>%
+            bind_rows(de_tbl_geneset_down) %>%
             dplyr::mutate(contrast = contrast_oi) %>%
-            dplyr::rename(ligand_target_weight = weight)
-          ligand_activities_down <- ligand_activities_down %>%
-            dplyr::inner_join(ligand_target_df) %>%
-            dplyr::mutate(receiver = receiver_oi, direction_regulation = "down") %>%
-            dplyr::group_by(receiver, contrast) %>%
-            dplyr::mutate(activity_scaled = nichenetr::scaling_zscore(activity))
-        } else {
-          warning(paste0("For Celltype ", receiver_oi, " in condition ", contrast_oi, " there seem to be no downregulated DE genes - so ligand activities will be NA. Please check the DE output."))
-          ligand_activities_down <- tibble(ligand = ligands, activity = NA, contrast = contrast_oi, target = NA, direction_regulation = "down", ligand_target_weight = NA, receiver = receiver_oi, activity_scaled = NA)
+            dplyr::rename(receiver = cluster_id)
+
+          ligand_activities_targets_geneset[[i]] <- list(
+            ligand_activities = ligand_activities,
+            de_genes_df = de_genes_df
+          )
         }
-        ligand_activities <- ligand_activities %>% bind_rows(ligand_activities_down)
-        de_genes_df <- de_tbl_geneset %>%
-          bind_rows(de_tbl_geneset_down) %>%
-          dplyr::mutate(contrast = contrast_oi) %>%
-          dplyr::rename(receiver = cluster_id)
 
-        ligand_activities_targets_geneset[[i]] <- list(ligand_activities = ligand_activities, de_genes_df = de_genes_df)
-      }
+        ligand_activities <- ligand_activities_targets_geneset %>%
+          purrr::map("ligand_activities") %>%
+          dplyr::bind_rows()
+        de_genes_df <- ligand_activities_targets_geneset %>%
+          purrr::map("de_genes_df") %>%
+          dplyr::bind_rows()
 
-      ligand_activities <- ligand_activities_targets_geneset %>%
-        purrr::map("ligand_activities") %>%
-        dplyr::bind_rows()
-      de_genes_df <- ligand_activities_targets_geneset %>%
-        purrr::map("de_genes_df") %>%
-        dplyr::bind_rows()
-
-      return(list(ligand_activities = ligand_activities, de_genes_df = de_genes_df))
-    }, receiver_de, verbose, ligand_target_matrix, logFC_threshold, p_val_threshold, p_val_adj, top_n_target)
+        return(list(
+          ligand_activities = ligand_activities,
+          de_genes_df = de_genes_df
+        ))
+      },
+      receiver_de,
+      verbose,
+      ligand_target_matrix,
+      logFC_threshold,
+      p_val_threshold,
+      p_val_adj,
+      top_n_target
+    )
   }
-
 
   ligand_activities <- ligand_activities_targets_geneset_ALL %>%
     purrr::map("ligand_activities") %>%
     dplyr::bind_rows() %>%
-    dplyr::mutate(direction_regulation = factor(direction_regulation, levels = c("up", "down")))
+    dplyr::mutate(
+      direction_regulation = factor(
+        direction_regulation,
+        levels = c("up", "down")
+      )
+    )
   de_genes_df <- ligand_activities_targets_geneset_ALL %>%
     purrr::map("de_genes_df") %>%
     dplyr::bind_rows()
@@ -829,7 +1253,13 @@ get_ligand_activities_targets_DEgenes_beta <- function(receiver_de, receivers_oi
 #'
 #' @export
 #'
-process_geneset_data <- function(contrast_oi, receiver_de, logFC_threshold = 0.5, p_val_adj = FALSE, p_val_threshold = 0.05) {
+process_geneset_data <- function(
+  contrast_oi,
+  receiver_de,
+  logFC_threshold = 0.5,
+  p_val_adj = FALSE,
+  p_val_threshold = 0.05
+) {
   requireNamespace("dplyr")
 
   celltype_de <- receiver_de %>% filter(contrast == contrast_oi)
@@ -870,16 +1300,30 @@ process_geneset_data <- function(contrast_oi, receiver_de, logFC_threshold = 0.5
   n_df <- background_df %>%
     left_join(geneset_oi_up_df) %>%
     left_join(geneset_oi_down_df) %>%
-    mutate(n_geneset_up = n_geneset_up %>% tidyr::replace_na(0), n_geneset_down = n_geneset_down %>% tidyr::replace_na(0))
+    mutate(
+      n_geneset_up = n_geneset_up %>% tidyr::replace_na(0),
+      n_geneset_down = n_geneset_down %>% tidyr::replace_na(0)
+    )
 
-  geneset_df <- n_df %>% mutate(prop_geneset_up = n_geneset_up / n_background, prop_geneset_down = n_geneset_down / n_background)
-  geneset_df <- geneset_df %>% mutate(
-    in_range_up = prop_geneset_up >= 1 / 200 & prop_geneset_up <= 1 / 10,
-    in_range_down = prop_geneset_down >= 1 / 200 & prop_geneset_down <= 1 / 10,
-    contrast = contrast_oi
-  )
+  geneset_df <- n_df %>%
+    mutate(
+      prop_geneset_up = n_geneset_up / n_background,
+      prop_geneset_down = n_geneset_down / n_background
+    )
+  geneset_df <- geneset_df %>%
+    mutate(
+      in_range_up = prop_geneset_up >= 1 / 200 & prop_geneset_up <= 1 / 10,
+      in_range_down = prop_geneset_down >= 1 / 200 &
+        prop_geneset_down <= 1 / 10,
+      contrast = contrast_oi
+    )
 
-  geneset_df <- geneset_df %>% mutate(logFC_threshold = logFC_threshold, p_val_threshold = p_val_threshold, adjusted = p_val_adj)
+  geneset_df <- geneset_df %>%
+    mutate(
+      logFC_threshold = logFC_threshold,
+      p_val_threshold = p_val_threshold,
+      adjusted = p_val_adj
+    )
 
   return(geneset_df)
 }

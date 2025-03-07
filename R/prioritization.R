@@ -110,20 +110,60 @@ scale_quantile_adapted <- function(x, outlier_cutoff = 0) {
 #'
 #'
 #'
-generate_prioritization_tables <- function(sender_receiver_info, sender_receiver_de, ligand_activities_targets_DEgenes, contrast_tbl, sender_receiver_tbl, grouping_tbl, scenario = "regular", fraction_cutoff, abundance_data_receiver, abundance_data_sender, ligand_activity_down = FALSE) {
+generate_prioritization_tables <- function(
+  sender_receiver_info,
+  sender_receiver_de,
+  ligand_activities_targets_DEgenes,
+  contrast_tbl,
+  sender_receiver_tbl,
+  grouping_tbl,
+  scenario = "regular",
+  fraction_cutoff,
+  abundance_data_receiver,
+  abundance_data_sender,
+  ligand_activity_down = FALSE
+) {
   requireNamespace("dplyr")
 
   if (scenario == "regular") {
-    prioritizing_weights <- c("de_ligand" = 1, "de_receptor" = 1, "activity_scaled" = 1, "exprs_ligand" = 1, "exprs_receptor" = 1, "frac_exprs_ligand_receptor" = 1)
+    prioritizing_weights <- c(
+      "de_ligand" = 1,
+      "de_receptor" = 1,
+      "activity_scaled" = 1,
+      "exprs_ligand" = 1,
+      "exprs_receptor" = 1,
+      "frac_exprs_ligand_receptor" = 1
+    )
   }
   if (scenario == "no_activity") {
-    prioritizing_weights <- c("de_ligand" = 1, "de_receptor" = 1, "activity_scaled" = 0, "exprs_ligand" = 1, "exprs_receptor" = 1, "frac_exprs_ligand_receptor" = 1)
+    prioritizing_weights <- c(
+      "de_ligand" = 1,
+      "de_receptor" = 1,
+      "activity_scaled" = 0,
+      "exprs_ligand" = 1,
+      "exprs_receptor" = 1,
+      "frac_exprs_ligand_receptor" = 1
+    )
   }
   if (scenario == "lower_DE") {
-    prioritizing_weights <- c("de_ligand" = 0.5, "de_receptor" = 0.5, "activity_scaled" = 2, "exprs_ligand" = 1, "exprs_receptor" = 1, "frac_exprs_ligand_receptor" = 1)
+    prioritizing_weights <- c(
+      "de_ligand" = 0.5,
+      "de_receptor" = 0.5,
+      "activity_scaled" = 2,
+      "exprs_ligand" = 1,
+      "exprs_receptor" = 1,
+      "frac_exprs_ligand_receptor" = 1
+    )
   }
   if (scenario == "no_frac_LR_expr") {
-    prioritizing_weights <- c("de_ligand" = 1, "de_receptor" = 1, "activity_scaled" = 1, "exprs_ligand" = 1, "exprs_receptor" = 1, "frac_exprs_ligand_receptor" = 0)
+    prioritizing_weights <- c(
+      "de_ligand" = 1,
+      "de_receptor" = 1,
+      "activity_scaled" = 1,
+      "exprs_ligand" = 1,
+      "exprs_receptor" = 1,
+      "frac_exprs_ligand_receptor" = 0
+    )
   }
 
   # Group prioritization table -------------------------------------------------------------------------------------------------------------------------------------------
@@ -131,11 +171,53 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
   # receiver-focused prioritization for receptor: contrast - receiver - receptor - lfc_receptor - p_adj_receptor: group by contrast and receiver: score each receptor based on those rankings
   receiver_receptor_prioritization <- sender_receiver_de %>%
     dplyr::ungroup() %>%
-    dplyr::select(contrast, receiver, receptor, lfc_receptor, p_val_receptor) %>%
+    dplyr::select(
+      contrast,
+      receiver,
+      receptor,
+      lfc_receptor,
+      p_val_receptor
+    ) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(lfc_pval_receptor = -log10(p_val_receptor) * lfc_receptor, p_val_receptor_adapted = -log10(p_val_receptor) * sign(lfc_receptor))
+    dplyr::mutate(
+      lfc_pval_receptor = -log10(p_val_receptor) * lfc_receptor,
+      p_val_receptor_adapted = -log10(p_val_receptor) * sign(lfc_receptor)
+    )
   receiver_receptor_prioritization <- receiver_receptor_prioritization %>%
-    dplyr::mutate(scaled_lfc_receptor = rank(lfc_receptor, ties.method = "average", na.last = FALSE) / max(rank(lfc_receptor, ties.method = "average", na.last = FALSE)), scaled_p_val_receptor = rank(desc(p_val_receptor), ties.method = "average", na.last = FALSE) / max(rank(desc(p_val_receptor), ties.method = "average", na.last = FALSE)), scaled_lfc_pval_receptor = rank(lfc_pval_receptor, ties.method = "average", na.last = FALSE) / max(rank(lfc_pval_receptor, ties.method = "average", na.last = FALSE)), scaled_p_val_receptor_adapted = rank(p_val_receptor_adapted, ties.method = "average", na.last = FALSE) / max(rank(p_val_receptor_adapted, ties.method = "average", na.last = FALSE))) %>%
+    dplyr::mutate(
+      scaled_lfc_receptor = rank(
+        lfc_receptor,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(lfc_receptor, ties.method = "average", na.last = FALSE)),
+      scaled_p_val_receptor = rank(
+        desc(p_val_receptor),
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(
+          desc(p_val_receptor),
+          ties.method = "average",
+          na.last = FALSE
+        )),
+      scaled_lfc_pval_receptor = rank(
+        lfc_pval_receptor,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(lfc_pval_receptor, ties.method = "average", na.last = FALSE)),
+      scaled_p_val_receptor_adapted = rank(
+        p_val_receptor_adapted,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(
+          p_val_receptor_adapted,
+          ties.method = "average",
+          na.last = FALSE
+        ))
+    ) %>%
     dplyr::arrange(-lfc_pval_receptor)
 
   # receiver-focused prioritization for ligand: contrast - receiver - ligand - activity_scaled: group by contrast and receiver: score each ligand based on the activity
@@ -143,17 +225,41 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
     dplyr::ungroup() %>%
     dplyr::filter(direction_regulation == "up") %>%
     dplyr::select(contrast, receiver, ligand, activity, activity_scaled) %>%
-    dplyr::rename(activity_up = activity, activity_scaled_up = activity_scaled) %>%
+    dplyr::rename(
+      activity_up = activity,
+      activity_scaled_up = activity_scaled
+    ) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(scaled_activity_scaled_up = scale_quantile_adapted(activity_scaled_up, outlier_cutoff = 0.01), scaled_activity_up = scale_quantile_adapted(activity_up, outlier_cutoff = 0.01)) %>%
+    dplyr::mutate(
+      scaled_activity_scaled_up = scale_quantile_adapted(
+        activity_scaled_up,
+        outlier_cutoff = 0.01
+      ),
+      scaled_activity_up = scale_quantile_adapted(
+        activity_up,
+        outlier_cutoff = 0.01
+      )
+    ) %>%
     dplyr::arrange(-activity_scaled_up)
   receiver_ligand_activity_prioritization_down <- ligand_activities_targets_DEgenes$ligand_activities %>%
     dplyr::ungroup() %>%
     dplyr::filter(direction_regulation == "down") %>%
     dplyr::select(contrast, receiver, ligand, activity, activity_scaled) %>%
-    dplyr::rename(activity_down = activity, activity_scaled_down = activity_scaled) %>%
+    dplyr::rename(
+      activity_down = activity,
+      activity_scaled_down = activity_scaled
+    ) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(scaled_activity_scaled_down = scale_quantile_adapted(activity_scaled_down, outlier_cutoff = 0.01), scaled_activity_down = scale_quantile_adapted(activity_down, outlier_cutoff = 0.01)) %>%
+    dplyr::mutate(
+      scaled_activity_scaled_down = scale_quantile_adapted(
+        activity_scaled_down,
+        outlier_cutoff = 0.01
+      ),
+      scaled_activity_down = scale_quantile_adapted(
+        activity_down,
+        outlier_cutoff = 0.01
+      )
+    ) %>%
     dplyr::arrange(-activity_scaled_down)
 
   # sender-focused prioritization: contrast - sender - ligand - lfc_ligand - p_adj_ligand: group by contrast and sender: score each ligand based on those rankings
@@ -161,9 +267,41 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
     dplyr::ungroup() %>%
     dplyr::select(contrast, sender, ligand, lfc_ligand, p_val_ligand) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(lfc_pval_ligand = -log10(p_val_ligand) * lfc_ligand, p_val_ligand_adapted = -log10(p_val_ligand) * sign(lfc_ligand))
+    dplyr::mutate(
+      lfc_pval_ligand = -log10(p_val_ligand) * lfc_ligand,
+      p_val_ligand_adapted = -log10(p_val_ligand) * sign(lfc_ligand)
+    )
   sender_ligand_prioritization <- sender_ligand_prioritization %>%
-    dplyr::mutate(scaled_lfc_ligand = rank(lfc_ligand, ties.method = "average", na.last = FALSE) / max(rank(lfc_ligand, ties.method = "average", na.last = FALSE)), scaled_p_val_ligand = rank(desc(p_val_ligand), ties.method = "average", na.last = FALSE) / max(rank(desc(p_val_ligand), ties.method = "average", na.last = FALSE)), scaled_lfc_pval_ligand = rank(lfc_pval_ligand, ties.method = "average", na.last = FALSE) / max(rank(lfc_pval_ligand, ties.method = "average", na.last = FALSE)), scaled_p_val_ligand_adapted = rank(p_val_ligand_adapted, ties.method = "average", na.last = FALSE) / max(rank(p_val_ligand_adapted, ties.method = "average", na.last = FALSE))) %>%
+    dplyr::mutate(
+      scaled_lfc_ligand = rank(
+        lfc_ligand,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(lfc_ligand, ties.method = "average", na.last = FALSE)),
+      scaled_p_val_ligand = rank(
+        desc(p_val_ligand),
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(desc(p_val_ligand), ties.method = "average", na.last = FALSE)),
+      scaled_lfc_pval_ligand = rank(
+        lfc_pval_ligand,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(lfc_pval_ligand, ties.method = "average", na.last = FALSE)),
+      scaled_p_val_ligand_adapted = rank(
+        p_val_ligand_adapted,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(
+          p_val_ligand_adapted,
+          ties.method = "average",
+          na.last = FALSE
+        ))
+    ) %>%
     dplyr::arrange(-lfc_pval_ligand)
 
   # cell-type and condition specificity of expression of ligand:  per ligand: score each sender-condition combination based on expression and fraction
@@ -174,7 +312,9 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
     dplyr::select(group, sender, ligand, avg_ligand_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(ligand) %>%
-    dplyr::mutate(scaled_avg_exprs_ligand = scale_quantile_adapted(avg_ligand_group)) %>%
+    dplyr::mutate(
+      scaled_avg_exprs_ligand = scale_quantile_adapted(avg_ligand_group)
+    ) %>%
     dplyr::arrange(-scaled_avg_exprs_ligand)
   ligand_celltype_specificity_prioritization_frq <- sender_receiver_info$frq_df_group %>%
     dplyr::inner_join(sender_receiver_tbl) %>%
@@ -183,7 +323,9 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
     dplyr::select(group, sender, ligand, fraction_ligand_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(ligand) %>%
-    dplyr::mutate(scaled_avg_frq_ligand = scale_quantile_adapted(fraction_ligand_group)) %>%
+    dplyr::mutate(
+      scaled_avg_frq_ligand = scale_quantile_adapted(fraction_ligand_group)
+    ) %>%
     dplyr::arrange(-scaled_avg_frq_ligand)
   ligand_celltype_specificity_prioritization_pb <- sender_receiver_info$pb_df_group %>%
     dplyr::inner_join(sender_receiver_tbl) %>%
@@ -192,7 +334,9 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
     dplyr::select(group, sender, ligand, pb_ligand_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(ligand) %>%
-    dplyr::mutate(scaled_pb_ligand = scale_quantile_adapted(pb_ligand_group)) %>%
+    dplyr::mutate(
+      scaled_pb_ligand = scale_quantile_adapted(pb_ligand_group)
+    ) %>%
     dplyr::arrange(-scaled_pb_ligand)
 
   # cell-type and condition specificity of expression of receptor:  per receptor: score each receiver-condition combination based on expression and fraction
@@ -203,7 +347,9 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
     dplyr::select(group, receiver, receptor, avg_receptor_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(receptor) %>%
-    dplyr::mutate(scaled_avg_exprs_receptor = scale_quantile_adapted(avg_receptor_group)) %>%
+    dplyr::mutate(
+      scaled_avg_exprs_receptor = scale_quantile_adapted(avg_receptor_group)
+    ) %>%
     dplyr::arrange(-scaled_avg_exprs_receptor)
   receptor_celltype_specificity_prioritization_frq <- sender_receiver_info$frq_df_group %>%
     dplyr::inner_join(sender_receiver_tbl) %>%
@@ -212,7 +358,9 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
     dplyr::select(group, receiver, receptor, fraction_receptor_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(receptor) %>%
-    dplyr::mutate(scaled_avg_frq_receptor = scale_quantile_adapted(fraction_receptor_group)) %>%
+    dplyr::mutate(
+      scaled_avg_frq_receptor = scale_quantile_adapted(fraction_receptor_group)
+    ) %>%
     dplyr::arrange(-scaled_avg_frq_receptor)
   receptor_celltype_specificity_prioritization_pb <- sender_receiver_info$pb_df_group %>%
     dplyr::inner_join(sender_receiver_tbl) %>%
@@ -221,18 +369,36 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
     dplyr::select(group, receiver, receptor, pb_receptor_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(receptor) %>%
-    dplyr::mutate(scaled_pb_receptor = scale_quantile_adapted(pb_receptor_group)) %>%
+    dplyr::mutate(
+      scaled_pb_receptor = scale_quantile_adapted(pb_receptor_group)
+    ) %>%
     dplyr::arrange(-scaled_pb_receptor)
 
   # both receptor and ligand should be expressed!
   ligand_receptor_expressed_prioritization <- sender_receiver_info$frq_df %>%
     dplyr::inner_join(grouping_tbl) %>%
     dplyr::ungroup() %>%
-    dplyr::select(sample, group, sender, receiver, ligand, receptor, fraction_ligand, fraction_receptor) %>%
+    dplyr::select(
+      sample,
+      group,
+      sender,
+      receiver,
+      ligand,
+      receptor,
+      fraction_ligand,
+      fraction_receptor
+    ) %>%
     dplyr::distinct() %>%
     dplyr::group_by(ligand, receptor, sender, receiver, group) %>%
-    dplyr::summarise(n_samples = n(), n_expressing = sum(fraction_ligand > fraction_cutoff & fraction_receptor > fraction_cutoff)) %>%
-    dplyr::mutate(fraction_expressing_ligand_receptor = n_expressing / n_samples) %>%
+    dplyr::summarise(
+      n_samples = n(),
+      n_expressing = sum(
+        fraction_ligand > fraction_cutoff & fraction_receptor > fraction_cutoff
+      )
+    ) %>%
+    dplyr::mutate(
+      fraction_expressing_ligand_receptor = n_expressing / n_samples
+    ) %>%
     dplyr::arrange(-fraction_expressing_ligand_receptor) %>%
     dplyr::select(-n_samples, -n_expressing) %>%
     dplyr::ungroup()
@@ -241,7 +407,11 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
   if (ligand_activity_down == TRUE) {
     group_prioritization_tbl <- contrast_tbl %>%
       dplyr::inner_join(sender_receiver_de) %>%
-      dplyr::inner_join(ligand_activities_targets_DEgenes$ligand_activities %>% dplyr::select(-target, -ligand_target_weight) %>% dplyr::distinct()) %>%
+      dplyr::inner_join(
+        ligand_activities_targets_DEgenes$ligand_activities %>%
+          dplyr::select(-target, -ligand_target_weight) %>%
+          dplyr::distinct()
+      ) %>%
       dplyr::mutate(lr_interaction = paste(ligand, receptor, sep = "_")) %>%
       dplyr::mutate(id = paste(lr_interaction, sender, receiver, sep = "_")) %>%
       dplyr::inner_join(sender_receiver_info$avg_df_group) %>%
@@ -257,11 +427,21 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
       dplyr::inner_join(receptor_celltype_specificity_prioritization_frq) %>%
       dplyr::inner_join(receptor_celltype_specificity_prioritization_pb) %>%
       dplyr::inner_join(ligand_receptor_expressed_prioritization) %>%
-      mutate(max_scaled_activity = pmax(scaled_activity_scaled_up, scaled_activity_scaled_down, na.rm = TRUE))
+      mutate(
+        max_scaled_activity = pmax(
+          scaled_activity_scaled_up,
+          scaled_activity_scaled_down,
+          na.rm = TRUE
+        )
+      )
   } else {
     group_prioritization_tbl <- contrast_tbl %>%
       dplyr::inner_join(sender_receiver_de) %>%
-      dplyr::inner_join(ligand_activities_targets_DEgenes$ligand_activities %>% dplyr::select(-target, -ligand_target_weight) %>% dplyr::distinct()) %>%
+      dplyr::inner_join(
+        ligand_activities_targets_DEgenes$ligand_activities %>%
+          dplyr::select(-target, -ligand_target_weight) %>%
+          dplyr::distinct()
+      ) %>%
       dplyr::mutate(lr_interaction = paste(ligand, receptor, sep = "_")) %>%
       dplyr::mutate(id = paste(lr_interaction, sender, receiver, sep = "_")) %>%
       dplyr::inner_join(sender_receiver_info$avg_df_group) %>%
@@ -281,23 +461,32 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
   }
 
   # have a weighted average the final score (no product!!)
-  sum_prioritization_weights <- prioritizing_weights["de_ligand"] + prioritizing_weights["de_receptor"] + prioritizing_weights["activity_scaled"] + prioritizing_weights["exprs_ligand"] + prioritizing_weights["exprs_receptor"] + prioritizing_weights["frac_exprs_ligand_receptor"]
+  sum_prioritization_weights <- prioritizing_weights["de_ligand"] +
+    prioritizing_weights["de_receptor"] +
+    prioritizing_weights["activity_scaled"] +
+    prioritizing_weights["exprs_ligand"] +
+    prioritizing_weights["exprs_receptor"] +
+    prioritizing_weights["frac_exprs_ligand_receptor"]
   group_prioritization_tbl <- group_prioritization_tbl %>%
     dplyr::mutate(
-      prioritization_score =
-        (
-          (0.5 * prioritizing_weights["de_ligand"] * scaled_lfc_ligand) +
-            (0.5 * prioritizing_weights["de_receptor"] * scaled_lfc_receptor) +
-            (0.5 * prioritizing_weights["de_ligand"] * scaled_p_val_ligand_adapted) +
-            (0.5 * prioritizing_weights["de_receptor"] * scaled_p_val_receptor_adapted) +
-            (prioritizing_weights["activity_scaled"] * max_scaled_activity) +
-            (prioritizing_weights["exprs_ligand"] * scaled_pb_ligand) + # batch-effect corrected if needed
-            (prioritizing_weights["exprs_receptor"] * scaled_pb_receptor) + # batch-effect corrected if needed
-            (prioritizing_weights["frac_exprs_ligand_receptor"] * fraction_expressing_ligand_receptor)
-        ) * (1 / sum_prioritization_weights)
+      prioritization_score = ((0.5 *
+        prioritizing_weights["de_ligand"] *
+        scaled_lfc_ligand) +
+        (0.5 * prioritizing_weights["de_receptor"] * scaled_lfc_receptor) +
+        (0.5 *
+          prioritizing_weights["de_ligand"] *
+          scaled_p_val_ligand_adapted) +
+        (0.5 *
+          prioritizing_weights["de_receptor"] *
+          scaled_p_val_receptor_adapted) +
+        (prioritizing_weights["activity_scaled"] * max_scaled_activity) +
+        (prioritizing_weights["exprs_ligand"] * scaled_pb_ligand) + # batch-effect corrected if needed
+        (prioritizing_weights["exprs_receptor"] * scaled_pb_receptor) + # batch-effect corrected if needed
+        (prioritizing_weights["frac_exprs_ligand_receptor"] *
+          fraction_expressing_ligand_receptor)) *
+        (1 / sum_prioritization_weights)
     ) %>%
     dplyr::arrange(-prioritization_score)
-
 
   # Sample-based Prioritization ----------------------------------------------- ----------------------------------------------------------------
   # sample_prioritization_tbl = sender_receiver_info$avg_df %>% dplyr::inner_join(sender_receiver_info$frq_df) %>% dplyr::inner_join(grouping_tbl) %>% dplyr::inner_join(group_prioritization_tbl %>% dplyr::distinct(group, sender, receiver, ligand, receptor, prioritization_score))
@@ -305,53 +494,157 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
     dplyr::inner_join(sender_receiver_info$frq_df) %>%
     dplyr::inner_join(sender_receiver_info$pb_df) %>%
     dplyr::inner_join(grouping_tbl) %>%
-    dplyr::left_join(group_prioritization_tbl %>% dplyr::distinct(group, sender, receiver, ligand, receptor, prioritization_score)) # maybe NA there if it is not considered to be expressed
+    dplyr::left_join(
+      group_prioritization_tbl %>%
+        dplyr::distinct(
+          group,
+          sender,
+          receiver,
+          ligand,
+          receptor,
+          prioritization_score
+        )
+    ) # maybe NA there if it is not considered to be expressed
 
   sample_prioritization_tbl <- sample_prioritization_tbl %>%
     dplyr::mutate(lr_interaction = paste(ligand, receptor, sep = "_")) %>%
     dplyr::mutate(id = paste(lr_interaction, sender, receiver, sep = "_"))
   sample_prioritization_tbl <- sample_prioritization_tbl %>%
     dplyr::group_by(id) %>%
-    dplyr::mutate(scaled_LR_prod = nichenetr::scaling_zscore(ligand_receptor_prod), scaled_LR_frac = nichenetr::scaling_zscore(ligand_receptor_fraction_prod), scaled_LR_pb_prod = nichenetr::scaling_zscore(ligand_receptor_pb_prod)) %>%
+    dplyr::mutate(
+      scaled_LR_prod = nichenetr::scaling_zscore(ligand_receptor_prod),
+      scaled_LR_frac = nichenetr::scaling_zscore(ligand_receptor_fraction_prod),
+      scaled_LR_pb_prod = nichenetr::scaling_zscore(ligand_receptor_pb_prod)
+    ) %>%
     dplyr::ungroup()
 
   sample_prioritization_tbl <- sample_prioritization_tbl %>%
     dplyr::left_join(abundance_data_receiver) %>%
     dplyr::left_join(abundance_data_sender)
 
+  sample_prioritization_tbl$n_cells_sender[is.na(
+    sample_prioritization_tbl$n_cells_sender
+  )] <- 0
+  sample_prioritization_tbl$n_cells_receiver[is.na(
+    sample_prioritization_tbl$n_cells_receiver
+  )] <- 0
 
-  sample_prioritization_tbl$n_cells_sender[is.na(sample_prioritization_tbl$n_cells_sender)] <- 0
-  sample_prioritization_tbl$n_cells_receiver[is.na(sample_prioritization_tbl$n_cells_receiver)] <- 0
+  sample_prioritization_tbl$keep_sender[is.na(
+    sample_prioritization_tbl$keep_sender
+  )] <- 0
+  sample_prioritization_tbl$keep_receiver[is.na(
+    sample_prioritization_tbl$keep_receiver
+  )] <- 0
 
-  sample_prioritization_tbl$keep_sender[is.na(sample_prioritization_tbl$keep_sender)] <- 0
-  sample_prioritization_tbl$keep_receiver[is.na(sample_prioritization_tbl$keep_receiver)] <- 0
+  sample_prioritization_tbl <- sample_prioritization_tbl %>%
+    dplyr::mutate(keep_sender_receiver = keep_receiver + keep_sender)
 
-  sample_prioritization_tbl <- sample_prioritization_tbl %>% dplyr::mutate(keep_sender_receiver = keep_receiver + keep_sender)
-
-  sample_prioritization_tbl$keep_sender_receiver[sample_prioritization_tbl$keep_sender_receiver == 0] <- "Sender & Receiver absent"
-  sample_prioritization_tbl$keep_sender_receiver[sample_prioritization_tbl$keep_sender_receiver == 1 & sample_prioritization_tbl$keep_receiver == 0] <- "Receiver absent"
-  sample_prioritization_tbl$keep_sender_receiver[sample_prioritization_tbl$keep_sender_receiver == 1 & sample_prioritization_tbl$keep_sender == 0] <- "Sender absent"
-  sample_prioritization_tbl$keep_sender_receiver[sample_prioritization_tbl$keep_sender_receiver == 2] <- "Sender & Receiver present"
-  sample_prioritization_tbl <- sample_prioritization_tbl %>% mutate(keep_sender_receiver = factor(keep_sender_receiver, levels = c("Sender & Receiver absent", "Receiver absent", "Sender absent", "Sender & Receiver present")))
+  sample_prioritization_tbl$keep_sender_receiver[
+    sample_prioritization_tbl$keep_sender_receiver == 0
+  ] <- "Sender & Receiver absent"
+  sample_prioritization_tbl$keep_sender_receiver[
+    sample_prioritization_tbl$keep_sender_receiver == 1 &
+      sample_prioritization_tbl$keep_receiver == 0
+  ] <- "Receiver absent"
+  sample_prioritization_tbl$keep_sender_receiver[
+    sample_prioritization_tbl$keep_sender_receiver == 1 &
+      sample_prioritization_tbl$keep_sender == 0
+  ] <- "Sender absent"
+  sample_prioritization_tbl$keep_sender_receiver[
+    sample_prioritization_tbl$keep_sender_receiver == 2
+  ] <- "Sender & Receiver present"
+  sample_prioritization_tbl <- sample_prioritization_tbl %>%
+    mutate(
+      keep_sender_receiver = factor(
+        keep_sender_receiver,
+        levels = c(
+          "Sender & Receiver absent",
+          "Receiver absent",
+          "Sender absent",
+          "Sender & Receiver present"
+        )
+      )
+    )
 
   # ligand-target information  -----------------------------------------------
   ligand_activities_target_de_tbl <- ligand_activities_targets_DEgenes$ligand_activities %>%
-    dplyr::inner_join(ligand_activities_targets_DEgenes$de_genes_df %>% dplyr::rename(target = gene, p_val_adj = p_adj)) %>%
-    dplyr::select(contrast, receiver, ligand, activity, activity_scaled, target, ligand_target_weight, logFC, p_val, p_val_adj, direction_regulation) %>%
+    dplyr::inner_join(
+      ligand_activities_targets_DEgenes$de_genes_df %>%
+        dplyr::rename(target = gene, p_val_adj = p_adj)
+    ) %>%
+    dplyr::select(
+      contrast,
+      receiver,
+      ligand,
+      activity,
+      activity_scaled,
+      target,
+      ligand_target_weight,
+      logFC,
+      p_val,
+      p_val_adj,
+      direction_regulation
+    ) %>%
     dplyr::distinct()
 
-  ligand_activities_target_de_tbl <- ligand_activities_target_de_tbl %>% dplyr::mutate(direction_regulation = factor(direction_regulation, levels = c("up", "down")))
+  ligand_activities_target_de_tbl <- ligand_activities_target_de_tbl %>%
+    dplyr::mutate(
+      direction_regulation = factor(
+        direction_regulation,
+        levels = c("up", "down")
+      )
+    )
 
   # post-process group_prioritization   -----------------------------------------------
 
-  group_prioritization_tbl <- group_prioritization_tbl %>% dplyr::mutate(direction_regulation = factor(direction_regulation, levels = c("up", "down")))
-  group_prioritization_tbl <- group_prioritization_tbl %>% dplyr::inner_join(group_prioritization_tbl %>% dplyr::distinct(id, group, prioritization_score) %>% dplyr::group_by(id) %>% dplyr::top_n(1, prioritization_score) %>% dplyr::mutate(top_group = group) %>% dplyr::distinct(id, top_group) %>% dplyr::ungroup())
+  group_prioritization_tbl <- group_prioritization_tbl %>%
+    dplyr::mutate(
+      direction_regulation = factor(
+        direction_regulation,
+        levels = c("up", "down")
+      )
+    )
+  group_prioritization_tbl <- group_prioritization_tbl %>%
+    dplyr::inner_join(
+      group_prioritization_tbl %>%
+        dplyr::distinct(id, group, prioritization_score) %>%
+        dplyr::group_by(id) %>%
+        dplyr::top_n(1, prioritization_score) %>%
+        dplyr::mutate(top_group = group) %>%
+        dplyr::distinct(id, top_group) %>%
+        dplyr::ungroup()
+    )
 
   columns_to_remove <- c(
-    "scaled_lfc_ligand", "scaled_p_val_ligand_adapted", "scaled_lfc_receptor", "scaled_p_val_receptor_adapted", "max_scaled_activity", "scaled_pb_ligand", "scaled_pb_receptor", "fraction_expressing_ligand_receptor",
-    "avg_ligand_group", "avg_receptor_group", "ligand_receptor_prod_group", "ligand_receptor_fraction_prod_group", "sender_receiver_rel_abundance_avg", "lfc_pval_ligand", "p_val_ligand_adapted",
-    "scaled_p_val_ligand", "scaled_lfc_pval_ligand", "lfc_pval_receptor", "p_val_receptor_adapted", "scaled_p_val_receptor", "scaled_lfc_pval_receptor", "scaled_activity_scaled_up", "scaled_activity_up", "scaled_activity_scaled_down",
-    "scaled_activity_down", "scaled_avg_exprs_ligand", "scaled_avg_frq_ligand", "scaled_avg_exprs_receptor", "scaled_avg_frq_receptor"
+    "scaled_lfc_ligand",
+    "scaled_p_val_ligand_adapted",
+    "scaled_lfc_receptor",
+    "scaled_p_val_receptor_adapted",
+    "max_scaled_activity",
+    "scaled_pb_ligand",
+    "scaled_pb_receptor",
+    "fraction_expressing_ligand_receptor",
+    "avg_ligand_group",
+    "avg_receptor_group",
+    "ligand_receptor_prod_group",
+    "ligand_receptor_fraction_prod_group",
+    "sender_receiver_rel_abundance_avg",
+    "lfc_pval_ligand",
+    "p_val_ligand_adapted",
+    "scaled_p_val_ligand",
+    "scaled_lfc_pval_ligand",
+    "lfc_pval_receptor",
+    "p_val_receptor_adapted",
+    "scaled_p_val_receptor",
+    "scaled_lfc_pval_receptor",
+    "scaled_activity_scaled_up",
+    "scaled_activity_up",
+    "scaled_activity_scaled_down",
+    "scaled_activity_down",
+    "scaled_avg_exprs_ligand",
+    "scaled_avg_frq_ligand",
+    "scaled_avg_exprs_receptor",
+    "scaled_avg_frq_receptor"
   )
   columns_to_keep <- group_prioritization_tbl %>%
     colnames() %>%
@@ -360,10 +653,34 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
     select(columns_to_keep) %>%
     distinct()
   group_prioritization_tbl <- group_prioritization_tbl %>%
-    select(contrast, group, sender, receiver, ligand, receptor, lr_interaction, id, scaled_lfc_ligand, scaled_p_val_ligand_adapted, scaled_lfc_receptor, scaled_p_val_receptor_adapted, max_scaled_activity, scaled_pb_ligand, scaled_pb_receptor, fraction_expressing_ligand_receptor, prioritization_score, top_group) %>%
+    select(
+      contrast,
+      group,
+      sender,
+      receiver,
+      ligand,
+      receptor,
+      lr_interaction,
+      id,
+      scaled_lfc_ligand,
+      scaled_p_val_ligand_adapted,
+      scaled_lfc_receptor,
+      scaled_p_val_receptor_adapted,
+      max_scaled_activity,
+      scaled_pb_ligand,
+      scaled_pb_receptor,
+      fraction_expressing_ligand_receptor,
+      prioritization_score,
+      top_group
+    ) %>%
     distinct()
 
-  return(list(group_prioritization_tbl = group_prioritization_tbl, sample_prioritization_tbl = sample_prioritization_tbl, ligand_activities_target_de_tbl = ligand_activities_target_de_tbl, group_prioritization_table_source = group_prioritization_table_source))
+  return(list(
+    group_prioritization_tbl = group_prioritization_tbl,
+    sample_prioritization_tbl = sample_prioritization_tbl,
+    ligand_activities_target_de_tbl = ligand_activities_target_de_tbl,
+    group_prioritization_table_source = group_prioritization_table_source
+  ))
 }
 #' @title get_top_n_lr_pairs
 #'
@@ -470,18 +787,39 @@ generate_prioritization_tables <- function(sender_receiver_info, sender_receiver
 #'
 #'
 #'
-get_top_n_lr_pairs <- function(prioritization_tables, top_n, groups_oi = NULL, senders_oi = NULL, receivers_oi = NULL, rank_per_group = TRUE) {
+get_top_n_lr_pairs <- function(
+  prioritization_tables,
+  top_n,
+  groups_oi = NULL,
+  senders_oi = NULL,
+  receivers_oi = NULL,
+  rank_per_group = TRUE
+) {
   prioritization_tbl_oi <- prioritization_tables$group_prioritization_tbl %>%
-    dplyr::filter(group == top_group & fraction_expressing_ligand_receptor > 0) %>%
-    dplyr::distinct(group, sender, receiver, ligand, receptor, receiver, id, prioritization_score)
+    dplyr::filter(
+      group == top_group & fraction_expressing_ligand_receptor > 0
+    ) %>%
+    dplyr::distinct(
+      group,
+      sender,
+      receiver,
+      ligand,
+      receptor,
+      receiver,
+      id,
+      prioritization_score
+    )
   if (!is.null(groups_oi)) {
-    prioritization_tbl_oi <- prioritization_tbl_oi %>% dplyr::filter(group %in% groups_oi)
+    prioritization_tbl_oi <- prioritization_tbl_oi %>%
+      dplyr::filter(group %in% groups_oi)
   }
   if (!is.null(senders_oi)) {
-    prioritization_tbl_oi <- prioritization_tbl_oi %>% dplyr::filter(sender %in% senders_oi)
+    prioritization_tbl_oi <- prioritization_tbl_oi %>%
+      dplyr::filter(sender %in% senders_oi)
   }
   if (!is.null(receivers_oi)) {
-    prioritization_tbl_oi <- prioritization_tbl_oi %>% dplyr::filter(receiver %in% receivers_oi)
+    prioritization_tbl_oi <- prioritization_tbl_oi %>%
+      dplyr::filter(receiver %in% receivers_oi)
   }
   if (rank_per_group == TRUE) {
     prioritization_tbl_oi <- prioritization_tbl_oi %>%
@@ -603,38 +941,92 @@ get_top_n_lr_pairs <- function(prioritization_tables, top_n, groups_oi = NULL, s
 #'
 #'
 #'
-add_extra_criterion <- function(prioritization_tables, new_criteria_tbl, regular_criteria_tbl, scenario = "regular") {
-  group_prioritization_tbl <- prioritization_tables$group_prioritization_tbl %>% dplyr::mutate(prioritization_score = 0) # because we will recalculate this again
+add_extra_criterion <- function(
+  prioritization_tables,
+  new_criteria_tbl,
+  regular_criteria_tbl,
+  scenario = "regular"
+) {
+  group_prioritization_tbl <- prioritization_tables$group_prioritization_tbl %>%
+    dplyr::mutate(prioritization_score = 0) # because we will recalculate this again
 
   if (scenario == "regular") {
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_lfc_ligand"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_p_val_ligand_adapted"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_lfc_receptor"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_p_val_receptor_adapted"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "max_scaled_activity"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_pb_ligand"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_pb_receptor"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "fraction_expressing_ligand_receptor"] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_lfc_ligand"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_p_val_ligand_adapted"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_lfc_receptor"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_p_val_receptor_adapted"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "max_scaled_activity"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_pb_ligand"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_pb_receptor"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "fraction_expressing_ligand_receptor"
+    ] <- 1
   }
   if (scenario == "lower_DE") {
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_lfc_ligand"] <- 0.5
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_p_val_ligand_adapted"] <- 0.5
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_lfc_receptor"] <- 0.5
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_p_val_receptor_adapted"] <- 0.5
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "max_scaled_activity"] <- 2
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_pb_ligand"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_pb_receptor"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "fraction_expressing_ligand_receptor"] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_lfc_ligand"
+    ] <- 0.5
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_p_val_ligand_adapted"
+    ] <- 0.5
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_lfc_receptor"
+    ] <- 0.5
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_p_val_receptor_adapted"
+    ] <- 0.5
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "max_scaled_activity"
+    ] <- 2
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_pb_ligand"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_pb_receptor"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "fraction_expressing_ligand_receptor"
+    ] <- 1
   }
   if (scenario == "no_frac_LR_expr") {
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_lfc_ligand"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_p_val_ligand_adapted"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_lfc_receptor"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_p_val_receptor_adapted"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "max_scaled_activity"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_pb_ligand"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "scaled_pb_receptor"] <- 1
-    regular_criteria_tbl$weight[regular_criteria_tbl$criterion == "fraction_expressing_ligand_receptor"] <- 0
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_lfc_ligand"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_p_val_ligand_adapted"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_lfc_receptor"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_p_val_receptor_adapted"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "max_scaled_activity"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_pb_ligand"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "scaled_pb_receptor"
+    ] <- 1
+    regular_criteria_tbl$weight[
+      regular_criteria_tbl$criterion == "fraction_expressing_ligand_receptor"
+    ] <- 0
   }
 
   criteria_tbl <- dplyr::bind_rows(regular_criteria_tbl, new_criteria_tbl)
@@ -644,23 +1036,56 @@ add_extra_criterion <- function(prioritization_tables, new_criteria_tbl, regular
   for (i in 1:nrow(criteria_tbl)) {
     criteria_tbl_oi <- criteria_tbl[i, ]
     group_prioritization_tbl <- group_prioritization_tbl %>%
-      dplyr::mutate(prioritization_score = prioritization_score + (criteria_tbl_oi$weight * criteria_tbl_oi$regularization_factor) * eval(parse(text = criteria_tbl_oi$criterion)))
+      dplyr::mutate(
+        prioritization_score = prioritization_score +
+          (criteria_tbl_oi$weight * criteria_tbl_oi$regularization_factor) *
+            eval(parse(text = criteria_tbl_oi$criterion))
+      )
   }
 
   group_prioritization_tbl <- group_prioritization_tbl %>%
-    dplyr::mutate(prioritization_score = prioritization_score / sum_prioritization_weights) %>%
+    dplyr::mutate(
+      prioritization_score = prioritization_score / sum_prioritization_weights
+    ) %>%
     dplyr::arrange(-prioritization_score)
 
   # post-process group_prioritization   -----------------------------------------------
   group_prioritization_tbl <- group_prioritization_tbl %>%
-    dplyr::inner_join(group_prioritization_tbl %>% dplyr::distinct(id, group, prioritization_score) %>% dplyr::group_by(id) %>% dplyr::top_n(1, prioritization_score) %>% dplyr::mutate(top_group = group) %>% dplyr::distinct(id, top_group) %>% dplyr::ungroup()) %>%
+    dplyr::inner_join(
+      group_prioritization_tbl %>%
+        dplyr::distinct(id, group, prioritization_score) %>%
+        dplyr::group_by(id) %>%
+        dplyr::top_n(1, prioritization_score) %>%
+        dplyr::mutate(top_group = group) %>%
+        dplyr::distinct(id, top_group) %>%
+        dplyr::ungroup()
+    ) %>%
     dplyr::distinct()
 
   prioritization_tables$group_prioritization_tbl <- group_prioritization_tbl
 
   return(prioritization_tables)
 }
-generate_prioritization_tables_tests <- function(sender_receiver_info, sender_receiver_de, ligand_activities_targets_DEgenes, contrast_tbl, sender_receiver_tbl, grouping_tbl, prioritizing_weights = c("de_ligand" = 1, "de_receptor" = 1, "activity_scaled" = 1, "exprs_ligand" = 1, "exprs_receptor" = 1, "frac_exprs_ligand_receptor" = 1), fraction_cutoff, abundance_data_receiver, abundance_data_sender, ligand_activity_down = TRUE) {
+generate_prioritization_tables_tests <- function(
+  sender_receiver_info,
+  sender_receiver_de,
+  ligand_activities_targets_DEgenes,
+  contrast_tbl,
+  sender_receiver_tbl,
+  grouping_tbl,
+  prioritizing_weights = c(
+    "de_ligand" = 1,
+    "de_receptor" = 1,
+    "activity_scaled" = 1,
+    "exprs_ligand" = 1,
+    "exprs_receptor" = 1,
+    "frac_exprs_ligand_receptor" = 1
+  ),
+  fraction_cutoff,
+  abundance_data_receiver,
+  abundance_data_sender,
+  ligand_activity_down = TRUE
+) {
   requireNamespace("dplyr")
 
   # Group prioritization table -------------------------------------------------------------------------------------------------------------------------------------------
@@ -668,11 +1093,53 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
   # receiver-focused prioritization for receptor: contrast - receiver - receptor - lfc_receptor - p_adj_receptor: group by contrast and receiver: score each receptor based on those rankings
   receiver_receptor_prioritization <- sender_receiver_de %>%
     dplyr::ungroup() %>%
-    dplyr::select(contrast, receiver, receptor, lfc_receptor, p_val_receptor) %>%
+    dplyr::select(
+      contrast,
+      receiver,
+      receptor,
+      lfc_receptor,
+      p_val_receptor
+    ) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(lfc_pval_receptor = -log10(p_val_receptor) * lfc_receptor, p_val_receptor_adapted = -log10(p_val_receptor) * sign(lfc_receptor))
+    dplyr::mutate(
+      lfc_pval_receptor = -log10(p_val_receptor) * lfc_receptor,
+      p_val_receptor_adapted = -log10(p_val_receptor) * sign(lfc_receptor)
+    )
   receiver_receptor_prioritization <- receiver_receptor_prioritization %>%
-    dplyr::mutate(scaled_lfc_receptor = rank(lfc_receptor, ties.method = "average", na.last = FALSE) / max(rank(lfc_receptor, ties.method = "average", na.last = FALSE)), scaled_p_val_receptor = rank(desc(p_val_receptor), ties.method = "average", na.last = FALSE) / max(rank(desc(p_val_receptor), ties.method = "average", na.last = FALSE)), scaled_lfc_pval_receptor = rank(lfc_pval_receptor, ties.method = "average", na.last = FALSE) / max(rank(lfc_pval_receptor, ties.method = "average", na.last = FALSE)), scaled_p_val_receptor_adapted = rank(p_val_receptor_adapted, ties.method = "average", na.last = FALSE) / max(rank(p_val_receptor_adapted, ties.method = "average", na.last = FALSE))) %>%
+    dplyr::mutate(
+      scaled_lfc_receptor = rank(
+        lfc_receptor,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(lfc_receptor, ties.method = "average", na.last = FALSE)),
+      scaled_p_val_receptor = rank(
+        desc(p_val_receptor),
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(
+          desc(p_val_receptor),
+          ties.method = "average",
+          na.last = FALSE
+        )),
+      scaled_lfc_pval_receptor = rank(
+        lfc_pval_receptor,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(lfc_pval_receptor, ties.method = "average", na.last = FALSE)),
+      scaled_p_val_receptor_adapted = rank(
+        p_val_receptor_adapted,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(
+          p_val_receptor_adapted,
+          ties.method = "average",
+          na.last = FALSE
+        ))
+    ) %>%
     dplyr::arrange(-lfc_pval_receptor)
 
   # receiver-focused prioritization for ligand: contrast - receiver - ligand - activity_scaled: group by contrast and receiver: score each ligand based on the activity
@@ -680,17 +1147,41 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
     dplyr::ungroup() %>%
     dplyr::filter(direction_regulation == "up") %>%
     dplyr::select(contrast, receiver, ligand, activity, activity_scaled) %>%
-    dplyr::rename(activity_up = activity, activity_scaled_up = activity_scaled) %>%
+    dplyr::rename(
+      activity_up = activity,
+      activity_scaled_up = activity_scaled
+    ) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(scaled_activity_scaled_up = scale_quantile_adapted(activity_scaled_up, outlier_cutoff = 0.01), scaled_activity_up = scale_quantile_adapted(activity_up, outlier_cutoff = 0.01)) %>%
+    dplyr::mutate(
+      scaled_activity_scaled_up = scale_quantile_adapted(
+        activity_scaled_up,
+        outlier_cutoff = 0.01
+      ),
+      scaled_activity_up = scale_quantile_adapted(
+        activity_up,
+        outlier_cutoff = 0.01
+      )
+    ) %>%
     dplyr::arrange(-activity_scaled_up)
   receiver_ligand_activity_prioritization_down <- ligand_activities_targets_DEgenes$ligand_activities %>%
     dplyr::ungroup() %>%
     dplyr::filter(direction_regulation == "down") %>%
     dplyr::select(contrast, receiver, ligand, activity, activity_scaled) %>%
-    dplyr::rename(activity_down = activity, activity_scaled_down = activity_scaled) %>%
+    dplyr::rename(
+      activity_down = activity,
+      activity_scaled_down = activity_scaled
+    ) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(scaled_activity_scaled_down = scale_quantile_adapted(activity_scaled_down, outlier_cutoff = 0.01), scaled_activity_down = scale_quantile_adapted(activity_down, outlier_cutoff = 0.01)) %>%
+    dplyr::mutate(
+      scaled_activity_scaled_down = scale_quantile_adapted(
+        activity_scaled_down,
+        outlier_cutoff = 0.01
+      ),
+      scaled_activity_down = scale_quantile_adapted(
+        activity_down,
+        outlier_cutoff = 0.01
+      )
+    ) %>%
     dplyr::arrange(-activity_scaled_down)
 
   # sender-focused prioritization: contrast - sender - ligand - lfc_ligand - p_adj_ligand: group by contrast and sender: score each ligand based on those rankings
@@ -698,9 +1189,41 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
     dplyr::ungroup() %>%
     dplyr::select(contrast, sender, ligand, lfc_ligand, p_val_ligand) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(lfc_pval_ligand = -log10(p_val_ligand) * lfc_ligand, p_val_ligand_adapted = -log10(p_val_ligand) * sign(lfc_ligand))
+    dplyr::mutate(
+      lfc_pval_ligand = -log10(p_val_ligand) * lfc_ligand,
+      p_val_ligand_adapted = -log10(p_val_ligand) * sign(lfc_ligand)
+    )
   sender_ligand_prioritization <- sender_ligand_prioritization %>%
-    dplyr::mutate(scaled_lfc_ligand = rank(lfc_ligand, ties.method = "average", na.last = FALSE) / max(rank(lfc_ligand, ties.method = "average", na.last = FALSE)), scaled_p_val_ligand = rank(desc(p_val_ligand), ties.method = "average", na.last = FALSE) / max(rank(desc(p_val_ligand), ties.method = "average", na.last = FALSE)), scaled_lfc_pval_ligand = rank(lfc_pval_ligand, ties.method = "average", na.last = FALSE) / max(rank(lfc_pval_ligand, ties.method = "average", na.last = FALSE)), scaled_p_val_ligand_adapted = rank(p_val_ligand_adapted, ties.method = "average", na.last = FALSE) / max(rank(p_val_ligand_adapted, ties.method = "average", na.last = FALSE))) %>%
+    dplyr::mutate(
+      scaled_lfc_ligand = rank(
+        lfc_ligand,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(lfc_ligand, ties.method = "average", na.last = FALSE)),
+      scaled_p_val_ligand = rank(
+        desc(p_val_ligand),
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(desc(p_val_ligand), ties.method = "average", na.last = FALSE)),
+      scaled_lfc_pval_ligand = rank(
+        lfc_pval_ligand,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(lfc_pval_ligand, ties.method = "average", na.last = FALSE)),
+      scaled_p_val_ligand_adapted = rank(
+        p_val_ligand_adapted,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(
+          p_val_ligand_adapted,
+          ties.method = "average",
+          na.last = FALSE
+        ))
+    ) %>%
     dplyr::arrange(-lfc_pval_ligand)
 
   # cell-type and condition specificity of expression of ligand:  per ligand: score each sender-condition combination based on expression and fraction
@@ -711,7 +1234,9 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
     dplyr::select(group, sender, ligand, avg_ligand_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(ligand) %>%
-    dplyr::mutate(scaled_avg_exprs_ligand = scale_quantile_adapted(avg_ligand_group)) %>%
+    dplyr::mutate(
+      scaled_avg_exprs_ligand = scale_quantile_adapted(avg_ligand_group)
+    ) %>%
     dplyr::arrange(-scaled_avg_exprs_ligand)
   ligand_celltype_specificity_prioritization_frq <- sender_receiver_info$frq_df_group %>%
     dplyr::inner_join(sender_receiver_tbl) %>%
@@ -720,7 +1245,9 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
     dplyr::select(group, sender, ligand, fraction_ligand_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(ligand) %>%
-    dplyr::mutate(scaled_avg_frq_ligand = scale_quantile_adapted(fraction_ligand_group)) %>%
+    dplyr::mutate(
+      scaled_avg_frq_ligand = scale_quantile_adapted(fraction_ligand_group)
+    ) %>%
     dplyr::arrange(-scaled_avg_frq_ligand)
   ligand_celltype_specificity_prioritization_pb <- sender_receiver_info$pb_df_group %>%
     dplyr::inner_join(sender_receiver_tbl) %>%
@@ -729,7 +1256,9 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
     dplyr::select(group, sender, ligand, pb_ligand_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(ligand) %>%
-    dplyr::mutate(scaled_pb_ligand = scale_quantile_adapted(pb_ligand_group)) %>%
+    dplyr::mutate(
+      scaled_pb_ligand = scale_quantile_adapted(pb_ligand_group)
+    ) %>%
     dplyr::arrange(-scaled_pb_ligand)
 
   # cell-type and condition specificity of expression of receptor:  per receptor: score each receiver-condition combination based on expression and fraction
@@ -740,7 +1269,9 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
     dplyr::select(group, receiver, receptor, avg_receptor_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(receptor) %>%
-    dplyr::mutate(scaled_avg_exprs_receptor = scale_quantile_adapted(avg_receptor_group)) %>%
+    dplyr::mutate(
+      scaled_avg_exprs_receptor = scale_quantile_adapted(avg_receptor_group)
+    ) %>%
     dplyr::arrange(-scaled_avg_exprs_receptor)
   receptor_celltype_specificity_prioritization_frq <- sender_receiver_info$frq_df_group %>%
     dplyr::inner_join(sender_receiver_tbl) %>%
@@ -749,7 +1280,9 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
     dplyr::select(group, receiver, receptor, fraction_receptor_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(receptor) %>%
-    dplyr::mutate(scaled_avg_frq_receptor = scale_quantile_adapted(fraction_receptor_group)) %>%
+    dplyr::mutate(
+      scaled_avg_frq_receptor = scale_quantile_adapted(fraction_receptor_group)
+    ) %>%
     dplyr::arrange(-scaled_avg_frq_receptor)
   receptor_celltype_specificity_prioritization_pb <- sender_receiver_info$pb_df_group %>%
     dplyr::inner_join(sender_receiver_tbl) %>%
@@ -758,28 +1291,49 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
     dplyr::select(group, receiver, receptor, pb_receptor_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(receptor) %>%
-    dplyr::mutate(scaled_pb_receptor = scale_quantile_adapted(pb_receptor_group)) %>%
+    dplyr::mutate(
+      scaled_pb_receptor = scale_quantile_adapted(pb_receptor_group)
+    ) %>%
     dplyr::arrange(-scaled_pb_receptor)
 
   # both receptor and ligand should be expressed!
   ligand_receptor_expressed_prioritization <- sender_receiver_info$frq_df %>%
     dplyr::inner_join(grouping_tbl) %>%
     dplyr::ungroup() %>%
-    dplyr::select(sample, group, sender, receiver, ligand, receptor, fraction_ligand, fraction_receptor) %>%
+    dplyr::select(
+      sample,
+      group,
+      sender,
+      receiver,
+      ligand,
+      receptor,
+      fraction_ligand,
+      fraction_receptor
+    ) %>%
     dplyr::distinct() %>%
     dplyr::group_by(ligand, receptor, sender, receiver, group) %>%
-    dplyr::summarise(n_samples = n(), n_expressing = sum(fraction_ligand > fraction_cutoff & fraction_receptor > fraction_cutoff)) %>%
-    dplyr::mutate(fraction_expressing_ligand_receptor = n_expressing / n_samples) %>%
+    dplyr::summarise(
+      n_samples = n(),
+      n_expressing = sum(
+        fraction_ligand > fraction_cutoff & fraction_receptor > fraction_cutoff
+      )
+    ) %>%
+    dplyr::mutate(
+      fraction_expressing_ligand_receptor = n_expressing / n_samples
+    ) %>%
     dplyr::arrange(-fraction_expressing_ligand_receptor) %>%
     dplyr::select(-n_samples, -n_expressing) %>%
     dplyr::ungroup()
-
 
   # final group-based prioritization
   if (ligand_activity_down == TRUE) {
     group_prioritization_tbl <- contrast_tbl %>%
       dplyr::inner_join(sender_receiver_de) %>%
-      dplyr::inner_join(ligand_activities_targets_DEgenes$ligand_activities %>% dplyr::select(-target, -ligand_target_weight) %>% dplyr::distinct()) %>%
+      dplyr::inner_join(
+        ligand_activities_targets_DEgenes$ligand_activities %>%
+          dplyr::select(-target, -ligand_target_weight) %>%
+          dplyr::distinct()
+      ) %>%
       dplyr::mutate(lr_interaction = paste(ligand, receptor, sep = "_")) %>%
       dplyr::mutate(id = paste(lr_interaction, sender, receiver, sep = "_")) %>%
       dplyr::inner_join(sender_receiver_info$avg_df_group) %>%
@@ -795,11 +1349,21 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
       dplyr::inner_join(receptor_celltype_specificity_prioritization_frq) %>%
       dplyr::inner_join(receptor_celltype_specificity_prioritization_pb) %>%
       dplyr::inner_join(ligand_receptor_expressed_prioritization) %>%
-      mutate(max_scaled_activity = pmax(scaled_activity_scaled_up, scaled_activity_scaled_down, na.rm = TRUE))
+      mutate(
+        max_scaled_activity = pmax(
+          scaled_activity_scaled_up,
+          scaled_activity_scaled_down,
+          na.rm = TRUE
+        )
+      )
   } else {
     group_prioritization_tbl <- contrast_tbl %>%
       dplyr::inner_join(sender_receiver_de) %>%
-      dplyr::inner_join(ligand_activities_targets_DEgenes$ligand_activities %>% dplyr::select(-target, -ligand_target_weight) %>% dplyr::distinct()) %>%
+      dplyr::inner_join(
+        ligand_activities_targets_DEgenes$ligand_activities %>%
+          dplyr::select(-target, -ligand_target_weight) %>%
+          dplyr::distinct()
+      ) %>%
       dplyr::mutate(lr_interaction = paste(ligand, receptor, sep = "_")) %>%
       dplyr::mutate(id = paste(lr_interaction, sender, receiver, sep = "_")) %>%
       dplyr::inner_join(sender_receiver_info$avg_df_group) %>%
@@ -819,23 +1383,32 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
   }
 
   # have a weighted average the final score (no product!!)
-  sum_prioritization_weights <- prioritizing_weights["de_ligand"] + prioritizing_weights["de_receptor"] + prioritizing_weights["activity_scaled"] + prioritizing_weights["exprs_ligand"] + prioritizing_weights["exprs_receptor"] + prioritizing_weights["frac_exprs_ligand_receptor"]
+  sum_prioritization_weights <- prioritizing_weights["de_ligand"] +
+    prioritizing_weights["de_receptor"] +
+    prioritizing_weights["activity_scaled"] +
+    prioritizing_weights["exprs_ligand"] +
+    prioritizing_weights["exprs_receptor"] +
+    prioritizing_weights["frac_exprs_ligand_receptor"]
   group_prioritization_tbl <- group_prioritization_tbl %>%
     dplyr::mutate(
-      prioritization_score =
-        (
-          (0.5 * prioritizing_weights["de_ligand"] * scaled_lfc_ligand) +
-            (0.5 * prioritizing_weights["de_receptor"] * scaled_lfc_receptor) +
-            (0.5 * prioritizing_weights["de_ligand"] * scaled_p_val_ligand_adapted) +
-            (0.5 * prioritizing_weights["de_receptor"] * scaled_p_val_receptor_adapted) +
-            (prioritizing_weights["activity_scaled"] * max_scaled_activity) +
-            (prioritizing_weights["exprs_ligand"] * scaled_pb_ligand) + # batch-effect corrected if needed
-            (prioritizing_weights["exprs_receptor"] * scaled_pb_receptor) + # batch-effect corrected if needed
-            (prioritizing_weights["frac_exprs_ligand_receptor"] * fraction_expressing_ligand_receptor)
-        ) * (1 / sum_prioritization_weights)
+      prioritization_score = ((0.5 *
+        prioritizing_weights["de_ligand"] *
+        scaled_lfc_ligand) +
+        (0.5 * prioritizing_weights["de_receptor"] * scaled_lfc_receptor) +
+        (0.5 *
+          prioritizing_weights["de_ligand"] *
+          scaled_p_val_ligand_adapted) +
+        (0.5 *
+          prioritizing_weights["de_receptor"] *
+          scaled_p_val_receptor_adapted) +
+        (prioritizing_weights["activity_scaled"] * max_scaled_activity) +
+        (prioritizing_weights["exprs_ligand"] * scaled_pb_ligand) + # batch-effect corrected if needed
+        (prioritizing_weights["exprs_receptor"] * scaled_pb_receptor) + # batch-effect corrected if needed
+        (prioritizing_weights["frac_exprs_ligand_receptor"] *
+          fraction_expressing_ligand_receptor)) *
+        (1 / sum_prioritization_weights)
     ) %>%
     dplyr::arrange(-prioritization_score)
-
 
   # Sample-based Prioritization ----------------------------------------------- ----------------------------------------------------------------
   # sample_prioritization_tbl = sender_receiver_info$avg_df %>% dplyr::inner_join(sender_receiver_info$frq_df) %>% dplyr::inner_join(grouping_tbl) %>% dplyr::inner_join(group_prioritization_tbl %>% dplyr::distinct(group, sender, receiver, ligand, receptor, prioritization_score))
@@ -843,53 +1416,157 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
     dplyr::inner_join(sender_receiver_info$frq_df) %>%
     dplyr::inner_join(sender_receiver_info$pb_df) %>%
     dplyr::inner_join(grouping_tbl) %>%
-    dplyr::left_join(group_prioritization_tbl %>% dplyr::distinct(group, sender, receiver, ligand, receptor, prioritization_score)) # maybe NA there if it is not considered to be expressed
+    dplyr::left_join(
+      group_prioritization_tbl %>%
+        dplyr::distinct(
+          group,
+          sender,
+          receiver,
+          ligand,
+          receptor,
+          prioritization_score
+        )
+    ) # maybe NA there if it is not considered to be expressed
 
   sample_prioritization_tbl <- sample_prioritization_tbl %>%
     dplyr::mutate(lr_interaction = paste(ligand, receptor, sep = "_")) %>%
     dplyr::mutate(id = paste(lr_interaction, sender, receiver, sep = "_"))
   sample_prioritization_tbl <- sample_prioritization_tbl %>%
     dplyr::group_by(id) %>%
-    dplyr::mutate(scaled_LR_prod = nichenetr::scaling_zscore(ligand_receptor_prod), scaled_LR_frac = nichenetr::scaling_zscore(ligand_receptor_fraction_prod), scaled_LR_pb_prod = nichenetr::scaling_zscore(ligand_receptor_pb_prod)) %>%
+    dplyr::mutate(
+      scaled_LR_prod = nichenetr::scaling_zscore(ligand_receptor_prod),
+      scaled_LR_frac = nichenetr::scaling_zscore(ligand_receptor_fraction_prod),
+      scaled_LR_pb_prod = nichenetr::scaling_zscore(ligand_receptor_pb_prod)
+    ) %>%
     dplyr::ungroup()
 
   sample_prioritization_tbl <- sample_prioritization_tbl %>%
     dplyr::left_join(abundance_data_receiver) %>%
     dplyr::left_join(abundance_data_sender)
 
+  sample_prioritization_tbl$n_cells_sender[is.na(
+    sample_prioritization_tbl$n_cells_sender
+  )] <- 0
+  sample_prioritization_tbl$n_cells_receiver[is.na(
+    sample_prioritization_tbl$n_cells_receiver
+  )] <- 0
 
-  sample_prioritization_tbl$n_cells_sender[is.na(sample_prioritization_tbl$n_cells_sender)] <- 0
-  sample_prioritization_tbl$n_cells_receiver[is.na(sample_prioritization_tbl$n_cells_receiver)] <- 0
+  sample_prioritization_tbl$keep_sender[is.na(
+    sample_prioritization_tbl$keep_sender
+  )] <- 0
+  sample_prioritization_tbl$keep_receiver[is.na(
+    sample_prioritization_tbl$keep_receiver
+  )] <- 0
 
-  sample_prioritization_tbl$keep_sender[is.na(sample_prioritization_tbl$keep_sender)] <- 0
-  sample_prioritization_tbl$keep_receiver[is.na(sample_prioritization_tbl$keep_receiver)] <- 0
+  sample_prioritization_tbl <- sample_prioritization_tbl %>%
+    dplyr::mutate(keep_sender_receiver = keep_receiver + keep_sender)
 
-  sample_prioritization_tbl <- sample_prioritization_tbl %>% dplyr::mutate(keep_sender_receiver = keep_receiver + keep_sender)
-
-  sample_prioritization_tbl$keep_sender_receiver[sample_prioritization_tbl$keep_sender_receiver == 0] <- "Sender & Receiver absent"
-  sample_prioritization_tbl$keep_sender_receiver[sample_prioritization_tbl$keep_sender_receiver == 1 & sample_prioritization_tbl$keep_receiver == 0] <- "Receiver absent"
-  sample_prioritization_tbl$keep_sender_receiver[sample_prioritization_tbl$keep_sender_receiver == 1 & sample_prioritization_tbl$keep_sender == 0] <- "Sender absent"
-  sample_prioritization_tbl$keep_sender_receiver[sample_prioritization_tbl$keep_sender_receiver == 2] <- "Sender & Receiver present"
-  sample_prioritization_tbl <- sample_prioritization_tbl %>% mutate(keep_sender_receiver = factor(keep_sender_receiver, levels = c("Sender & Receiver absent", "Receiver absent", "Sender absent", "Sender & Receiver present")))
+  sample_prioritization_tbl$keep_sender_receiver[
+    sample_prioritization_tbl$keep_sender_receiver == 0
+  ] <- "Sender & Receiver absent"
+  sample_prioritization_tbl$keep_sender_receiver[
+    sample_prioritization_tbl$keep_sender_receiver == 1 &
+      sample_prioritization_tbl$keep_receiver == 0
+  ] <- "Receiver absent"
+  sample_prioritization_tbl$keep_sender_receiver[
+    sample_prioritization_tbl$keep_sender_receiver == 1 &
+      sample_prioritization_tbl$keep_sender == 0
+  ] <- "Sender absent"
+  sample_prioritization_tbl$keep_sender_receiver[
+    sample_prioritization_tbl$keep_sender_receiver == 2
+  ] <- "Sender & Receiver present"
+  sample_prioritization_tbl <- sample_prioritization_tbl %>%
+    mutate(
+      keep_sender_receiver = factor(
+        keep_sender_receiver,
+        levels = c(
+          "Sender & Receiver absent",
+          "Receiver absent",
+          "Sender absent",
+          "Sender & Receiver present"
+        )
+      )
+    )
 
   # ligand-target information  -----------------------------------------------
   ligand_activities_target_de_tbl <- ligand_activities_targets_DEgenes$ligand_activities %>%
-    dplyr::inner_join(ligand_activities_targets_DEgenes$de_genes_df %>% dplyr::rename(target = gene, p_val_adj = p_adj)) %>%
-    dplyr::select(contrast, receiver, ligand, activity, activity_scaled, target, ligand_target_weight, logFC, p_val, p_val_adj, direction_regulation) %>%
+    dplyr::inner_join(
+      ligand_activities_targets_DEgenes$de_genes_df %>%
+        dplyr::rename(target = gene, p_val_adj = p_adj)
+    ) %>%
+    dplyr::select(
+      contrast,
+      receiver,
+      ligand,
+      activity,
+      activity_scaled,
+      target,
+      ligand_target_weight,
+      logFC,
+      p_val,
+      p_val_adj,
+      direction_regulation
+    ) %>%
     dplyr::distinct()
 
-  ligand_activities_target_de_tbl <- ligand_activities_target_de_tbl %>% dplyr::mutate(direction_regulation = factor(direction_regulation, levels = c("up", "down")))
+  ligand_activities_target_de_tbl <- ligand_activities_target_de_tbl %>%
+    dplyr::mutate(
+      direction_regulation = factor(
+        direction_regulation,
+        levels = c("up", "down")
+      )
+    )
 
   # post-process group_prioritization
 
-  group_prioritization_tbl <- group_prioritization_tbl %>% dplyr::mutate(direction_regulation = factor(direction_regulation, levels = c("up", "down")))
-  group_prioritization_tbl <- group_prioritization_tbl %>% dplyr::inner_join(group_prioritization_tbl %>% dplyr::distinct(id, group, prioritization_score) %>% dplyr::group_by(id) %>% dplyr::top_n(1, prioritization_score) %>% dplyr::mutate(top_group = group) %>% dplyr::distinct(id, top_group) %>% dplyr::ungroup())
+  group_prioritization_tbl <- group_prioritization_tbl %>%
+    dplyr::mutate(
+      direction_regulation = factor(
+        direction_regulation,
+        levels = c("up", "down")
+      )
+    )
+  group_prioritization_tbl <- group_prioritization_tbl %>%
+    dplyr::inner_join(
+      group_prioritization_tbl %>%
+        dplyr::distinct(id, group, prioritization_score) %>%
+        dplyr::group_by(id) %>%
+        dplyr::top_n(1, prioritization_score) %>%
+        dplyr::mutate(top_group = group) %>%
+        dplyr::distinct(id, top_group) %>%
+        dplyr::ungroup()
+    )
 
   columns_to_remove <- c(
-    "scaled_lfc_ligand", "scaled_p_val_ligand_adapted", "scaled_lfc_receptor", "scaled_p_val_receptor_adapted", "max_scaled_activity", "scaled_pb_ligand", "scaled_pb_receptor", "fraction_expressing_ligand_receptor",
-    "avg_ligand_group", "avg_receptor_group", "ligand_receptor_prod_group", "ligand_receptor_fraction_prod_group", "sender_receiver_rel_abundance_avg", "lfc_pval_ligand", "p_val_ligand_adapted",
-    "scaled_p_val_ligand", "scaled_lfc_pval_ligand", "lfc_pval_receptor", "p_val_receptor_adapted", "scaled_p_val_receptor", "scaled_lfc_pval_receptor", "scaled_activity_scaled_up", "scaled_activity_up", "scaled_activity_scaled_down",
-    "scaled_activity_down", "scaled_avg_exprs_ligand", "scaled_avg_frq_ligand", "scaled_avg_exprs_receptor", "scaled_avg_frq_receptor"
+    "scaled_lfc_ligand",
+    "scaled_p_val_ligand_adapted",
+    "scaled_lfc_receptor",
+    "scaled_p_val_receptor_adapted",
+    "max_scaled_activity",
+    "scaled_pb_ligand",
+    "scaled_pb_receptor",
+    "fraction_expressing_ligand_receptor",
+    "avg_ligand_group",
+    "avg_receptor_group",
+    "ligand_receptor_prod_group",
+    "ligand_receptor_fraction_prod_group",
+    "sender_receiver_rel_abundance_avg",
+    "lfc_pval_ligand",
+    "p_val_ligand_adapted",
+    "scaled_p_val_ligand",
+    "scaled_lfc_pval_ligand",
+    "lfc_pval_receptor",
+    "p_val_receptor_adapted",
+    "scaled_p_val_receptor",
+    "scaled_lfc_pval_receptor",
+    "scaled_activity_scaled_up",
+    "scaled_activity_up",
+    "scaled_activity_scaled_down",
+    "scaled_activity_down",
+    "scaled_avg_exprs_ligand",
+    "scaled_avg_frq_ligand",
+    "scaled_avg_exprs_receptor",
+    "scaled_avg_frq_receptor"
   )
   columns_to_keep <- group_prioritization_tbl %>%
     colnames() %>%
@@ -898,10 +1575,34 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
     select(columns_to_keep) %>%
     distinct()
   group_prioritization_tbl <- group_prioritization_tbl %>%
-    select(contrast, group, sender, receiver, ligand, receptor, lr_interaction, id, scaled_lfc_ligand, scaled_p_val_ligand_adapted, scaled_lfc_receptor, scaled_p_val_receptor_adapted, max_scaled_activity, scaled_pb_ligand, scaled_pb_receptor, fraction_expressing_ligand_receptor, prioritization_score, top_group) %>%
+    select(
+      contrast,
+      group,
+      sender,
+      receiver,
+      ligand,
+      receptor,
+      lr_interaction,
+      id,
+      scaled_lfc_ligand,
+      scaled_p_val_ligand_adapted,
+      scaled_lfc_receptor,
+      scaled_p_val_receptor_adapted,
+      max_scaled_activity,
+      scaled_pb_ligand,
+      scaled_pb_receptor,
+      fraction_expressing_ligand_receptor,
+      prioritization_score,
+      top_group
+    ) %>%
     distinct()
 
-  return(list(group_prioritization_tbl = group_prioritization_tbl, sample_prioritization_tbl = sample_prioritization_tbl, ligand_activities_target_de_tbl = ligand_activities_target_de_tbl, group_prioritization_table_source = group_prioritization_table_source))
+  return(list(
+    group_prioritization_tbl = group_prioritization_tbl,
+    sample_prioritization_tbl = sample_prioritization_tbl,
+    ligand_activities_target_de_tbl = ligand_activities_target_de_tbl,
+    group_prioritization_table_source = group_prioritization_table_source
+  ))
 }
 #' @title generate_prioritization_tables_sampleAgnostic_multifactorial
 #'
@@ -1010,17 +1711,50 @@ generate_prioritization_tables_tests <- function(sender_receiver_info, sender_re
 #'
 #'
 #'
-generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_receiver_info, sender_receiver_de, ligand_activities_targets_DEgenes, contrast_tbl, sender_receiver_tbl, grouping_tbl, scenario = "regular", fraction_cutoff, abundance_data_receiver, abundance_data_sender, ligand_activity_down = FALSE) {
+generate_prioritization_tables_sampleAgnostic_multifactorial <- function(
+  sender_receiver_info,
+  sender_receiver_de,
+  ligand_activities_targets_DEgenes,
+  contrast_tbl,
+  sender_receiver_tbl,
+  grouping_tbl,
+  scenario = "regular",
+  fraction_cutoff,
+  abundance_data_receiver,
+  abundance_data_sender,
+  ligand_activity_down = FALSE
+) {
   requireNamespace("dplyr")
 
   if (scenario == "regular") {
-    prioritizing_weights <- c("de_ligand" = 1, "de_receptor" = 1, "activity_scaled" = 1, "exprs_ligand" = 1, "exprs_receptor" = 1, "frac_exprs_ligand_receptor" = 0)
+    prioritizing_weights <- c(
+      "de_ligand" = 1,
+      "de_receptor" = 1,
+      "activity_scaled" = 1,
+      "exprs_ligand" = 1,
+      "exprs_receptor" = 1,
+      "frac_exprs_ligand_receptor" = 0
+    )
   }
   if (scenario == "lower_DE") {
-    prioritizing_weights <- c("de_ligand" = 0.5, "de_receptor" = 0.5, "activity_scaled" = 2, "exprs_ligand" = 1, "exprs_receptor" = 1, "frac_exprs_ligand_receptor" = 0)
+    prioritizing_weights <- c(
+      "de_ligand" = 0.5,
+      "de_receptor" = 0.5,
+      "activity_scaled" = 2,
+      "exprs_ligand" = 1,
+      "exprs_receptor" = 1,
+      "frac_exprs_ligand_receptor" = 0
+    )
   }
   if (scenario == "no_frac_LR_expr") {
-    prioritizing_weights <- c("de_ligand" = 1, "de_receptor" = 1, "activity_scaled" = 1, "exprs_ligand" = 1, "exprs_receptor" = 1, "frac_exprs_ligand_receptor" = 0)
+    prioritizing_weights <- c(
+      "de_ligand" = 1,
+      "de_receptor" = 1,
+      "activity_scaled" = 1,
+      "exprs_ligand" = 1,
+      "exprs_receptor" = 1,
+      "frac_exprs_ligand_receptor" = 0
+    )
   }
 
   # Group prioritization table -------------------------------------------------------------------------------------------------------------------------------------------
@@ -1028,11 +1762,53 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_
   # receiver-focused prioritization for receptor: contrast - receiver - receptor - lfc_receptor - p_adj_receptor: group by contrast and receiver: score each receptor based on those rankings
   receiver_receptor_prioritization <- sender_receiver_de %>%
     dplyr::ungroup() %>%
-    dplyr::select(contrast, receiver, receptor, lfc_receptor, p_val_receptor) %>%
+    dplyr::select(
+      contrast,
+      receiver,
+      receptor,
+      lfc_receptor,
+      p_val_receptor
+    ) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(lfc_pval_receptor = -log10(p_val_receptor) * lfc_receptor, p_val_receptor_adapted = -log10(p_val_receptor) * sign(lfc_receptor))
+    dplyr::mutate(
+      lfc_pval_receptor = -log10(p_val_receptor) * lfc_receptor,
+      p_val_receptor_adapted = -log10(p_val_receptor) * sign(lfc_receptor)
+    )
   receiver_receptor_prioritization <- receiver_receptor_prioritization %>%
-    dplyr::mutate(scaled_lfc_receptor = rank(lfc_receptor, ties.method = "average", na.last = FALSE) / max(rank(lfc_receptor, ties.method = "average", na.last = FALSE)), scaled_p_val_receptor = rank(desc(p_val_receptor), ties.method = "average", na.last = FALSE) / max(rank(desc(p_val_receptor), ties.method = "average", na.last = FALSE)), scaled_lfc_pval_receptor = rank(lfc_pval_receptor, ties.method = "average", na.last = FALSE) / max(rank(lfc_pval_receptor, ties.method = "average", na.last = FALSE)), scaled_p_val_receptor_adapted = rank(p_val_receptor_adapted, ties.method = "average", na.last = FALSE) / max(rank(p_val_receptor_adapted, ties.method = "average", na.last = FALSE))) %>%
+    dplyr::mutate(
+      scaled_lfc_receptor = rank(
+        lfc_receptor,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(lfc_receptor, ties.method = "average", na.last = FALSE)),
+      scaled_p_val_receptor = rank(
+        desc(p_val_receptor),
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(
+          desc(p_val_receptor),
+          ties.method = "average",
+          na.last = FALSE
+        )),
+      scaled_lfc_pval_receptor = rank(
+        lfc_pval_receptor,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(lfc_pval_receptor, ties.method = "average", na.last = FALSE)),
+      scaled_p_val_receptor_adapted = rank(
+        p_val_receptor_adapted,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(
+          p_val_receptor_adapted,
+          ties.method = "average",
+          na.last = FALSE
+        ))
+    ) %>%
     dplyr::arrange(-lfc_pval_receptor)
 
   # receiver-focused prioritization for ligand: contrast - receiver - ligand - activity_scaled: group by contrast and receiver: score each ligand based on the activity
@@ -1040,17 +1816,41 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_
     dplyr::ungroup() %>%
     dplyr::filter(direction_regulation == "up") %>%
     dplyr::select(contrast, receiver, ligand, activity, activity_scaled) %>%
-    dplyr::rename(activity_up = activity, activity_scaled_up = activity_scaled) %>%
+    dplyr::rename(
+      activity_up = activity,
+      activity_scaled_up = activity_scaled
+    ) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(scaled_activity_scaled_up = scale_quantile_adapted(activity_scaled_up, outlier_cutoff = 0.01), scaled_activity_up = scale_quantile_adapted(activity_up, outlier_cutoff = 0.01)) %>%
+    dplyr::mutate(
+      scaled_activity_scaled_up = scale_quantile_adapted(
+        activity_scaled_up,
+        outlier_cutoff = 0.01
+      ),
+      scaled_activity_up = scale_quantile_adapted(
+        activity_up,
+        outlier_cutoff = 0.01
+      )
+    ) %>%
     dplyr::arrange(-activity_scaled_up)
   receiver_ligand_activity_prioritization_down <- ligand_activities_targets_DEgenes$ligand_activities %>%
     dplyr::ungroup() %>%
     dplyr::filter(direction_regulation == "down") %>%
     dplyr::select(contrast, receiver, ligand, activity, activity_scaled) %>%
-    dplyr::rename(activity_down = activity, activity_scaled_down = activity_scaled) %>%
+    dplyr::rename(
+      activity_down = activity,
+      activity_scaled_down = activity_scaled
+    ) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(scaled_activity_scaled_down = scale_quantile_adapted(activity_scaled_down, outlier_cutoff = 0.01), scaled_activity_down = scale_quantile_adapted(activity_down, outlier_cutoff = 0.01)) %>%
+    dplyr::mutate(
+      scaled_activity_scaled_down = scale_quantile_adapted(
+        activity_scaled_down,
+        outlier_cutoff = 0.01
+      ),
+      scaled_activity_down = scale_quantile_adapted(
+        activity_down,
+        outlier_cutoff = 0.01
+      )
+    ) %>%
     dplyr::arrange(-activity_scaled_down)
 
   # sender-focused prioritization: contrast - sender - ligand - lfc_ligand - p_adj_ligand: group by contrast and sender: score each ligand based on those rankings
@@ -1058,9 +1858,41 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_
     dplyr::ungroup() %>%
     dplyr::select(contrast, sender, ligand, lfc_ligand, p_val_ligand) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(lfc_pval_ligand = -log10(p_val_ligand) * lfc_ligand, p_val_ligand_adapted = -log10(p_val_ligand) * sign(lfc_ligand))
+    dplyr::mutate(
+      lfc_pval_ligand = -log10(p_val_ligand) * lfc_ligand,
+      p_val_ligand_adapted = -log10(p_val_ligand) * sign(lfc_ligand)
+    )
   sender_ligand_prioritization <- sender_ligand_prioritization %>%
-    dplyr::mutate(scaled_lfc_ligand = rank(lfc_ligand, ties.method = "average", na.last = FALSE) / max(rank(lfc_ligand, ties.method = "average", na.last = FALSE)), scaled_p_val_ligand = rank(desc(p_val_ligand), ties.method = "average", na.last = FALSE) / max(rank(desc(p_val_ligand), ties.method = "average", na.last = FALSE)), scaled_lfc_pval_ligand = rank(lfc_pval_ligand, ties.method = "average", na.last = FALSE) / max(rank(lfc_pval_ligand, ties.method = "average", na.last = FALSE)), scaled_p_val_ligand_adapted = rank(p_val_ligand_adapted, ties.method = "average", na.last = FALSE) / max(rank(p_val_ligand_adapted, ties.method = "average", na.last = FALSE))) %>%
+    dplyr::mutate(
+      scaled_lfc_ligand = rank(
+        lfc_ligand,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(lfc_ligand, ties.method = "average", na.last = FALSE)),
+      scaled_p_val_ligand = rank(
+        desc(p_val_ligand),
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(desc(p_val_ligand), ties.method = "average", na.last = FALSE)),
+      scaled_lfc_pval_ligand = rank(
+        lfc_pval_ligand,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(lfc_pval_ligand, ties.method = "average", na.last = FALSE)),
+      scaled_p_val_ligand_adapted = rank(
+        p_val_ligand_adapted,
+        ties.method = "average",
+        na.last = FALSE
+      ) /
+        max(rank(
+          p_val_ligand_adapted,
+          ties.method = "average",
+          na.last = FALSE
+        ))
+    ) %>%
     dplyr::arrange(-lfc_pval_ligand)
 
   # cell-type and condition specificity of expression of ligand:  per ligand: score each sender-condition combination based on expression and fraction
@@ -1071,7 +1903,9 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_
     dplyr::select(group, sender, ligand, avg_ligand_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(ligand) %>%
-    dplyr::mutate(scaled_avg_exprs_ligand = scale_quantile_adapted(avg_ligand_group)) %>%
+    dplyr::mutate(
+      scaled_avg_exprs_ligand = scale_quantile_adapted(avg_ligand_group)
+    ) %>%
     dplyr::arrange(-scaled_avg_exprs_ligand)
   ligand_celltype_specificity_prioritization_frq <- sender_receiver_info$frq_df_group %>%
     dplyr::inner_join(sender_receiver_tbl) %>%
@@ -1080,7 +1914,9 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_
     dplyr::select(group, sender, ligand, fraction_ligand_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(ligand) %>%
-    dplyr::mutate(scaled_avg_frq_ligand = scale_quantile_adapted(fraction_ligand_group)) %>%
+    dplyr::mutate(
+      scaled_avg_frq_ligand = scale_quantile_adapted(fraction_ligand_group)
+    ) %>%
     dplyr::arrange(-scaled_avg_frq_ligand)
   ligand_celltype_specificity_prioritization_pb <- sender_receiver_info$pb_df_group %>%
     dplyr::inner_join(sender_receiver_tbl) %>%
@@ -1089,7 +1925,9 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_
     dplyr::select(group, sender, ligand, pb_ligand_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(ligand) %>%
-    dplyr::mutate(scaled_pb_ligand = scale_quantile_adapted(pb_ligand_group)) %>%
+    dplyr::mutate(
+      scaled_pb_ligand = scale_quantile_adapted(pb_ligand_group)
+    ) %>%
     dplyr::arrange(-scaled_pb_ligand)
 
   # cell-type and condition specificity of expression of receptor:  per receptor: score each receiver-condition combination based on expression and fraction
@@ -1100,7 +1938,9 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_
     dplyr::select(group, receiver, receptor, avg_receptor_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(receptor) %>%
-    dplyr::mutate(scaled_avg_exprs_receptor = scale_quantile_adapted(avg_receptor_group)) %>%
+    dplyr::mutate(
+      scaled_avg_exprs_receptor = scale_quantile_adapted(avg_receptor_group)
+    ) %>%
     dplyr::arrange(-scaled_avg_exprs_receptor)
   receptor_celltype_specificity_prioritization_frq <- sender_receiver_info$frq_df_group %>%
     dplyr::inner_join(sender_receiver_tbl) %>%
@@ -1109,7 +1949,9 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_
     dplyr::select(group, receiver, receptor, fraction_receptor_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(receptor) %>%
-    dplyr::mutate(scaled_avg_frq_receptor = scale_quantile_adapted(fraction_receptor_group)) %>%
+    dplyr::mutate(
+      scaled_avg_frq_receptor = scale_quantile_adapted(fraction_receptor_group)
+    ) %>%
     dplyr::arrange(-scaled_avg_frq_receptor)
   receptor_celltype_specificity_prioritization_pb <- sender_receiver_info$pb_df_group %>%
     dplyr::inner_join(sender_receiver_tbl) %>%
@@ -1118,28 +1960,49 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_
     dplyr::select(group, receiver, receptor, pb_receptor_group) %>%
     dplyr::distinct() %>%
     dplyr::group_by(receptor) %>%
-    dplyr::mutate(scaled_pb_receptor = scale_quantile_adapted(pb_receptor_group)) %>%
+    dplyr::mutate(
+      scaled_pb_receptor = scale_quantile_adapted(pb_receptor_group)
+    ) %>%
     dplyr::arrange(-scaled_pb_receptor)
 
   # both receptor and ligand should be expressed!
   ligand_receptor_expressed_prioritization <- sender_receiver_info$frq_df %>%
     dplyr::inner_join(grouping_tbl) %>%
     dplyr::ungroup() %>%
-    dplyr::select(sample, group, sender, receiver, ligand, receptor, fraction_ligand, fraction_receptor) %>%
+    dplyr::select(
+      sample,
+      group,
+      sender,
+      receiver,
+      ligand,
+      receptor,
+      fraction_ligand,
+      fraction_receptor
+    ) %>%
     dplyr::distinct() %>%
     dplyr::group_by(ligand, receptor, sender, receiver, group) %>%
-    dplyr::summarise(n_samples = n(), n_expressing = sum(fraction_ligand > fraction_cutoff & fraction_receptor > fraction_cutoff)) %>%
-    dplyr::mutate(fraction_expressing_ligand_receptor = n_expressing / n_samples) %>%
+    dplyr::summarise(
+      n_samples = n(),
+      n_expressing = sum(
+        fraction_ligand > fraction_cutoff & fraction_receptor > fraction_cutoff
+      )
+    ) %>%
+    dplyr::mutate(
+      fraction_expressing_ligand_receptor = n_expressing / n_samples
+    ) %>%
     dplyr::arrange(-fraction_expressing_ligand_receptor) %>%
     dplyr::select(-n_samples, -n_expressing) %>%
     dplyr::ungroup()
-
 
   # final group-based prioritization
   if (ligand_activity_down == TRUE) {
     group_prioritization_tbl <- contrast_tbl %>%
       dplyr::inner_join(sender_receiver_de) %>%
-      dplyr::inner_join(ligand_activities_targets_DEgenes$ligand_activities %>% dplyr::select(-target, -ligand_target_weight) %>% dplyr::distinct()) %>%
+      dplyr::inner_join(
+        ligand_activities_targets_DEgenes$ligand_activities %>%
+          dplyr::select(-target, -ligand_target_weight) %>%
+          dplyr::distinct()
+      ) %>%
       dplyr::mutate(lr_interaction = paste(ligand, receptor, sep = "_")) %>%
       dplyr::mutate(id = paste(lr_interaction, sender, receiver, sep = "_")) %>%
       dplyr::inner_join(sender_receiver_info$avg_df_group) %>%
@@ -1155,11 +2018,21 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_
       dplyr::inner_join(receptor_celltype_specificity_prioritization_frq) %>%
       dplyr::inner_join(receptor_celltype_specificity_prioritization_pb) %>%
       dplyr::inner_join(ligand_receptor_expressed_prioritization) %>%
-      mutate(max_scaled_activity = pmax(scaled_activity_scaled_up, scaled_activity_scaled_down, na.rm = TRUE))
+      mutate(
+        max_scaled_activity = pmax(
+          scaled_activity_scaled_up,
+          scaled_activity_scaled_down,
+          na.rm = TRUE
+        )
+      )
   } else {
     group_prioritization_tbl <- contrast_tbl %>%
       dplyr::inner_join(sender_receiver_de) %>%
-      dplyr::inner_join(ligand_activities_targets_DEgenes$ligand_activities %>% dplyr::select(-target, -ligand_target_weight) %>% dplyr::distinct()) %>%
+      dplyr::inner_join(
+        ligand_activities_targets_DEgenes$ligand_activities %>%
+          dplyr::select(-target, -ligand_target_weight) %>%
+          dplyr::distinct()
+      ) %>%
       dplyr::mutate(lr_interaction = paste(ligand, receptor, sep = "_")) %>%
       dplyr::mutate(id = paste(lr_interaction, sender, receiver, sep = "_")) %>%
       dplyr::inner_join(sender_receiver_info$avg_df_group) %>%
@@ -1179,20 +2052,24 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_
   }
 
   # have a weighted average the final score (no product!!)
-  sum_prioritization_weights <- prioritizing_weights["de_ligand"] + prioritizing_weights["de_receptor"] + prioritizing_weights["activity_scaled"] + prioritizing_weights["exprs_ligand"] + prioritizing_weights["exprs_receptor"] + prioritizing_weights["frac_exprs_ligand_receptor"]
+  sum_prioritization_weights <- prioritizing_weights["de_ligand"] +
+    prioritizing_weights["de_receptor"] +
+    prioritizing_weights["activity_scaled"] +
+    prioritizing_weights["exprs_ligand"] +
+    prioritizing_weights["exprs_receptor"] +
+    prioritizing_weights["frac_exprs_ligand_receptor"]
   group_prioritization_tbl <- group_prioritization_tbl %>%
     dplyr::mutate(
-      prioritization_score =
-        (
-          (prioritizing_weights["de_ligand"] * scaled_lfc_ligand) +
-            (prioritizing_weights["de_receptor"] * scaled_lfc_receptor) +
-            (prioritizing_weights["activity_scaled"] * max_scaled_activity) +
-            (prioritizing_weights["exprs_ligand"] * scaled_pb_ligand) + # batch-effect corrected if needed
-            (prioritizing_weights["exprs_receptor"] * scaled_pb_receptor) # batch-effect corrected if needed
-        ) * (1 / sum_prioritization_weights)
+      prioritization_score = (
+        (prioritizing_weights["de_ligand"] * scaled_lfc_ligand) +
+          (prioritizing_weights["de_receptor"] * scaled_lfc_receptor) +
+          (prioritizing_weights["activity_scaled"] * max_scaled_activity) +
+          (prioritizing_weights["exprs_ligand"] * scaled_pb_ligand) + # batch-effect corrected if needed
+          (prioritizing_weights["exprs_receptor"] * scaled_pb_receptor) # batch-effect corrected if needed
+      ) *
+        (1 / sum_prioritization_weights)
     ) %>%
     dplyr::arrange(-prioritization_score)
-
 
   # Sample-based Prioritization ----------------------------------------------- ----------------------------------------------------------------
   # sample_prioritization_tbl = sender_receiver_info$avg_df %>% dplyr::inner_join(sender_receiver_info$frq_df) %>% dplyr::inner_join(grouping_tbl) %>% dplyr::inner_join(group_prioritization_tbl %>% dplyr::distinct(group, sender, receiver, ligand, receptor, prioritization_score))
@@ -1200,53 +2077,157 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_
     dplyr::inner_join(sender_receiver_info$frq_df) %>%
     dplyr::inner_join(sender_receiver_info$pb_df) %>%
     dplyr::inner_join(grouping_tbl) %>%
-    dplyr::left_join(group_prioritization_tbl %>% dplyr::distinct(group, sender, receiver, ligand, receptor, prioritization_score)) # maybe NA there if it is not considered to be expressed
+    dplyr::left_join(
+      group_prioritization_tbl %>%
+        dplyr::distinct(
+          group,
+          sender,
+          receiver,
+          ligand,
+          receptor,
+          prioritization_score
+        )
+    ) # maybe NA there if it is not considered to be expressed
 
   sample_prioritization_tbl <- sample_prioritization_tbl %>%
     dplyr::mutate(lr_interaction = paste(ligand, receptor, sep = "_")) %>%
     dplyr::mutate(id = paste(lr_interaction, sender, receiver, sep = "_"))
   sample_prioritization_tbl <- sample_prioritization_tbl %>%
     dplyr::group_by(id) %>%
-    dplyr::mutate(scaled_LR_prod = nichenetr::scaling_zscore(ligand_receptor_prod), scaled_LR_frac = nichenetr::scaling_zscore(ligand_receptor_fraction_prod), scaled_LR_pb_prod = nichenetr::scaling_zscore(ligand_receptor_pb_prod)) %>%
+    dplyr::mutate(
+      scaled_LR_prod = nichenetr::scaling_zscore(ligand_receptor_prod),
+      scaled_LR_frac = nichenetr::scaling_zscore(ligand_receptor_fraction_prod),
+      scaled_LR_pb_prod = nichenetr::scaling_zscore(ligand_receptor_pb_prod)
+    ) %>%
     dplyr::ungroup()
 
   sample_prioritization_tbl <- sample_prioritization_tbl %>%
     dplyr::left_join(abundance_data_receiver) %>%
     dplyr::left_join(abundance_data_sender)
 
+  sample_prioritization_tbl$n_cells_sender[is.na(
+    sample_prioritization_tbl$n_cells_sender
+  )] <- 0
+  sample_prioritization_tbl$n_cells_receiver[is.na(
+    sample_prioritization_tbl$n_cells_receiver
+  )] <- 0
 
-  sample_prioritization_tbl$n_cells_sender[is.na(sample_prioritization_tbl$n_cells_sender)] <- 0
-  sample_prioritization_tbl$n_cells_receiver[is.na(sample_prioritization_tbl$n_cells_receiver)] <- 0
+  sample_prioritization_tbl$keep_sender[is.na(
+    sample_prioritization_tbl$keep_sender
+  )] <- 0
+  sample_prioritization_tbl$keep_receiver[is.na(
+    sample_prioritization_tbl$keep_receiver
+  )] <- 0
 
-  sample_prioritization_tbl$keep_sender[is.na(sample_prioritization_tbl$keep_sender)] <- 0
-  sample_prioritization_tbl$keep_receiver[is.na(sample_prioritization_tbl$keep_receiver)] <- 0
+  sample_prioritization_tbl <- sample_prioritization_tbl %>%
+    dplyr::mutate(keep_sender_receiver = keep_receiver + keep_sender)
 
-  sample_prioritization_tbl <- sample_prioritization_tbl %>% dplyr::mutate(keep_sender_receiver = keep_receiver + keep_sender)
-
-  sample_prioritization_tbl$keep_sender_receiver[sample_prioritization_tbl$keep_sender_receiver == 0] <- "Sender & Receiver absent"
-  sample_prioritization_tbl$keep_sender_receiver[sample_prioritization_tbl$keep_sender_receiver == 1 & sample_prioritization_tbl$keep_receiver == 0] <- "Receiver absent"
-  sample_prioritization_tbl$keep_sender_receiver[sample_prioritization_tbl$keep_sender_receiver == 1 & sample_prioritization_tbl$keep_sender == 0] <- "Sender absent"
-  sample_prioritization_tbl$keep_sender_receiver[sample_prioritization_tbl$keep_sender_receiver == 2] <- "Sender & Receiver present"
-  sample_prioritization_tbl <- sample_prioritization_tbl %>% mutate(keep_sender_receiver = factor(keep_sender_receiver, levels = c("Sender & Receiver absent", "Receiver absent", "Sender absent", "Sender & Receiver present")))
+  sample_prioritization_tbl$keep_sender_receiver[
+    sample_prioritization_tbl$keep_sender_receiver == 0
+  ] <- "Sender & Receiver absent"
+  sample_prioritization_tbl$keep_sender_receiver[
+    sample_prioritization_tbl$keep_sender_receiver == 1 &
+      sample_prioritization_tbl$keep_receiver == 0
+  ] <- "Receiver absent"
+  sample_prioritization_tbl$keep_sender_receiver[
+    sample_prioritization_tbl$keep_sender_receiver == 1 &
+      sample_prioritization_tbl$keep_sender == 0
+  ] <- "Sender absent"
+  sample_prioritization_tbl$keep_sender_receiver[
+    sample_prioritization_tbl$keep_sender_receiver == 2
+  ] <- "Sender & Receiver present"
+  sample_prioritization_tbl <- sample_prioritization_tbl %>%
+    mutate(
+      keep_sender_receiver = factor(
+        keep_sender_receiver,
+        levels = c(
+          "Sender & Receiver absent",
+          "Receiver absent",
+          "Sender absent",
+          "Sender & Receiver present"
+        )
+      )
+    )
 
   # ligand-target information  -----------------------------------------------
   ligand_activities_target_de_tbl <- ligand_activities_targets_DEgenes$ligand_activities %>%
-    dplyr::inner_join(ligand_activities_targets_DEgenes$de_genes_df %>% dplyr::rename(target = gene, p_val_adj = p_adj)) %>%
-    dplyr::select(contrast, receiver, ligand, activity, activity_scaled, target, ligand_target_weight, logFC, p_val, p_val_adj, direction_regulation) %>%
+    dplyr::inner_join(
+      ligand_activities_targets_DEgenes$de_genes_df %>%
+        dplyr::rename(target = gene, p_val_adj = p_adj)
+    ) %>%
+    dplyr::select(
+      contrast,
+      receiver,
+      ligand,
+      activity,
+      activity_scaled,
+      target,
+      ligand_target_weight,
+      logFC,
+      p_val,
+      p_val_adj,
+      direction_regulation
+    ) %>%
     dplyr::distinct()
 
-  ligand_activities_target_de_tbl <- ligand_activities_target_de_tbl %>% dplyr::mutate(direction_regulation = factor(direction_regulation, levels = c("up", "down")))
+  ligand_activities_target_de_tbl <- ligand_activities_target_de_tbl %>%
+    dplyr::mutate(
+      direction_regulation = factor(
+        direction_regulation,
+        levels = c("up", "down")
+      )
+    )
 
   # post-process group_prioritization   -----------------------------------------------
 
-  group_prioritization_tbl <- group_prioritization_tbl %>% dplyr::mutate(direction_regulation = factor(direction_regulation, levels = c("up", "down")))
-  group_prioritization_tbl <- group_prioritization_tbl %>% dplyr::inner_join(group_prioritization_tbl %>% dplyr::distinct(id, group, prioritization_score) %>% dplyr::group_by(id) %>% dplyr::top_n(1, prioritization_score) %>% dplyr::mutate(top_group = group) %>% dplyr::distinct(id, top_group) %>% dplyr::ungroup())
+  group_prioritization_tbl <- group_prioritization_tbl %>%
+    dplyr::mutate(
+      direction_regulation = factor(
+        direction_regulation,
+        levels = c("up", "down")
+      )
+    )
+  group_prioritization_tbl <- group_prioritization_tbl %>%
+    dplyr::inner_join(
+      group_prioritization_tbl %>%
+        dplyr::distinct(id, group, prioritization_score) %>%
+        dplyr::group_by(id) %>%
+        dplyr::top_n(1, prioritization_score) %>%
+        dplyr::mutate(top_group = group) %>%
+        dplyr::distinct(id, top_group) %>%
+        dplyr::ungroup()
+    )
 
   columns_to_remove <- c(
-    "scaled_lfc_ligand", "scaled_p_val_ligand_adapted", "scaled_lfc_receptor", "scaled_p_val_receptor_adapted", "max_scaled_activity", "scaled_pb_ligand", "scaled_pb_receptor", "fraction_expressing_ligand_receptor",
-    "avg_ligand_group", "avg_receptor_group", "ligand_receptor_prod_group", "ligand_receptor_fraction_prod_group", "sender_receiver_rel_abundance_avg", "lfc_pval_ligand", "p_val_ligand_adapted",
-    "scaled_p_val_ligand", "scaled_lfc_pval_ligand", "lfc_pval_receptor", "p_val_receptor_adapted", "scaled_p_val_receptor", "scaled_lfc_pval_receptor", "scaled_activity_scaled_up", "scaled_activity_up", "scaled_activity_scaled_down",
-    "scaled_activity_down", "scaled_avg_exprs_ligand", "scaled_avg_frq_ligand", "scaled_avg_exprs_receptor", "scaled_avg_frq_receptor"
+    "scaled_lfc_ligand",
+    "scaled_p_val_ligand_adapted",
+    "scaled_lfc_receptor",
+    "scaled_p_val_receptor_adapted",
+    "max_scaled_activity",
+    "scaled_pb_ligand",
+    "scaled_pb_receptor",
+    "fraction_expressing_ligand_receptor",
+    "avg_ligand_group",
+    "avg_receptor_group",
+    "ligand_receptor_prod_group",
+    "ligand_receptor_fraction_prod_group",
+    "sender_receiver_rel_abundance_avg",
+    "lfc_pval_ligand",
+    "p_val_ligand_adapted",
+    "scaled_p_val_ligand",
+    "scaled_lfc_pval_ligand",
+    "lfc_pval_receptor",
+    "p_val_receptor_adapted",
+    "scaled_p_val_receptor",
+    "scaled_lfc_pval_receptor",
+    "scaled_activity_scaled_up",
+    "scaled_activity_up",
+    "scaled_activity_scaled_down",
+    "scaled_activity_down",
+    "scaled_avg_exprs_ligand",
+    "scaled_avg_frq_ligand",
+    "scaled_avg_exprs_receptor",
+    "scaled_avg_frq_receptor"
   )
   columns_to_keep <- group_prioritization_tbl %>%
     colnames() %>%
@@ -1255,8 +2236,32 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(sender_
     select(columns_to_keep) %>%
     distinct()
   group_prioritization_tbl <- group_prioritization_tbl %>%
-    select(contrast, group, sender, receiver, ligand, receptor, lr_interaction, id, scaled_lfc_ligand, scaled_p_val_ligand_adapted, scaled_lfc_receptor, scaled_p_val_receptor_adapted, max_scaled_activity, scaled_pb_ligand, scaled_pb_receptor, fraction_expressing_ligand_receptor, prioritization_score, top_group) %>%
+    select(
+      contrast,
+      group,
+      sender,
+      receiver,
+      ligand,
+      receptor,
+      lr_interaction,
+      id,
+      scaled_lfc_ligand,
+      scaled_p_val_ligand_adapted,
+      scaled_lfc_receptor,
+      scaled_p_val_receptor_adapted,
+      max_scaled_activity,
+      scaled_pb_ligand,
+      scaled_pb_receptor,
+      fraction_expressing_ligand_receptor,
+      prioritization_score,
+      top_group
+    ) %>%
     distinct()
 
-  return(list(group_prioritization_tbl = group_prioritization_tbl, sample_prioritization_tbl = sample_prioritization_tbl, ligand_activities_target_de_tbl = ligand_activities_target_de_tbl, group_prioritization_table_source = group_prioritization_table_source))
+  return(list(
+    group_prioritization_tbl = group_prioritization_tbl,
+    sample_prioritization_tbl = sample_prioritization_tbl,
+    ligand_activities_target_de_tbl = ligand_activities_target_de_tbl,
+    group_prioritization_table_source = group_prioritization_table_source
+  ))
 }

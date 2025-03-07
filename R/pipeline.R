@@ -97,31 +97,38 @@
 #'
 #' @export
 #'
-multi_nichenet_analysis <- function(sce,
-                                    celltype_id,
-                                    sample_id,
-                                    group_id,
-                                    batches,
-                                    covariates,
-                                    lr_network,
-                                    ligand_target_matrix,
-                                    contrasts_oi,
-                                    contrast_tbl,
-                                    senders_oi = NULL,
-                                    receivers_oi = NULL,
-                                    fraction_cutoff = 0.05,
-                                    min_sample_prop = 0.5,
-                                    scenario = "regular",
-                                    ligand_activity_down = FALSE,
-                                    assay_oi_pb = "counts",
-                                    fun_oi_pb = "sum",
-                                    de_method_oi = "edgeR",
-                                    min_cells = 10,
-                                    logFC_threshold = 0.50,
-                                    p_val_threshold = 0.05,
-                                    p_val_adj = FALSE,
-                                    empirical_pval = TRUE,
-                                    top_n_target = 250, verbose = FALSE, n.cores = 1, return_lr_prod_matrix = FALSE, findMarkers = FALSE, top_n_LR = 2500) {
+multi_nichenet_analysis <- function(
+  sce,
+  celltype_id,
+  sample_id,
+  group_id,
+  batches,
+  covariates,
+  lr_network,
+  ligand_target_matrix,
+  contrasts_oi,
+  contrast_tbl,
+  senders_oi = NULL,
+  receivers_oi = NULL,
+  fraction_cutoff = 0.05,
+  min_sample_prop = 0.5,
+  scenario = "regular",
+  ligand_activity_down = FALSE,
+  assay_oi_pb = "counts",
+  fun_oi_pb = "sum",
+  de_method_oi = "edgeR",
+  min_cells = 10,
+  logFC_threshold = 0.50,
+  p_val_threshold = 0.05,
+  p_val_adj = FALSE,
+  empirical_pval = TRUE,
+  top_n_target = 250,
+  verbose = FALSE,
+  n.cores = 1,
+  return_lr_prod_matrix = FALSE,
+  findMarkers = FALSE,
+  top_n_LR = 2500
+) {
   requireNamespace("dplyr")
   requireNamespace("ggplot2")
 
@@ -134,7 +141,9 @@ multi_nichenet_analysis <- function(sce,
     stop("celltype_id should be a column name in the metadata dataframe of sce")
   }
   if (celltype_id != make.names(celltype_id)) {
-    stop("celltype_id should be a syntactically valid R name - check make.names")
+    stop(
+      "celltype_id should be a syntactically valid R name - check make.names"
+    )
   }
   if (!sample_id %in% colnames(SummarizedExperiment::colData(sce))) {
     stop("sample_id should be a column name in the metadata dataframe of sce")
@@ -150,36 +159,61 @@ multi_nichenet_analysis <- function(sce,
   }
 
   if (is.double(SummarizedExperiment::colData(sce)[, celltype_id])) {
-    stop("SummarizedExperiment::colData(sce)[,celltype_id] should be a character vector or a factor")
+    stop(
+      "SummarizedExperiment::colData(sce)[,celltype_id] should be a character vector or a factor"
+    )
   }
   if (is.double(SummarizedExperiment::colData(sce)[, group_id])) {
-    stop("SummarizedExperiment::colData(sce)[,group_id] should be a character vector or a factor")
+    stop(
+      "SummarizedExperiment::colData(sce)[,group_id] should be a character vector or a factor"
+    )
   }
   if (is.double(SummarizedExperiment::colData(sce)[, sample_id])) {
-    stop("SummarizedExperiment::colData(sce)[,sample_id] should be a character vector or a factor")
+    stop(
+      "SummarizedExperiment::colData(sce)[,sample_id] should be a character vector or a factor"
+    )
   }
   # if some of these are factors, and not all levels have syntactically valid names - prompt to change this
   if (is.factor(SummarizedExperiment::colData(sce)[, celltype_id])) {
-    is_make_names <- levels(SummarizedExperiment::colData(sce)[, celltype_id]) == make.names(levels(SummarizedExperiment::colData(sce)[, celltype_id]))
-    if (sum(is_make_names) != length(levels(SummarizedExperiment::colData(sce)[, celltype_id]))) {
-      stop("The levels of the factor SummarizedExperiment::colData(sce)[,celltype_id] should be a syntactically valid R names - see make.names")
+    is_make_names <- levels(SummarizedExperiment::colData(sce)[,
+      celltype_id
+    ]) ==
+      make.names(levels(SummarizedExperiment::colData(sce)[, celltype_id]))
+    if (
+      sum(is_make_names) !=
+        length(levels(SummarizedExperiment::colData(sce)[, celltype_id]))
+    ) {
+      stop(
+        "The levels of the factor SummarizedExperiment::colData(sce)[,celltype_id] should be a syntactically valid R names - see make.names"
+      )
     }
   }
 
   if (is.factor(SummarizedExperiment::colData(sce)[, group_id])) {
-    is_make_names <- levels(SummarizedExperiment::colData(sce)[, group_id]) == make.names(levels(SummarizedExperiment::colData(sce)[, group_id]))
-    if (sum(is_make_names) != length(levels(SummarizedExperiment::colData(sce)[, group_id]))) {
-      stop("The levels of the factor SummarizedExperiment::colData(sce)[,group_id] should be a syntactically valid R names - see make.names")
+    is_make_names <- levels(SummarizedExperiment::colData(sce)[, group_id]) ==
+      make.names(levels(SummarizedExperiment::colData(sce)[, group_id]))
+    if (
+      sum(is_make_names) !=
+        length(levels(SummarizedExperiment::colData(sce)[, group_id]))
+    ) {
+      stop(
+        "The levels of the factor SummarizedExperiment::colData(sce)[,group_id] should be a syntactically valid R names - see make.names"
+      )
     }
   }
 
   if (is.factor(SummarizedExperiment::colData(sce)[, sample_id])) {
-    is_make_names <- levels(SummarizedExperiment::colData(sce)[, sample_id]) == make.names(levels(SummarizedExperiment::colData(sce)[, sample_id]))
-    if (sum(is_make_names) != length(levels(SummarizedExperiment::colData(sce)[, sample_id]))) {
-      stop("The levels of the factor SummarizedExperiment::colData(sce)[,sample_id] should be a syntactically valid R names - see make.names")
+    is_make_names <- levels(SummarizedExperiment::colData(sce)[, sample_id]) ==
+      make.names(levels(SummarizedExperiment::colData(sce)[, sample_id]))
+    if (
+      sum(is_make_names) !=
+        length(levels(SummarizedExperiment::colData(sce)[, sample_id]))
+    ) {
+      stop(
+        "The levels of the factor SummarizedExperiment::colData(sce)[,sample_id] should be a syntactically valid R names - see make.names"
+      )
     }
   }
-
 
   if (!is.character(contrasts_oi)) {
     stop("contrasts_oi should be a character vector")
@@ -214,10 +248,14 @@ multi_nichenet_analysis <- function(sce,
     generics::setdiff(c("", ",", " ,", ", ")) %>%
     unlist() %>%
     unique()
-  conditions_oi <- conditions_oi[is.na(suppressWarnings(as.numeric(conditions_oi)))]
+  conditions_oi <- conditions_oi[is.na(suppressWarnings(as.numeric(
+    conditions_oi
+  )))]
 
   if (length(contrasts_oi) != 1 | !is.character(contrasts_oi)) {
-    stop("contrasts_oi should be a character vector of length 1. See the documentation of the function for having an idea of the right format of setting your contrasts.")
+    stop(
+      "contrasts_oi should be a character vector of length 1. See the documentation of the function for having an idea of the right format of setting your contrasts."
+    )
   }
 
   # conditions of interest in the contrast should be present in the in the contrast_tbl
@@ -232,25 +270,43 @@ multi_nichenet_analysis <- function(sce,
     unique()
 
   if (sum(conditions_oi %in% groups_oi) != length(conditions_oi)) {
-    stop("conditions written in contrasts_oi should be in the condition-indicating column! This is not the case, which can lead to errors downstream.")
+    stop(
+      "conditions written in contrasts_oi should be in the condition-indicating column! This is not the case, which can lead to errors downstream."
+    )
   }
-  if (sum(contrasts_oi_simplified %in% unique(contrast_tbl$contrast)) != length(contrasts_oi_simplified)) {
-    stop("conditions written in contrasts_oi should be in the contrast column of contrast_tbl column! This is not the case, which can lead to errors downstream.")
+  if (
+    sum(contrasts_oi_simplified %in% unique(contrast_tbl$contrast)) !=
+      length(contrasts_oi_simplified)
+  ) {
+    stop(
+      "conditions written in contrasts_oi should be in the contrast column of contrast_tbl column! This is not the case, which can lead to errors downstream."
+    )
   }
 
   #
   groups_oi_contrast_tbl <- contrast_tbl$group %>% unique()
-  if (sum(groups_oi_contrast_tbl %in% groups_oi) != length(groups_oi_contrast_tbl)) {
-    stop("You have defined some groups in contrast_tbl$group that are not present SummarizedExperiment::colData(sce)[,group_id]. This will result in lack of information downstream. We recommend to change your metadata or this contrast_tbl appropriately.")
+  if (
+    sum(groups_oi_contrast_tbl %in% groups_oi) != length(groups_oi_contrast_tbl)
+  ) {
+    stop(
+      "You have defined some groups in contrast_tbl$group that are not present SummarizedExperiment::colData(sce)[,group_id]. This will result in lack of information downstream. We recommend to change your metadata or this contrast_tbl appropriately."
+    )
   }
 
   if (length(groups_oi_contrast_tbl) != length(contrast_tbl$group)) {
-    warning("According to your contrast_tbl, some of your contrasts will be assigned to the same group. This should not be a problem if this was intended, but be aware not to make mistakes in the further interpretation and plotting of the results.")
+    warning(
+      "According to your contrast_tbl, some of your contrasts will be assigned to the same group. This should not be a problem if this was intended, but be aware not to make mistakes in the further interpretation and plotting of the results."
+    )
   }
 
   if (!is.na(batches)) {
-    if (sum(batches %in% colnames(SummarizedExperiment::colData(sce))) != length(batches)) {
-      stop("batches should be NA or all present as column name(s) in the metadata dataframe of sce")
+    if (
+      sum(batches %in% colnames(SummarizedExperiment::colData(sce))) !=
+        length(batches)
+    ) {
+      stop(
+        "batches should be NA or all present as column name(s) in the metadata dataframe of sce"
+      )
     }
   }
 
@@ -266,14 +322,18 @@ multi_nichenet_analysis <- function(sce,
     if ("from" %in% colnames(lr_network)) {
       lr_network <- lr_network %>% dplyr::rename(ligand = from)
     } else {
-      stop("The ligand-receptor network should have the columns ligand and receptor (or: from and to)")
+      stop(
+        "The ligand-receptor network should have the columns ligand and receptor (or: from and to)"
+      )
     }
   }
   if (!"receptor" %in% colnames(lr_network)) {
     if ("to" %in% colnames(lr_network)) {
       lr_network <- lr_network %>% dplyr::rename(receptor = to)
     } else {
-      stop("The ligand-receptor network should have the columns ligand and receptor (or: from and to)")
+      stop(
+        "The ligand-receptor network should have the columns ligand and receptor (or: from and to)"
+      )
     }
   }
 
@@ -282,21 +342,35 @@ multi_nichenet_analysis <- function(sce,
   ligands_ligand_target_matrix <- colnames(ligand_target_matrix)
 
   if (length(ligands_ligand_target_matrix) < length(ligands_lrnetwork)) {
-    warning("Not all Ligands from your ligand-receptor network are in the ligand-target matrix")
+    warning(
+      "Not all Ligands from your ligand-receptor network are in the ligand-target matrix"
+    )
   }
   if (length(ligands_lrnetwork) < length(ligands_ligand_target_matrix)) {
-    warning("Not all Ligands from your ligand-target matrix are in the ligand-receptor network")
+    warning(
+      "Not all Ligands from your ligand-target matrix are in the ligand-receptor network"
+    )
   }
-
 
   if (length(rownames(sce) %>% generics::intersect(ligands_lrnetwork)) < 25) {
-    warning("Less than 25 ligands from your ligand-receptor network are in your expression matrix of the sender cell.\nDid you convert the gene symbols of the ligand-receptor network and the ligand-target matrix if your data is not from human?")
+    warning(
+      "Less than 25 ligands from your ligand-receptor network are in your expression matrix of the sender cell.\nDid you convert the gene symbols of the ligand-receptor network and the ligand-target matrix if your data is not from human?"
+    )
   }
-  if (length(rownames(sce) %>% generics::intersect(ligands_ligand_target_matrix)) < 25) {
-    warning("Less than 25 ligands from your ligand-target matrix are in your expression matrix of the sender cell.\nDid you convert the gene symbols of the ligand-receptor network and the ligand-target matrix if your data is not from human?")
+  if (
+    length(
+      rownames(sce) %>% generics::intersect(ligands_ligand_target_matrix)
+    ) <
+      25
+  ) {
+    warning(
+      "Less than 25 ligands from your ligand-target matrix are in your expression matrix of the sender cell.\nDid you convert the gene symbols of the ligand-receptor network and the ligand-target matrix if your data is not from human?"
+    )
   }
   if (length(rownames(sce) %>% generics::intersect(receptors_lrnetwork)) < 25) {
-    warning("Less than 25 receptors from your ligand-receptor network are in your expression matrix of the receiver cell.\nDid you convert the gene symbols of the ligand-receptor network and the ligand-target matrix if your data is not from human?")
+    warning(
+      "Less than 25 receptors from your ligand-receptor network are in your expression matrix of the receiver cell.\nDid you convert the gene symbols of the ligand-receptor network and the ligand-target matrix if your data is not from human?"
+    )
   }
 
   if (!is.character(assay_oi_pb)) {
@@ -317,35 +391,45 @@ multi_nichenet_analysis <- function(sce,
     stop("min_cells should be numeric")
   } else {
     if (min_cells <= 0) {
-      warning("min_cells is now 0 or smaller. We recommend having a positive, non-zero value for this parameter")
+      warning(
+        "min_cells is now 0 or smaller. We recommend having a positive, non-zero value for this parameter"
+      )
     }
   }
   if (!is.double(logFC_threshold)) {
     stop("logFC_threshold should be numeric")
   } else {
     if (logFC_threshold <= 0) {
-      warning("logFC_threshold is now 0 or smaller. We recommend having a positive, non-zero value for this parameter")
+      warning(
+        "logFC_threshold is now 0 or smaller. We recommend having a positive, non-zero value for this parameter"
+      )
     }
   }
   if (!is.double(p_val_threshold)) {
     stop("p_val_threshold should be numeric")
   } else {
     if (p_val_threshold <= 0 | p_val_threshold > 1) {
-      warning("p_val_threshold is now 0 or smaller; or higher than 1. We recommend setting this parameter between 0 and 1 - preferably between 0 and 0.10, 0 excluded.")
+      warning(
+        "p_val_threshold is now 0 or smaller; or higher than 1. We recommend setting this parameter between 0 and 1 - preferably between 0 and 0.10, 0 excluded."
+      )
     }
   }
   if (!is.double(fraction_cutoff)) {
     stop("fraction_cutoff should be numeric")
   } else {
     if (fraction_cutoff <= 0 | fraction_cutoff > 1) {
-      stop("fraction_cutoff is now 0 or smaller; or higher than 1. We recommend setting this parameter between 0 and 1 - preferably between 0 and 0.25, 0 excluded.")
+      stop(
+        "fraction_cutoff is now 0 or smaller; or higher than 1. We recommend setting this parameter between 0 and 1 - preferably between 0 and 0.25, 0 excluded."
+      )
     }
   }
   if (!is.double(top_n_target)) {
     stop("top_n_target should be numeric")
   } else {
     if (top_n_target <= 0) {
-      warning("top_n_target is now 0 or smaller. We recommend having a positive, non-zero value for this parameter.")
+      warning(
+        "top_n_target is now 0 or smaller. We recommend having a positive, non-zero value for this parameter."
+      )
     }
   }
   if (!is.logical(p_val_adj)) {
@@ -365,17 +449,23 @@ multi_nichenet_analysis <- function(sce,
     stop("n.cores should be numeric")
   } else {
     if (n.cores <= 0) {
-      warning("n.cores is now 0 or smaller. We recommend having a positive, non-zero value for this parameter.")
+      warning(
+        "n.cores is now 0 or smaller. We recommend having a positive, non-zero value for this parameter."
+      )
     }
   }
   if (is.null(senders_oi)) {
     senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>% unique()
   }
   if (is.null(receivers_oi)) {
-    receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>% unique()
+    receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>%
+      unique()
   }
 
-  sce <- sce[, SummarizedExperiment::colData(sce)[, celltype_id] %in% c(senders_oi, receivers_oi)]
+  sce <- sce[,
+    SummarizedExperiment::colData(sce)[, celltype_id] %in%
+      c(senders_oi, receivers_oi)
+  ]
   # sce = sce[, SummarizedExperiment::colData(sce)[,group_id] %in% contrast_tbl$group] # keep only considered groups
   # do not do this -- this could give errors if only interested in one contrast but multiple groups
 
@@ -408,7 +498,10 @@ multi_nichenet_analysis <- function(sce,
     filter(samples_present >= 2) %>%
     pull(celltype_id) %>%
     unique() # require presence in at least 2 samples of one group so it is really present in at least one condition
-  condition_specific_celltypes <- intersect(celltypes_absent_one_condition, celltypes_present_one_condition)
+  condition_specific_celltypes <- intersect(
+    celltypes_absent_one_condition,
+    celltypes_present_one_condition
+  )
 
   total_nr_conditions <- SummarizedExperiment::colData(sce)[, group_id] %>%
     unique() %>%
@@ -423,8 +516,10 @@ multi_nichenet_analysis <- function(sce,
   print("condition-specific celltypes:")
   print(condition_specific_celltypes)
 
-  condition_specific_celltypes_senders <- condition_specific_celltypes %>% intersect(senders_oi)
-  condition_specific_celltypes_receivers <- condition_specific_celltypes %>% intersect(receivers_oi)
+  condition_specific_celltypes_senders <- condition_specific_celltypes %>%
+    intersect(senders_oi)
+  condition_specific_celltypes_receivers <- condition_specific_celltypes %>%
+    intersect(receivers_oi)
 
   print("absent celltypes:")
   print(absent_celltypes)
@@ -434,13 +529,24 @@ multi_nichenet_analysis <- function(sce,
 
   retained_celltypes <- union(senders_oi, receivers_oi)
 
-  sce <- sce[, SummarizedExperiment::colData(sce)[, celltype_id] %in% retained_celltypes]
+  sce <- sce[,
+    SummarizedExperiment::colData(sce)[, celltype_id] %in% retained_celltypes
+  ]
 
   ## define expressed genes
   if (verbose == TRUE) {
     print("Gene filtering")
   }
-  frq_list <- get_frac_exprs(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id, batches = batches, min_cells = min_cells, fraction_cutoff = fraction_cutoff, min_sample_prop = min_sample_prop)
+  frq_list <- get_frac_exprs(
+    sce = sce,
+    sample_id = sample_id,
+    celltype_id = celltype_id,
+    group_id = group_id,
+    batches = batches,
+    min_cells = min_cells,
+    fraction_cutoff = fraction_cutoff,
+    min_sample_prop = min_sample_prop
+  )
 
   ## filter out non-expressed genes
   genes_oi <- frq_list$expressed_df %>%
@@ -454,10 +560,17 @@ multi_nichenet_analysis <- function(sce,
     print("Calculate normalized average and pseudobulk expression")
   }
   abundance_expression_info <- process_abundance_expression_info(
-    sce = sce, sample_id = sample_id, group_id = group_id, celltype_id = celltype_id, min_cells = min_cells,
+    sce = sce,
+    sample_id = sample_id,
+    group_id = group_id,
+    celltype_id = celltype_id,
+    min_cells = min_cells,
     senders_oi = union(senders_oi, condition_specific_celltypes_senders),
     receivers_oi = union(receivers_oi, condition_specific_celltypes_receivers),
-    lr_network = lr_network, batches = batches, frq_list = frq_list, abundance_info = abundance_info
+    lr_network = lr_network,
+    batches = batches,
+    frq_list = frq_list,
+    abundance_info = abundance_info
   )
 
   ## Perform the DE analysis ----------------------------------------------------------------
@@ -468,7 +581,14 @@ multi_nichenet_analysis <- function(sce,
 
   if (findMarkers == FALSE) {
     DE_info <- get_DE_info(
-      sce = sce, sample_id = sample_id, group_id = group_id, celltype_id = celltype_id, batches = batches, covariates = covariates, contrasts_oi = contrasts_oi, min_cells = min_cells,
+      sce = sce,
+      sample_id = sample_id,
+      group_id = group_id,
+      celltype_id = celltype_id,
+      batches = batches,
+      covariates = covariates,
+      contrasts_oi = contrasts_oi,
+      min_cells = min_cells,
       assay_oi_pb = assay_oi_pb,
       fun_oi_pb = fun_oi_pb,
       de_method_oi = de_method_oi,
@@ -477,7 +597,14 @@ multi_nichenet_analysis <- function(sce,
     )
   } else {
     DE_info <- get_DE_info(
-      sce = sce, sample_id = sample_id, group_id = group_id, celltype_id = celltype_id, batches = batches, covariates = covariates, contrasts_oi = contrasts_oi, min_cells = min_cells,
+      sce = sce,
+      sample_id = sample_id,
+      group_id = group_id,
+      celltype_id = celltype_id,
+      batches = batches,
+      covariates = covariates,
+      contrasts_oi = contrasts_oi,
+      min_cells = min_cells,
       assay_oi_pb = assay_oi_pb,
       fun_oi_pb = fun_oi_pb,
       de_method_oi = de_method_oi,
@@ -518,7 +645,10 @@ multi_nichenet_analysis <- function(sce,
   print("retained cell types")
   print(retained_celltypes)
 
-  sce <- sce[genes_oi, SummarizedExperiment::colData(sce)[, celltype_id] %in% retained_celltypes]
+  sce <- sce[
+    genes_oi,
+    SummarizedExperiment::colData(sce)[, celltype_id] %in% retained_celltypes
+  ]
 
   sender_receiver_de <- suppressMessages(combine_sender_receiver_de(
     sender_de = celltype_de,
@@ -527,9 +657,11 @@ multi_nichenet_analysis <- function(sce,
     receivers_oi = receivers_oi,
     lr_network = lr_network
   ))
-  sender_receiver_tbl <- sender_receiver_de %>% dplyr::distinct(sender, receiver)
+  sender_receiver_tbl <- sender_receiver_de %>%
+    dplyr::distinct(sender, receiver)
 
-  metadata_combined <- SummarizedExperiment::colData(sce) %>% tibble::as_tibble()
+  metadata_combined <- SummarizedExperiment::colData(sce) %>%
+    tibble::as_tibble()
 
   if (!is.na(batches)) {
     grouping_tbl <- metadata_combined[, c(sample_id, group_id, batches)] %>%
@@ -562,7 +694,6 @@ multi_nichenet_analysis <- function(sce,
     verbose = verbose,
     n.cores = n.cores
   )))
-
 
   ## Combine the three types of information calculated above to prioritize ligand-receptor interactions ----------------------------------------------------------------
   if (verbose == TRUE) {
@@ -614,7 +745,11 @@ multi_nichenet_analysis <- function(sce,
       .[. == 0] %>%
       names()
 
-    lr_prod_mat <- lr_prod_mat %>% .[rownames(.) %>% generics::setdiff(col_remove), colnames(.) %>% generics::setdiff(col_remove)]
+    lr_prod_mat <- lr_prod_mat %>%
+      .[
+        rownames(.) %>% generics::setdiff(col_remove),
+        colnames(.) %>% generics::setdiff(col_remove)
+      ]
   } else {
     lr_prod_mat <- NULL
   }
@@ -623,12 +758,25 @@ multi_nichenet_analysis <- function(sce,
   if (verbose == TRUE) {
     print("Calculate correlation between LR pairs and target genes")
   }
-  lr_target_prior_cor <- lr_target_prior_cor_inference(prioritization_tables$group_prioritization_tbl$receiver %>% unique(), abundance_expression_info, celltype_de, grouping_tbl, prioritization_tables, ligand_target_matrix, logFC_threshold = logFC_threshold, p_val_threshold = p_val_threshold, p_val_adj = p_val_adj, top_n_LR = top_n_LR)
+  lr_target_prior_cor <- lr_target_prior_cor_inference(
+    prioritization_tables$group_prioritization_tbl$receiver %>% unique(),
+    abundance_expression_info,
+    celltype_de,
+    grouping_tbl,
+    prioritization_tables,
+    ligand_target_matrix,
+    logFC_threshold = logFC_threshold,
+    p_val_threshold = p_val_threshold,
+    p_val_adj = p_val_adj,
+    top_n_LR = top_n_LR
+  )
 
   ## save output
 
   if (length(condition_specific_celltypes) > 0) {
-    print("There are condition specific cell types in the data. Continuing with the regular MultiNicheNet analysis will not include those. If preferred, the user can apply a specific worfklow tailored to analyze CCC events involving condition-specific cell types")
+    print(
+      "There are condition specific cell types in the data. Continuing with the regular MultiNicheNet analysis will not include those. If preferred, the user can apply a specific worfklow tailored to analyze CCC events involving condition-specific cell types"
+    )
     print(condition_specific_celltypes)
     prioritization_tables_with_condition_specific_celltype_sender <- prioritize_condition_specific_sender(
       abundance_info = abundance_info,
@@ -658,9 +806,14 @@ multi_nichenet_analysis <- function(sce,
     )
     combined_prioritization_tables <- list(
       group_prioritization_tbl = bind_rows(
-        prioritization_tables_with_condition_specific_celltype_receiver$group_prioritization_tbl %>% filter(receiver %in% condition_specific_celltypes),
-        prioritization_tables_with_condition_specific_celltype_sender$group_prioritization_tbl %>% filter(sender %in% condition_specific_celltypes)
-      ) %>% bind_rows(prioritization_tables$group_prioritization_tbl) %>% arrange(-prioritization_score) %>% distinct()
+        prioritization_tables_with_condition_specific_celltype_receiver$group_prioritization_tbl %>%
+          filter(receiver %in% condition_specific_celltypes),
+        prioritization_tables_with_condition_specific_celltype_sender$group_prioritization_tbl %>%
+          filter(sender %in% condition_specific_celltypes)
+      ) %>%
+        bind_rows(prioritization_tables$group_prioritization_tbl) %>%
+        arrange(-prioritization_score) %>%
+        distinct()
     )
 
     multinichenet_output <- list(
@@ -677,9 +830,14 @@ multi_nichenet_analysis <- function(sce,
       lr_target_prior_cor = lr_target_prior_cor
     )
 
-    multinichenet_output <- make_lite_output_condition_specific(multinichenet_output, top_n_LR = top_n_LR)
+    multinichenet_output <- make_lite_output_condition_specific(
+      multinichenet_output,
+      top_n_LR = top_n_LR
+    )
   } else {
-    print("There are no condition specific cell types in the data. MultiNicheNet analysis is performed in the regular way for all cell types.")
+    print(
+      "There are no condition specific cell types in the data. MultiNicheNet analysis is performed in the regular way for all cell types."
+    )
     multinichenet_output <- list(
       celltype_info = abundance_expression_info$celltype_info,
       abundance_data_receiver = abundance_expression_info$abundance_data_receiver,
@@ -690,7 +848,10 @@ multi_nichenet_analysis <- function(sce,
       grouping_tbl = grouping_tbl,
       lr_target_prior_cor = lr_target_prior_cor
     )
-    multinichenet_output <- make_lite_output(multinichenet_output, top_n_LR = top_n_LR)
+    multinichenet_output <- make_lite_output(
+      multinichenet_output,
+      top_n_LR = top_n_LR
+    )
   }
 
   return(multinichenet_output)
@@ -755,31 +916,37 @@ multi_nichenet_analysis <- function(sce,
 #'
 #' @export
 #'
-multi_nichenet_analysis_sampleAgnostic <- function(sce,
-                                                   celltype_id,
-                                                   sample_id,
-                                                   group_id,
-                                                   batches,
-                                                   covariates,
-                                                   lr_network,
-                                                   ligand_target_matrix,
-                                                   contrasts_oi,
-                                                   contrast_tbl,
-                                                   senders_oi = NULL,
-                                                   receivers_oi = NULL,
-                                                   fraction_cutoff = 0.05,
-                                                   min_sample_prop = 0.5,
-                                                   scenario = "regular",
-                                                   ligand_activity_down = FALSE,
-                                                   assay_oi_pb = "counts",
-                                                   fun_oi_pb = "sum",
-                                                   de_method_oi = "edgeR",
-                                                   min_cells = 10,
-                                                   logFC_threshold = 0.50,
-                                                   p_val_threshold = 0.05,
-                                                   p_val_adj = FALSE,
-                                                   empirical_pval = TRUE,
-                                                   top_n_target = 250, verbose = FALSE, n.cores = 1, return_lr_prod_matrix = FALSE, top_n_LR = 2500) {
+multi_nichenet_analysis_sampleAgnostic <- function(
+  sce,
+  celltype_id,
+  sample_id,
+  group_id,
+  batches,
+  covariates,
+  lr_network,
+  ligand_target_matrix,
+  contrasts_oi,
+  contrast_tbl,
+  senders_oi = NULL,
+  receivers_oi = NULL,
+  fraction_cutoff = 0.05,
+  min_sample_prop = 0.5,
+  scenario = "regular",
+  ligand_activity_down = FALSE,
+  assay_oi_pb = "counts",
+  fun_oi_pb = "sum",
+  de_method_oi = "edgeR",
+  min_cells = 10,
+  logFC_threshold = 0.50,
+  p_val_threshold = 0.05,
+  p_val_adj = FALSE,
+  empirical_pval = TRUE,
+  top_n_target = 250,
+  verbose = FALSE,
+  n.cores = 1,
+  return_lr_prod_matrix = FALSE,
+  top_n_LR = 2500
+) {
   requireNamespace("dplyr")
   requireNamespace("ggplot2")
 
@@ -792,7 +959,9 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
     stop("celltype_id should be a column name in the metadata dataframe of sce")
   }
   if (celltype_id != make.names(celltype_id)) {
-    stop("celltype_id should be a syntactically valid R name - check make.names")
+    stop(
+      "celltype_id should be a syntactically valid R name - check make.names"
+    )
   }
   if (!sample_id %in% colnames(SummarizedExperiment::colData(sce))) {
     stop("sample_id should be a column name in the metadata dataframe of sce")
@@ -808,37 +977,62 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
   }
 
   if (is.double(SummarizedExperiment::colData(sce)[, celltype_id])) {
-    stop("SummarizedExperiment::colData(sce)[,celltype_id] should be a character vector or a factor")
+    stop(
+      "SummarizedExperiment::colData(sce)[,celltype_id] should be a character vector or a factor"
+    )
   }
   if (is.double(SummarizedExperiment::colData(sce)[, group_id])) {
-    stop("SummarizedExperiment::colData(sce)[,group_id] should be a character vector or a factor")
+    stop(
+      "SummarizedExperiment::colData(sce)[,group_id] should be a character vector or a factor"
+    )
   }
   if (is.double(SummarizedExperiment::colData(sce)[, sample_id])) {
-    stop("SummarizedExperiment::colData(sce)[,sample_id] should be a character vector or a factor")
+    stop(
+      "SummarizedExperiment::colData(sce)[,sample_id] should be a character vector or a factor"
+    )
   }
 
   # if some of these are factors, and not all levels have syntactically valid names - prompt to change this
   if (is.factor(SummarizedExperiment::colData(sce)[, celltype_id])) {
-    is_make_names <- levels(SummarizedExperiment::colData(sce)[, celltype_id]) == make.names(levels(SummarizedExperiment::colData(sce)[, celltype_id]))
-    if (sum(is_make_names) != length(levels(SummarizedExperiment::colData(sce)[, celltype_id]))) {
-      stop("The levels of the factor SummarizedExperiment::colData(sce)[,celltype_id] should be a syntactically valid R names - see make.names")
+    is_make_names <- levels(SummarizedExperiment::colData(sce)[,
+      celltype_id
+    ]) ==
+      make.names(levels(SummarizedExperiment::colData(sce)[, celltype_id]))
+    if (
+      sum(is_make_names) !=
+        length(levels(SummarizedExperiment::colData(sce)[, celltype_id]))
+    ) {
+      stop(
+        "The levels of the factor SummarizedExperiment::colData(sce)[,celltype_id] should be a syntactically valid R names - see make.names"
+      )
     }
   }
 
   if (is.factor(SummarizedExperiment::colData(sce)[, group_id])) {
-    is_make_names <- levels(SummarizedExperiment::colData(sce)[, group_id]) == make.names(levels(SummarizedExperiment::colData(sce)[, group_id]))
-    if (sum(is_make_names) != length(levels(SummarizedExperiment::colData(sce)[, group_id]))) {
-      stop("The levels of the factor SummarizedExperiment::colData(sce)[,group_id] should be a syntactically valid R names - see make.names")
+    is_make_names <- levels(SummarizedExperiment::colData(sce)[, group_id]) ==
+      make.names(levels(SummarizedExperiment::colData(sce)[, group_id]))
+    if (
+      sum(is_make_names) !=
+        length(levels(SummarizedExperiment::colData(sce)[, group_id]))
+    ) {
+      stop(
+        "The levels of the factor SummarizedExperiment::colData(sce)[,group_id] should be a syntactically valid R names - see make.names"
+      )
     }
   }
 
   if (is.factor(SummarizedExperiment::colData(sce)[, sample_id])) {
-    is_make_names <- levels(SummarizedExperiment::colData(sce)[, sample_id]) == make.names(levels(SummarizedExperiment::colData(sce)[, sample_id]))
-    if (sum(is_make_names) != length(levels(SummarizedExperiment::colData(sce)[, sample_id]))) {
-      stop("The levels of the factor SummarizedExperiment::colData(sce)[,sample_id] should be a syntactically valid R names - see make.names")
+    is_make_names <- levels(SummarizedExperiment::colData(sce)[, sample_id]) ==
+      make.names(levels(SummarizedExperiment::colData(sce)[, sample_id]))
+    if (
+      sum(is_make_names) !=
+        length(levels(SummarizedExperiment::colData(sce)[, sample_id]))
+    ) {
+      stop(
+        "The levels of the factor SummarizedExperiment::colData(sce)[,sample_id] should be a syntactically valid R names - see make.names"
+      )
     }
   }
-
 
   if (!is.character(contrasts_oi)) {
     stop("contrasts_oi should be a character vector")
@@ -873,10 +1067,14 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
     generics::setdiff(c("", ",", " ,", ", ")) %>%
     unlist() %>%
     unique()
-  conditions_oi <- conditions_oi[is.na(suppressWarnings(as.numeric(conditions_oi)))]
+  conditions_oi <- conditions_oi[is.na(suppressWarnings(as.numeric(
+    conditions_oi
+  )))]
 
   if (length(contrasts_oi) != 1 | !is.character(contrasts_oi)) {
-    stop("contrasts_oi should be a character vector of length 1. See the documentation of the function for having an idea of the right format of setting your contrasts.")
+    stop(
+      "contrasts_oi should be a character vector of length 1. See the documentation of the function for having an idea of the right format of setting your contrasts."
+    )
   }
 
   # conditions of interest in the contrast should be present in the in the contrast_tbl
@@ -891,25 +1089,43 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
     unique()
 
   if (sum(conditions_oi %in% groups_oi) != length(conditions_oi)) {
-    stop("conditions written in contrasts_oi should be in the condition-indicating column! This is not the case, which can lead to errors downstream.")
+    stop(
+      "conditions written in contrasts_oi should be in the condition-indicating column! This is not the case, which can lead to errors downstream."
+    )
   }
-  if (sum(contrasts_oi_simplified %in% unique(contrast_tbl$contrast)) != length(contrasts_oi_simplified)) {
-    stop("conditions written in contrasts_oi should be in the contrast column of contrast_tbl column! This is not the case, which can lead to errors downstream.")
+  if (
+    sum(contrasts_oi_simplified %in% unique(contrast_tbl$contrast)) !=
+      length(contrasts_oi_simplified)
+  ) {
+    stop(
+      "conditions written in contrasts_oi should be in the contrast column of contrast_tbl column! This is not the case, which can lead to errors downstream."
+    )
   }
 
   #
   groups_oi_contrast_tbl <- contrast_tbl$group %>% unique()
-  if (sum(groups_oi_contrast_tbl %in% groups_oi) != length(groups_oi_contrast_tbl)) {
-    stop("You have defined some groups in contrast_tbl$group that are not present SummarizedExperiment::colData(sce)[,group_id]. This will result in lack of information downstream. We recommend to change your metadata or this contrast_tbl appropriately.")
+  if (
+    sum(groups_oi_contrast_tbl %in% groups_oi) != length(groups_oi_contrast_tbl)
+  ) {
+    stop(
+      "You have defined some groups in contrast_tbl$group that are not present SummarizedExperiment::colData(sce)[,group_id]. This will result in lack of information downstream. We recommend to change your metadata or this contrast_tbl appropriately."
+    )
   }
 
   if (length(groups_oi_contrast_tbl) != length(contrast_tbl$group)) {
-    warning("According to your contrast_tbl, some of your contrasts will be assigned to the same group. This should not be a problem if this was intended, but be aware not to make mistakes in the further interpretation and plotting of the results.")
+    warning(
+      "According to your contrast_tbl, some of your contrasts will be assigned to the same group. This should not be a problem if this was intended, but be aware not to make mistakes in the further interpretation and plotting of the results."
+    )
   }
 
   if (!is.na(batches)) {
-    if (sum(batches %in% colnames(SummarizedExperiment::colData(sce))) != length(batches)) {
-      stop("batches should be NA or all present as column name(s) in the metadata dataframe of sce")
+    if (
+      sum(batches %in% colnames(SummarizedExperiment::colData(sce))) !=
+        length(batches)
+    ) {
+      stop(
+        "batches should be NA or all present as column name(s) in the metadata dataframe of sce"
+      )
     }
   }
 
@@ -925,14 +1141,18 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
     if ("from" %in% colnames(lr_network)) {
       lr_network <- lr_network %>% dplyr::rename(ligand = from)
     } else {
-      stop("The ligand-receptor network should have the columns ligand and receptor (or: from and to)")
+      stop(
+        "The ligand-receptor network should have the columns ligand and receptor (or: from and to)"
+      )
     }
   }
   if (!"receptor" %in% colnames(lr_network)) {
     if ("to" %in% colnames(lr_network)) {
       lr_network <- lr_network %>% dplyr::rename(receptor = to)
     } else {
-      stop("The ligand-receptor network should have the columns ligand and receptor (or: from and to)")
+      stop(
+        "The ligand-receptor network should have the columns ligand and receptor (or: from and to)"
+      )
     }
   }
 
@@ -941,21 +1161,35 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
   ligands_ligand_target_matrix <- colnames(ligand_target_matrix)
 
   if (length(ligands_ligand_target_matrix) < length(ligands_lrnetwork)) {
-    warning("Not all Ligands from your ligand-receptor network are in the ligand-target matrix")
+    warning(
+      "Not all Ligands from your ligand-receptor network are in the ligand-target matrix"
+    )
   }
   if (length(ligands_lrnetwork) < length(ligands_ligand_target_matrix)) {
-    warning("Not all Ligands from your ligand-target matrix are in the ligand-receptor network")
+    warning(
+      "Not all Ligands from your ligand-target matrix are in the ligand-receptor network"
+    )
   }
-
 
   if (length(rownames(sce) %>% generics::intersect(ligands_lrnetwork)) < 25) {
-    warning("Less than 25 ligands from your ligand-receptor network are in your expression matrix of the sender cell.\nDid you convert the gene symbols of the ligand-receptor network and the ligand-target matrix if your data is not from human?")
+    warning(
+      "Less than 25 ligands from your ligand-receptor network are in your expression matrix of the sender cell.\nDid you convert the gene symbols of the ligand-receptor network and the ligand-target matrix if your data is not from human?"
+    )
   }
-  if (length(rownames(sce) %>% generics::intersect(ligands_ligand_target_matrix)) < 25) {
-    warning("Less than 25 ligands from your ligand-target matrix are in your expression matrix of the sender cell.\nDid you convert the gene symbols of the ligand-receptor network and the ligand-target matrix if your data is not from human?")
+  if (
+    length(
+      rownames(sce) %>% generics::intersect(ligands_ligand_target_matrix)
+    ) <
+      25
+  ) {
+    warning(
+      "Less than 25 ligands from your ligand-target matrix are in your expression matrix of the sender cell.\nDid you convert the gene symbols of the ligand-receptor network and the ligand-target matrix if your data is not from human?"
+    )
   }
   if (length(rownames(sce) %>% generics::intersect(receptors_lrnetwork)) < 25) {
-    warning("Less than 25 receptors from your ligand-receptor network are in your expression matrix of the receiver cell.\nDid you convert the gene symbols of the ligand-receptor network and the ligand-target matrix if your data is not from human?")
+    warning(
+      "Less than 25 receptors from your ligand-receptor network are in your expression matrix of the receiver cell.\nDid you convert the gene symbols of the ligand-receptor network and the ligand-target matrix if your data is not from human?"
+    )
   }
 
   if (!is.character(assay_oi_pb)) {
@@ -976,35 +1210,45 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
     stop("min_cells should be numeric")
   } else {
     if (min_cells <= 0) {
-      warning("min_cells is now 0 or smaller. We recommend having a positive, non-zero value for this parameter")
+      warning(
+        "min_cells is now 0 or smaller. We recommend having a positive, non-zero value for this parameter"
+      )
     }
   }
   if (!is.double(logFC_threshold)) {
     stop("logFC_threshold should be numeric")
   } else {
     if (logFC_threshold <= 0) {
-      warning("logFC_threshold is now 0 or smaller. We recommend having a positive, non-zero value for this parameter")
+      warning(
+        "logFC_threshold is now 0 or smaller. We recommend having a positive, non-zero value for this parameter"
+      )
     }
   }
   if (!is.double(p_val_threshold)) {
     stop("p_val_threshold should be numeric")
   } else {
     if (p_val_threshold <= 0 | p_val_threshold > 1) {
-      warning("p_val_threshold is now 0 or smaller; or higher than 1. We recommend setting this parameter between 0 and 1 - preferably between 0 and 0.10, 0 excluded.")
+      warning(
+        "p_val_threshold is now 0 or smaller; or higher than 1. We recommend setting this parameter between 0 and 1 - preferably between 0 and 0.10, 0 excluded."
+      )
     }
   }
   if (!is.double(fraction_cutoff)) {
     stop("fraction_cutoff should be numeric")
   } else {
     if (fraction_cutoff <= 0 | fraction_cutoff > 1) {
-      stop("fraction_cutoff is now 0 or smaller; or higher than 1. We recommend setting this parameter between 0 and 1 - preferably between 0 and 0.25, 0 excluded.")
+      stop(
+        "fraction_cutoff is now 0 or smaller; or higher than 1. We recommend setting this parameter between 0 and 1 - preferably between 0 and 0.25, 0 excluded."
+      )
     }
   }
   if (!is.double(top_n_target)) {
     stop("top_n_target should be numeric")
   } else {
     if (top_n_target <= 0) {
-      warning("top_n_target is now 0 or smaller. We recommend having a positive, non-zero value for this parameter.")
+      warning(
+        "top_n_target is now 0 or smaller. We recommend having a positive, non-zero value for this parameter."
+      )
     }
   }
   if (!is.logical(p_val_adj)) {
@@ -1024,38 +1268,55 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
     stop("n.cores should be numeric")
   } else {
     if (n.cores <= 0) {
-      warning("n.cores is now 0 or smaller. We recommend having a positive, non-zero value for this parameter.")
+      warning(
+        "n.cores is now 0 or smaller. We recommend having a positive, non-zero value for this parameter."
+      )
     }
   }
   if (is.null(senders_oi)) {
     senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>% unique()
   }
   if (is.null(receivers_oi)) {
-    receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>% unique()
+    receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>%
+      unique()
   }
 
-  sce <- sce[, SummarizedExperiment::colData(sce)[, celltype_id] %in% c(senders_oi, receivers_oi)]
+  sce <- sce[,
+    SummarizedExperiment::colData(sce)[, celltype_id] %in%
+      c(senders_oi, receivers_oi)
+  ]
   # sce = sce[, SummarizedExperiment::colData(sce)[,group_id] %in% contrast_tbl$group] # keep only considered groups
   # do not do this -- this could give errors if only interested in one contrast but multiple groups
 
   sce <- scuttle::logNormCounts(sce)
-
 
   if (verbose == TRUE) {
     print("Make diagnostic abundance plots + define expressed genes")
   }
   ## check abundance info
 
-  abundance_info <- get_abundance_info(sce = sce, sample_id = group_id, group_id = group_id, celltype_id = celltype_id, min_cells = min_cells, senders_oi = senders_oi, receivers_oi = receivers_oi, batches = batches)
+  abundance_info <- get_abundance_info(
+    sce = sce,
+    sample_id = group_id,
+    group_id = group_id,
+    celltype_id = celltype_id,
+    min_cells = min_cells,
+    senders_oi = senders_oi,
+    receivers_oi = receivers_oi,
+    batches = batches
+  )
 
   ## check for condition-specific cell types
   sample_group_celltype_df <- abundance_info$abundance_data %>%
     filter(n > min_cells) %>%
     ungroup() %>%
     distinct(sample_id, group_id) %>%
-    cross_join(abundance_info$abundance_data %>% ungroup() %>% distinct(celltype_id)) %>%
+    cross_join(
+      abundance_info$abundance_data %>% ungroup() %>% distinct(celltype_id)
+    ) %>%
     arrange(sample_id)
-  abundance_df <- sample_group_celltype_df %>% left_join(abundance_info$abundance_data %>% ungroup())
+  abundance_df <- sample_group_celltype_df %>%
+    left_join(abundance_info$abundance_data %>% ungroup())
   abundance_df$n[is.na(abundance_df$n)] <- 0
   abundance_df$keep[is.na(abundance_df$keep)] <- FALSE
   abundance_df_summarized <- abundance_df %>%
@@ -1070,7 +1331,10 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
     filter(samples_present >= 1) %>%
     pull(celltype_id) %>%
     unique() # require presence in at least 2 samples of one group so it is really present in at least one condition
-  condition_specific_celltypes <- intersect(celltypes_absent_one_condition, celltypes_present_one_condition)
+  condition_specific_celltypes <- intersect(
+    celltypes_absent_one_condition,
+    celltypes_present_one_condition
+  )
 
   total_nr_conditions <- SummarizedExperiment::colData(sce)[, group_id] %>%
     unique() %>%
@@ -1093,10 +1357,21 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
 
   retained_celltypes <- union(senders_oi, receivers_oi)
 
-  sce <- sce[, SummarizedExperiment::colData(sce)[, celltype_id] %in% retained_celltypes]
+  sce <- sce[,
+    SummarizedExperiment::colData(sce)[, celltype_id] %in% retained_celltypes
+  ]
 
   ## define expressed genes
-  frq_list <- get_frac_exprs_sampleAgnostic(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id, batches = batches, min_cells = min_cells, fraction_cutoff = fraction_cutoff, min_sample_prop = min_sample_prop)
+  frq_list <- get_frac_exprs_sampleAgnostic(
+    sce = sce,
+    sample_id = sample_id,
+    celltype_id = celltype_id,
+    group_id = group_id,
+    batches = batches,
+    min_cells = min_cells,
+    fraction_cutoff = fraction_cutoff,
+    min_sample_prop = min_sample_prop
+  )
 
   ### Perform the DE analysis ----------------------------------------------------------------
 
@@ -1105,7 +1380,14 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
   }
 
   DE_info <- get_DE_info(
-    sce = sce, sample_id = sample_id, group_id = group_id, celltype_id = celltype_id, batches = batches, covariates = covariates, contrasts_oi = contrasts_oi, min_cells = min_cells,
+    sce = sce,
+    sample_id = sample_id,
+    group_id = group_id,
+    celltype_id = celltype_id,
+    batches = batches,
+    covariates = covariates,
+    contrasts_oi = contrasts_oi,
+    min_cells = min_cells,
     assay_oi_pb = assay_oi_pb,
     fun_oi_pb = fun_oi_pb,
     de_method_oi = de_method_oi,
@@ -1113,8 +1395,6 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
     contrast_tbl = contrast_tbl,
     expressed_df = frq_list$expressed_df
   )
-
-
 
   celltype_de <- DE_info$celltype_de_findmarkers
 
@@ -1130,7 +1410,10 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
   print("retained cell types")
   print(retained_celltypes)
 
-  sce <- sce[genes_oi, SummarizedExperiment::colData(sce)[, celltype_id] %in% retained_celltypes]
+  sce <- sce[
+    genes_oi,
+    SummarizedExperiment::colData(sce)[, celltype_id] %in% retained_celltypes
+  ]
 
   sender_receiver_de <- suppressMessages(combine_sender_receiver_de(
     sender_de = celltype_de,
@@ -1139,15 +1422,29 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
     receivers_oi = receivers_oi,
     lr_network = lr_network
   ))
-  sender_receiver_tbl <- sender_receiver_de %>% dplyr::distinct(sender, receiver)
+  sender_receiver_tbl <- sender_receiver_de %>%
+    dplyr::distinct(sender, receiver)
 
   ### Receiver abundance plots + Calculate expression information
   if (verbose == TRUE) {
     print("Calculate normalized average and pseudobulk expression")
   }
-  abundance_expression_info <- process_abundance_expression_info(sce = sce, sample_id = group_id, group_id = group_id, celltype_id = celltype_id, min_cells = min_cells, senders_oi = union(senders_oi, condition_specific_celltypes), receivers_oi = union(receivers_oi, condition_specific_celltypes), lr_network = lr_network, batches = batches, frq_list = frq_list, abundance_info = abundance_info)
+  abundance_expression_info <- process_abundance_expression_info(
+    sce = sce,
+    sample_id = group_id,
+    group_id = group_id,
+    celltype_id = celltype_id,
+    min_cells = min_cells,
+    senders_oi = union(senders_oi, condition_specific_celltypes),
+    receivers_oi = union(receivers_oi, condition_specific_celltypes),
+    lr_network = lr_network,
+    batches = batches,
+    frq_list = frq_list,
+    abundance_info = abundance_info
+  )
 
-  metadata_combined <- SummarizedExperiment::colData(sce) %>% tibble::as_tibble()
+  metadata_combined <- SummarizedExperiment::colData(sce) %>%
+    tibble::as_tibble()
 
   if (!is.na(batches)) {
     grouping_tbl <- metadata_combined[, c(group_id, batches)] %>%
@@ -1214,7 +1511,9 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
   ## save output
 
   if (length(condition_specific_celltypes) > 0) {
-    print("There are condition specific cell types in the data. Continuing with the regular MultiNicheNet analysis will not include those. If preferred, the user can apply a specific worfklow tailored to analyze CCC events involving condition-specific cell types")
+    print(
+      "There are condition specific cell types in the data. Continuing with the regular MultiNicheNet analysis will not include those. If preferred, the user can apply a specific worfklow tailored to analyze CCC events involving condition-specific cell types"
+    )
     print(condition_specific_celltypes)
     prioritization_tables_with_condition_specific_celltype_sender <- prioritize_condition_specific_sender(
       abundance_info = abundance_info,
@@ -1244,9 +1543,14 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
     )
     combined_prioritization_tables <- list(
       group_prioritization_tbl = bind_rows(
-        prioritization_tables_with_condition_specific_celltype_receiver$group_prioritization_tbl %>% filter(receiver %in% condition_specific_celltypes),
-        prioritization_tables_with_condition_specific_celltype_sender$group_prioritization_tbl %>% filter(sender %in% condition_specific_celltypes)
-      ) %>% bind_rows(prioritization_tables$group_prioritization_tbl) %>% arrange(-prioritization_score) %>% distinct()
+        prioritization_tables_with_condition_specific_celltype_receiver$group_prioritization_tbl %>%
+          filter(receiver %in% condition_specific_celltypes),
+        prioritization_tables_with_condition_specific_celltype_sender$group_prioritization_tbl %>%
+          filter(sender %in% condition_specific_celltypes)
+      ) %>%
+        bind_rows(prioritization_tables$group_prioritization_tbl) %>%
+        arrange(-prioritization_score) %>%
+        distinct()
     )
 
     multinichenet_output <- list(
@@ -1263,9 +1567,14 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
       lr_target_prior_cor = tibble()
     )
 
-    multinichenet_output <- make_lite_output_condition_specific(multinichenet_output, top_n_LR = top_n_LR)
+    multinichenet_output <- make_lite_output_condition_specific(
+      multinichenet_output,
+      top_n_LR = top_n_LR
+    )
   } else {
-    print("There are no condition specific cell types in the data. MultiNicheNet analysis is performed in the regular way for all cell types.")
+    print(
+      "There are no condition specific cell types in the data. MultiNicheNet analysis is performed in the regular way for all cell types."
+    )
     multinichenet_output <- list(
       celltype_info = abundance_expression_info$celltype_info,
       abundance_data_receiver = abundance_expression_info$abundance_data_receiver,
@@ -1276,7 +1585,10 @@ multi_nichenet_analysis_sampleAgnostic <- function(sce,
       grouping_tbl = grouping_tbl,
       lr_target_prior_cor = tibble()
     )
-    multinichenet_output <- make_lite_output(multinichenet_output, top_n_LR = top_n_LR)
+    multinichenet_output <- make_lite_output(
+      multinichenet_output,
+      top_n_LR = top_n_LR
+    )
   }
 
   return(multinichenet_output)

@@ -120,10 +120,10 @@ get_muscat_exprs_frac <- function(sce, sample_id, celltype_id, group_id) {
     dplyr::bind_rows()
   rm(frq_lists)
 
-  return(list(
+  list(
     frq_celltype_samples = frq_celltype_samples,
     frq_celltype_groups = frq_celltype_groups
-  ))
+  )
 }
 
 
@@ -303,7 +303,7 @@ get_muscat_exprs_avg <- function(sce, sample_id, celltype_id, group_id) {
 #' @importFrom sva ComBat_seq
 #' @importFrom S4Vectors metadata
 #' @importFrom SummarizedExperiment colData
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @examples
 #' \dontrun{
@@ -416,43 +416,43 @@ get_pseudobulk_logCPM_exprs <- function(
 
             pseudobulk_counts_celltype_df <- dplyr::inner_join(
               pseudobulk_counts_celltype$sample %>%
-                data.frame() %>%
-                tibble::rownames_to_column("sample") %>%
+                data.frame() |>
+                tibble::rownames_to_column("sample") |>
                 dplyr::mutate(effective_library_size = lib.size * norm.factors),
-              pseudobulk_counts_celltype$counts %>%
-                data.frame() %>%
-                tibble::rownames_to_column("gene") %>%
+              pseudobulk_counts_celltype$counts |>
+                data.frame() |>
+                tibble::rownames_to_column("gene") |>
                 tidyr::gather(sample, pb_raw, -gene)
             )
 
-            pseudobulk_counts_celltype_df <- pseudobulk_counts_celltype_df %>%
-              dplyr::mutate(pb_norm = pb_raw / effective_library_size) %>%
-              dplyr::mutate(pb_sample = log2((pb_norm * 1000000) + 1)) %>%
-              tibble::as_tibble() %>%
+            pseudobulk_counts_celltype_df <- pseudobulk_counts_celltype_df |>
+              dplyr::mutate(pb_norm = pb_raw / effective_library_size) |>
+              dplyr::mutate(pb_sample = log2((pb_norm * 1000000) + 1)) |>
+              tibble::as_tibble() |>
               dplyr::mutate(celltype = celltype_oi) # +1: pseudocount - should be introduced after library size correction, otherwise: we think some samples have a higher expression even though it was zero!
             # },
             # pb
           }
-        ) %>%
-        dplyr::bind_rows() %>%
-        dplyr::select(gene, sample, pb_sample, celltype) %>%
+        ) |>
+        dplyr::bind_rows() |>
+        dplyr::select(gene, sample, pb_sample, celltype) |>
         dplyr::distinct()
     } else {
-      pb_df <- sce$cluster_id %>%
-        unique() %>%
+      pb_df <- sce$cluster_id |>
+        unique() |>
         # lapply(
         #   function(celltype_oi, pb, ei) {
         furrr::future_map(
           .f = \(celltype_oi) {
             # get the count matrix
             count_matrix <- pb@assays@data[[celltype_oi]] %>% .[, ei$sample_id]
-            non_zero_samples <- count_matrix %>%
+            non_zero_samples <- count_matrix |>
               apply(2, sum) %>%
-              .[. > 0] %>%
+              .[. > 0] |>
               names()
             count_matrix <- count_matrix[, non_zero_samples]
             # adjust the count matrix
-            ei <- ei %>% dplyr::filter(sample_id %in% non_zero_samples)
+            ei <- ei |> dplyr::filter(sample_id %in% non_zero_samples)
             batch2 <- as.factor(ei$batches) # still check whether we have enough samples for each celltype to correct for!!
             if (any(table(batch2) <= 1)) {
               warning(paste0(
@@ -482,34 +482,34 @@ get_pseudobulk_logCPM_exprs <- function(
             )
 
             pseudobulk_counts_celltype_df <- dplyr::inner_join(
-              pseudobulk_counts_celltype$sample %>%
-                data.frame() %>%
-                tibble::rownames_to_column("sample") %>%
+              pseudobulk_counts_celltype$sample |>
+                data.frame() |>
+                tibble::rownames_to_column("sample") |>
                 dplyr::mutate(effective_library_size = lib.size * norm.factors),
-              pseudobulk_counts_celltype$counts %>%
-                data.frame() %>%
-                tibble::rownames_to_column("gene") %>%
+              pseudobulk_counts_celltype$counts |>
+                data.frame() |>
+                tibble::rownames_to_column("gene") |>
                 tidyr::gather(sample, pb_raw, -gene)
             )
 
-            pseudobulk_counts_celltype_df <- pseudobulk_counts_celltype_df %>%
-              dplyr::mutate(pb_norm = pb_raw / effective_library_size) %>%
-              dplyr::mutate(pb_sample = log2((pb_norm * 1000000) + 1)) %>%
-              tibble::as_tibble() %>%
+            pseudobulk_counts_celltype_df <- pseudobulk_counts_celltype_df |>
+              dplyr::mutate(pb_norm = pb_raw / effective_library_size) |>
+              dplyr::mutate(pb_sample = log2((pb_norm * 1000000) + 1)) |>
+              tibble::as_tibble() |>
               dplyr::mutate(celltype = celltype_oi) # +1: pseudocount - should be introduced after library size correction, otherwise: we think some samples have a higher expression even though it was zero!
             # },
             # pb,
             # ei
           }
-        ) %>%
-        dplyr::bind_rows() %>%
-        dplyr::select(gene, sample, pb_sample, celltype) %>%
+        ) |>
+        dplyr::bind_rows() |>
+        dplyr::select(gene, sample, pb_sample, celltype) |>
         dplyr::distinct()
     }
   } else {
     # no correction of the pseudobulk counts
-    pb_df <- sce$cluster_id %>%
-      unique() %>%
+    pb_df <- sce$cluster_id |>
+      unique() |>
       # lapply(
       #   function(celltype_oi, pb) {
       furrr::future_map(
@@ -518,9 +518,9 @@ get_pseudobulk_logCPM_exprs <- function(
             celltype_oi
           ]])
 
-          non_zero_samples <- pseudobulk_counts_celltype %>%
+          non_zero_samples <- pseudobulk_counts_celltype |>
             apply(2, sum) %>%
-            .[. > 0] %>%
+            .[. > 0] |>
             names()
           pseudobulk_counts_celltype <- pseudobulk_counts_celltype[,
             non_zero_samples
@@ -531,27 +531,27 @@ get_pseudobulk_logCPM_exprs <- function(
           )
 
           pseudobulk_counts_celltype_df <- dplyr::inner_join(
-            pseudobulk_counts_celltype$sample %>%
-              data.frame() %>%
-              tibble::rownames_to_column("sample") %>%
+            pseudobulk_counts_celltype$sample |>
+              data.frame() |>
+              tibble::rownames_to_column("sample") |>
               dplyr::mutate(effective_library_size = lib.size * norm.factors),
-            pseudobulk_counts_celltype$counts %>%
-              data.frame() %>%
-              tibble::rownames_to_column("gene") %>%
+            pseudobulk_counts_celltype$counts |>
+              data.frame() |>
+              tibble::rownames_to_column("gene") |>
               tidyr::gather(sample, pb_raw, -gene)
           )
 
-          pseudobulk_counts_celltype_df <- pseudobulk_counts_celltype_df %>%
-            dplyr::mutate(pb_norm = pb_raw / effective_library_size) %>%
-            dplyr::mutate(pb_sample = log2((pb_norm * 1000000) + 1)) %>%
-            tibble::as_tibble() %>%
+          pseudobulk_counts_celltype_df <- pseudobulk_counts_celltype_df |>
+            dplyr::mutate(pb_norm = pb_raw / effective_library_size) |>
+            dplyr::mutate(pb_sample = log2((pb_norm * 1000000) + 1)) |>
+            tibble::as_tibble() |>
             dplyr::mutate(celltype = celltype_oi) # +1: pseudocount - should be introduced after library size correction, otherwise: we think some samples have a higher expression even though it was zero!
           # },
           # pb
         }
-      ) %>%
-      dplyr::bind_rows() %>%
-      dplyr::select(gene, sample, pb_sample, celltype) %>%
+      ) |>
+      dplyr::bind_rows() |>
+      dplyr::select(gene, sample, pb_sample, celltype) |>
       dplyr::distinct()
   }
 
@@ -568,7 +568,7 @@ get_pseudobulk_logCPM_exprs <- function(
 #' @return Fixed data frame with fraction of cells expressing a gene.
 #'
 #' @import dplyr
-#' @importFrom magrittr set_names
+#' @importFrom magrittr set_names %>%
 #'
 #' @examples
 #' \dontrun{
@@ -588,34 +588,34 @@ fix_frq_df <- function(sce, frq_celltype_samples) {
   requireNamespace("dplyr")
 
   genes <- rownames(sce)
-  gene_mapping <- genes %>% magrittr::set_names(seq(length(genes)))
+  gene_mapping <- genes |> magrittr::set_names(seq(length(genes)))
 
-  frq_celltype_samples_OK <- frq_celltype_samples %>%
+  frq_celltype_samples_OK <- frq_celltype_samples |>
     dplyr::filter(gene %in% genes)
 
   # Fix 0's incase gene names absent
-  frq_celltype_samples_FIX <- frq_celltype_samples %>%
+  frq_celltype_samples_FIX <- frq_celltype_samples |>
     dplyr::filter(!gene %in% genes)
 
-  frq_celltype_samples_FIX <- frq_celltype_samples_FIX %>%
+  frq_celltype_samples_FIX <- frq_celltype_samples_FIX |>
     dplyr::mutate(gene = gene_mapping[gene])
 
-  frq_celltype_samples_FIX <- frq_celltype_samples_FIX %>%
+  frq_celltype_samples_FIX <- frq_celltype_samples_FIX |>
     dplyr::mutate(fraction_sample = 0)
 
-  frq_celltype_samples <- frq_celltype_samples_OK %>%
+  frq_celltype_samples <- frq_celltype_samples_OK |>
     dplyr::bind_rows(frq_celltype_samples_FIX)
 
   # Fix NA/NaNs to Os in case gene names present
-  frq_celltype_samples_OK <- frq_celltype_samples %>%
+  frq_celltype_samples_OK <- frq_celltype_samples |>
     dplyr::filter(!is.na(fraction_sample))
 
-  frq_celltype_samples_FIX <- frq_celltype_samples %>%
+  frq_celltype_samples_FIX <- frq_celltype_samples |>
     dplyr::filter(is.na(fraction_sample))
-  frq_celltype_samples_FIX <- frq_celltype_samples_FIX %>%
+  frq_celltype_samples_FIX <- frq_celltype_samples_FIX |>
     dplyr::mutate(fraction_sample = 0)
 
-  frq_celltype_samples <- frq_celltype_samples_OK %>%
+  frq_celltype_samples <- frq_celltype_samples_OK |>
     dplyr::bind_rows(frq_celltype_samples_FIX)
 
   return(frq_celltype_samples)
@@ -770,14 +770,14 @@ get_avg_pb_exprs <- function(
 
   # check whether something needs to be fixed
   if (
-    nrow(avg_df %>% dplyr::filter(is.na(average_sample))) > 0 |
-      nrow(avg_df %>% dplyr::filter(is.nan(average_sample))) > 0
+    nrow(avg_df |> dplyr::filter(is.na(average_sample))) > 0 |
+      nrow(avg_df |> dplyr::filter(is.nan(average_sample))) > 0
   ) {
     warning("There are some genes with NA average expression.")
   }
 
   # calculate these above metrics per group
-  metadata <- SummarizedExperiment::colData(sce) %>% tibble::as_tibble()
+  metadata <- SummarizedExperiment::colData(sce) |> tibble::as_tibble()
   if ("sample_id" != sample_id) {
     metadata$sample_id <- metadata[[sample_id]]
   }
@@ -787,64 +787,64 @@ get_avg_pb_exprs <- function(
   if ("celltype_id" != celltype_id) {
     metadata$celltype_id <- metadata[[celltype_id]]
   }
-  # metadata_abundance = metadata %>% dplyr::select(sample_id, group_id, celltype_id) %>% tibble::as_tibble()
+  # metadata_abundance = metadata |> dplyr::select(sample_id, group_id, celltype_id) |> tibble::as_tibble()
   # colnames(metadata_abundance) =c("sample", "group", "celltype")
-  # abundance_data = metadata_abundance %>% tibble::as_tibble() %>% dplyr::group_by(sample , celltype) %>% dplyr::count() %>% dplyr::inner_join(metadata_abundance %>% tibble::as_tibble() %>% dplyr::distinct(sample , group ), by = "sample")
-  # abundance_data = abundance_data %>% dplyr::mutate(keep_sample = n >= min_cells) %>% dplyr::mutate(keep_sample = factor(keep_sample, levels = c(TRUE,FALSE)))
+  # abundance_data = metadata_abundance |> tibble::as_tibble() |> dplyr::group_by(sample , celltype) |> dplyr::count() |> dplyr::inner_join(metadata_abundance |> tibble::as_tibble() |> dplyr::distinct(sample , group ), by = "sample")
+  # abundance_data = abundance_data |> dplyr::mutate(keep_sample = n >= min_cells) |> dplyr::mutate(keep_sample = factor(keep_sample, levels = c(TRUE,FALSE)))
 
-  metadata_abundance <- metadata %>%
-    dplyr::select(sample_id, group_id, celltype_id) %>%
+  metadata_abundance <- metadata |>
+    dplyr::select(sample_id, group_id, celltype_id) |>
     tibble::as_tibble()
   # colnames(metadata_abundance) =c("sample", "group", "celltype")
-  # abundance_data = metadata_abundance %>% tibble::as_tibble() %>% dplyr::group_by(sample , celltype) %>% dplyr::count() %>% dplyr::inner_join(metadata_abundance %>% tibble::as_tibble() %>% dplyr::distinct(sample , group ), by = "sample")
-  # abundance_data = abundance_data %>% dplyr::mutate(keep_sample = n >= min_cells) %>% dplyr::mutate(keep_sample = factor(keep_sample, levels = c(TRUE,FALSE)))
+  # abundance_data = metadata_abundance |> tibble::as_tibble() |> dplyr::group_by(sample , celltype) |> dplyr::count() |> dplyr::inner_join(metadata_abundance |> tibble::as_tibble() |> dplyr::distinct(sample , group ), by = "sample")
+  # abundance_data = abundance_data |> dplyr::mutate(keep_sample = n >= min_cells) |> dplyr::mutate(keep_sample = factor(keep_sample, levels = c(TRUE,FALSE)))
 
   # Ensure column names are consistent
   colnames(metadata_abundance) <- c("sample", "group", "celltype")
 
   # Get unique sample and celltype combinations, fill in missing with n = 0
-  all_combinations <- metadata_abundance %>%
-    dplyr::distinct(sample, celltype) %>%
+  all_combinations <- metadata_abundance |>
+    dplyr::distinct(sample, celltype) |>
     tidyr::expand(sample, celltype)
 
   # Calculate abundance
-  abundance_data <- metadata_abundance %>%
-    dplyr::group_by(sample, celltype) %>%
-    dplyr::count() %>%
-    dplyr::right_join(all_combinations, by = c("sample", "celltype")) %>%
+  abundance_data <- metadata_abundance |>
+    dplyr::group_by(sample, celltype) |>
+    dplyr::count() |>
+    dplyr::right_join(all_combinations, by = c("sample", "celltype")) |>
     dplyr::mutate(n = ifelse(is.na(n), 0, n)) # Set missing counts to 0
 
   # Add group information
-  abundance_data <- abundance_data %>%
+  abundance_data <- abundance_data |>
     dplyr::left_join(
-      metadata_abundance %>% distinct(sample, group),
+      metadata_abundance |> distinct(sample, group),
       by = "sample"
     )
 
-  abundance_data <- abundance_data %>%
-    dplyr::mutate(keep_sample = n >= min_cells) %>%
+  abundance_data <- abundance_data |>
+    dplyr::mutate(keep_sample = n >= min_cells) |>
     dplyr::mutate(keep_sample = factor(keep_sample, levels = c(TRUE, FALSE)))
 
-  grouping_df <- metadata %>%
-    dplyr::select(sample_id, group_id) %>%
-    tibble::as_tibble() %>%
-    dplyr::distinct() %>%
+  grouping_df <- metadata |>
+    dplyr::select(sample_id, group_id) |>
+    tibble::as_tibble() |>
+    dplyr::distinct() |>
     dplyr::rename(
       sample = sample_id,
       group = group_id
     )
 
-  grouping_df_filtered <- grouping_df %>%
-    inner_join(abundance_data) %>%
+  grouping_df_filtered <- grouping_df |>
+    inner_join(abundance_data) |>
     filter(keep_sample == TRUE) # continue only with samples that have sufficient cells of a cell type in a sample
 
-  avg_df_group <- avg_df %>%
-    dplyr::inner_join(grouping_df_filtered) %>%
-    dplyr::group_by(group, celltype, gene) %>%
+  avg_df_group <- avg_df |>
+    dplyr::inner_join(grouping_df_filtered) |>
+    dplyr::group_by(group, celltype, gene) |>
     dplyr::summarise(average_group = mean(average_sample))
-  pb_df_group <- pb_df %>%
-    dplyr::inner_join(grouping_df_filtered) %>%
-    dplyr::group_by(group, celltype, gene) %>%
+  pb_df_group <- pb_df |>
+    dplyr::inner_join(grouping_df_filtered) |>
+    dplyr::group_by(group, celltype, gene) |>
     dplyr::summarise(pb_group = mean(pb_sample))
 
   return(list(
@@ -989,12 +989,12 @@ get_frac_exprs <- function(
     sample_id = sample_id,
     celltype_id = celltype_id,
     group_id = group_id
-  ) %>%
-    .$frq_celltype_samples
+  ) |>
+    dplyr::pull(frq_celltype_samples)
 
   if (
-    nrow(frq_df %>% dplyr::filter(is.na(fraction_sample))) > 0 |
-      nrow(frq_df %>% dplyr::filter(is.nan(fraction_sample))) > 0
+    nrow(frq_df |> dplyr::filter(is.na(fraction_sample))) > 0 |
+      nrow(frq_df |> dplyr::filter(is.nan(fraction_sample))) > 0
   ) {
     warning(
       "There are some genes with NA/NaN fraction of expression. This is the result of the muscat function `calcExprFreqs` which will give NA/NaN when there are no cells of a particular cell type in a particular group or no cells of a cell type in one sample. As a temporary fix, we give all these genes an expression fraction of 0 in that group for that cell type"
@@ -1003,7 +1003,7 @@ get_frac_exprs <- function(
   }
 
   # calculate these above metrics per group
-  metadata <- SummarizedExperiment::colData(sce) %>% tibble::as_tibble()
+  metadata <- SummarizedExperiment::colData(sce) |> tibble::as_tibble()
   if ("sample_id" != sample_id) {
     metadata$sample_id <- metadata[[sample_id]]
   }
@@ -1013,50 +1013,50 @@ get_frac_exprs <- function(
   if ("celltype_id" != celltype_id) {
     metadata$celltype_id <- metadata[[celltype_id]]
   }
-  metadata_abundance <- metadata %>%
-    dplyr::select(sample_id, group_id, celltype_id) %>%
+  metadata_abundance <- metadata |>
+    dplyr::select(sample_id, group_id, celltype_id) |>
     tibble::as_tibble()
   # colnames(metadata_abundance) =c("sample", "group", "celltype")
-  # abundance_data = metadata_abundance %>% tibble::as_tibble() %>% dplyr::group_by(sample , celltype) %>% dplyr::count() %>% dplyr::inner_join(metadata_abundance %>% tibble::as_tibble() %>% dplyr::distinct(sample , group ), by = "sample")
-  # abundance_data = abundance_data %>% dplyr::mutate(keep_sample = n >= min_cells) %>% dplyr::mutate(keep_sample = factor(keep_sample, levels = c(TRUE,FALSE)))
+  # abundance_data = metadata_abundance |> tibble::as_tibble() |> dplyr::group_by(sample , celltype) |> dplyr::count() |> dplyr::inner_join(metadata_abundance |> tibble::as_tibble() |> dplyr::distinct(sample , group ), by = "sample")
+  # abundance_data = abundance_data |> dplyr::mutate(keep_sample = n >= min_cells) |> dplyr::mutate(keep_sample = factor(keep_sample, levels = c(TRUE,FALSE)))
 
   # Ensure column names are consistent
   colnames(metadata_abundance) <- c("sample", "group", "celltype")
 
   # Get unique sample and celltype combinations, fill in missing with n = 0
-  all_combinations <- metadata_abundance %>%
-    dplyr::distinct(sample, celltype) %>%
+  all_combinations <- metadata_abundance |>
+    dplyr::distinct(sample, celltype) |>
     tidyr::expand(sample, celltype)
 
   # Calculate abundance
-  abundance_data <- metadata_abundance %>%
-    dplyr::group_by(sample, celltype) %>%
-    dplyr::count() %>%
-    dplyr::right_join(all_combinations, by = c("sample", "celltype")) %>%
+  abundance_data <- metadata_abundance |>
+    dplyr::group_by(sample, celltype) |>
+    dplyr::count() |>
+    dplyr::right_join(all_combinations, by = c("sample", "celltype")) |>
     dplyr::mutate(n = ifelse(is.na(n), 0, n)) # Set missing counts to 0
 
   # Add group information
-  abundance_data <- abundance_data %>%
+  abundance_data <- abundance_data |>
     dplyr::left_join(
-      metadata_abundance %>% distinct(sample, group),
+      metadata_abundance |> distinct(sample, group),
       by = "sample"
     )
 
-  abundance_data <- abundance_data %>%
-    dplyr::mutate(keep_sample = n >= min_cells) %>%
+  abundance_data <- abundance_data |>
+    dplyr::mutate(keep_sample = n >= min_cells) |>
     dplyr::mutate(keep_sample = factor(keep_sample, levels = c(TRUE, FALSE)))
 
-  grouping_df <- metadata %>%
-    dplyr::select(sample_id, group_id) %>%
-    tibble::as_tibble() %>%
-    dplyr::distinct() %>%
+  grouping_df <- metadata |>
+    dplyr::select(sample_id, group_id) |>
+    tibble::as_tibble() |>
+    dplyr::distinct() |>
     dplyr::rename(
       sample = sample_id,
       group = group_id
     )
 
-  grouping_df_filtered <- grouping_df %>%
-    inner_join(abundance_data) %>%
+  grouping_df_filtered <- grouping_df |>
+    inner_join(abundance_data) |>
     filter(keep_sample == TRUE) # continue only with samples that have sufficient cells of a cell type in a sample
 
   print(paste0(
@@ -1065,9 +1065,9 @@ get_frac_exprs <- function(
     " cells of the cell type of interest"
   ))
 
-  frq_df_group <- frq_df %>%
-    dplyr::inner_join(grouping_df_filtered) %>%
-    dplyr::group_by(group, celltype, gene) %>%
+  frq_df_group <- frq_df |>
+    dplyr::inner_join(grouping_df_filtered) |>
+    dplyr::group_by(group, celltype, gene) |>
     dplyr::summarise(fraction_group = mean(fraction_sample))
 
   # define whether genes are expressed - inspired by edgeR::filterByExprs but more suited for pseudobulk data
@@ -1075,13 +1075,13 @@ get_frac_exprs <- function(
   # n = min_sample_prop fraction of samples of the smallest group
   # min_sample_prop = 0.5 by default
   # fraction_cutoff = 0.05 by default
-  n_smallest_group_tbl <- grouping_df_filtered %>%
-    dplyr::group_by(group, celltype) %>%
-    dplyr::count() %>%
-    dplyr::group_by(celltype) %>%
-    dplyr::summarize(n_smallest_group = min(n)) %>%
-    dplyr::mutate(n_min = min_sample_prop * n_smallest_group) %>%
-    dplyr::mutate(n_min = pmax(n_min, 2)) %>%
+  n_smallest_group_tbl <- grouping_df_filtered |>
+    dplyr::group_by(group, celltype) |>
+    dplyr::count() |>
+    dplyr::group_by(celltype) |>
+    dplyr::summarize(n_smallest_group = min(n)) |>
+    dplyr::mutate(n_min = min_sample_prop * n_smallest_group) |>
+    dplyr::mutate(n_min = pmax(n_min, 2)) |>
     distinct()
 
   print(paste0(
@@ -1092,8 +1092,8 @@ get_frac_exprs <- function(
 
   for (i in seq(length(unique(n_smallest_group_tbl$celltype)))) {
     celltype_oi <- unique(n_smallest_group_tbl$celltype)[i]
-    n_min <- n_smallest_group_tbl %>%
-      filter(celltype == celltype_oi) %>%
+    n_min <- n_smallest_group_tbl |>
+      filter(celltype == celltype_oi) |>
       pull(n_min)
     print(paste0(
       "Genes expressed in at least ",
@@ -1103,24 +1103,24 @@ get_frac_exprs <- function(
     ))
   }
 
-  frq_df <- frq_df %>%
-    dplyr::inner_join(grouping_df) %>%
+  frq_df <- frq_df |>
+    dplyr::inner_join(grouping_df) |>
     dplyr::mutate(expressed_sample = fraction_sample >= fraction_cutoff)
 
-  expressed_df <- frq_df %>%
-    inner_join(n_smallest_group_tbl) %>%
-    inner_join(abundance_data) %>%
-    dplyr::group_by(gene, celltype) %>%
-    dplyr::summarise(n_expressed = sum(expressed_sample)) %>%
-    dplyr::mutate(expressed = n_expressed >= n_min) %>%
+  expressed_df <- frq_df |>
+    inner_join(n_smallest_group_tbl) |>
+    inner_join(abundance_data) |>
+    dplyr::group_by(gene, celltype) |>
+    dplyr::summarise(n_expressed = sum(expressed_sample)) |>
+    dplyr::mutate(expressed = n_expressed >= n_min) |>
     distinct(celltype, gene, expressed)
   for (i in seq(length(unique(expressed_df$celltype)))) {
     celltype_oi <- unique(expressed_df$celltype)[i]
-    n_genes <- expressed_df %>%
-      filter(celltype == celltype_oi) %>%
-      filter(expressed == TRUE) %>%
-      pull(gene) %>%
-      unique() %>%
+    n_genes <- expressed_df |>
+      filter(celltype == celltype_oi) |>
+      filter(expressed == TRUE) |>
+      pull(gene) |>
+      unique() |>
       length()
     print(paste0(
       n_genes,
@@ -1176,58 +1176,59 @@ get_frac_exprs_sampleAgnostic <- function(
     sample_id = sample_id,
     celltype_id = celltype_id,
     group_id = group_id
-  ) %>%
-    .$frq_celltype_samples
-  metadata <- SummarizedExperiment::colData(sce) %>% tibble::as_tibble()
-  metadata_abundance <- metadata %>% dplyr::select(group_id, celltype_id)
+  ) |>
+    magrittr::extract2("frq_celltype_samples")
+
+  metadata <- SummarizedExperiment::colData(sce) |> tibble::as_tibble()
+  metadata_abundance <- metadata |> dplyr::select(group_id, celltype_id)
   print(head(metadata_abundance))
   metadata_abundance <- cbind(metadata[, group_id], metadata_abundance)
   print(head(metadata_abundance))
   colnames(metadata_abundance) <- c("sample", "group", "celltype")
   print(head(metadata_abundance))
-  metadata_abundance <- metadata_abundance %>% tibble::as_tibble()
+  metadata_abundance <- metadata_abundance |> tibble::as_tibble()
   print(head(metadata_abundance))
 
-  abundance_data <- metadata_abundance %>%
-    tibble::as_tibble() %>%
-    dplyr::group_by(sample, celltype) %>%
-    dplyr::count() %>%
+  abundance_data <- metadata_abundance |>
+    tibble::as_tibble() |>
+    dplyr::group_by(sample, celltype) |>
+    dplyr::count() |>
     dplyr::inner_join(
-      metadata_abundance %>%
-        tibble::as_tibble() %>%
+      metadata_abundance |>
+        tibble::as_tibble() |>
         dplyr::distinct(sample, group),
       by = "sample"
     )
-  abundance_data <- abundance_data %>%
-    dplyr::mutate(keep_sample = n >= min_cells) %>%
+  abundance_data <- abundance_data |>
+    dplyr::mutate(keep_sample = n >= min_cells) |>
     dplyr::mutate(keep_sample = factor(keep_sample, levels = c(TRUE, FALSE)))
-  grouping_df <- abundance_data[, c("sample", "group")] %>%
-    tibble::as_tibble() %>%
+  grouping_df <- abundance_data[, c("sample", "group")] |>
+    tibble::as_tibble() |>
     dplyr::distinct()
-  grouping_df_filtered <- grouping_df %>%
-    inner_join(abundance_data) %>%
+  grouping_df_filtered <- grouping_df |>
+    inner_join(abundance_data) |>
     filter(keep_sample == TRUE)
   print(paste0(
     "Groups are considered if they have more than ",
     min_cells,
     " cells of the cell type of interest"
   ))
-  frq_df_group <- frq_df %>%
-    dplyr::inner_join(grouping_df_filtered) %>%
-    dplyr::group_by(group, celltype, gene) %>%
+  frq_df_group <- frq_df |>
+    dplyr::inner_join(grouping_df_filtered) |>
+    dplyr::group_by(group, celltype, gene) |>
     dplyr::summarise(fraction_group = mean(fraction_sample))
-  n_smallest_group_tbl <- grouping_df_filtered %>%
+  n_smallest_group_tbl <- grouping_df_filtered |>
     dplyr::group_by(
       group,
       celltype
-    ) %>%
-    dplyr::count() %>%
-    dplyr::group_by(celltype) %>%
-    dplyr::summarize(n_smallest_group = min(n)) %>%
+    ) |>
+    dplyr::count() |>
+    dplyr::group_by(celltype) |>
+    dplyr::summarize(n_smallest_group = min(n)) |>
     dplyr::mutate(
       n_min = min_sample_prop *
         n_smallest_group
-    ) %>%
+    ) |>
     distinct()
   print(paste0(
     "Genes with non-zero counts in at least ",
@@ -1237,8 +1238,8 @@ get_frac_exprs_sampleAgnostic <- function(
   ))
   for (i in seq(length(unique(n_smallest_group_tbl$celltype)))) {
     celltype_oi <- unique(n_smallest_group_tbl$celltype)[i]
-    n_min <- n_smallest_group_tbl %>%
-      filter(celltype == celltype_oi) %>%
+    n_min <- n_smallest_group_tbl |>
+      filter(celltype == celltype_oi) |>
       pull(n_min)
     print(paste0(
       "Genes expressed in at least ",
@@ -1247,18 +1248,18 @@ get_frac_exprs_sampleAgnostic <- function(
       celltype_oi
     ))
   }
-  frq_df <- frq_df %>%
-    dplyr::inner_join(grouping_df) %>%
+  frq_df <- frq_df |>
+    dplyr::inner_join(grouping_df) |>
     dplyr::mutate(expressed_sample = fraction_sample >= fraction_cutoff)
-  expressed_df <- frq_df %>%
-    inner_join(n_smallest_group_tbl) %>%
-    inner_join(abundance_data) %>%
+  expressed_df <- frq_df |>
+    inner_join(n_smallest_group_tbl) |>
+    inner_join(abundance_data) |>
     dplyr::group_by(
       gene,
       celltype
-    ) %>%
-    dplyr::summarise(n_expressed = sum(expressed_sample)) %>%
-    dplyr::mutate(expressed = n_expressed >= n_min) %>%
+    ) |>
+    dplyr::summarise(n_expressed = sum(expressed_sample)) |>
+    dplyr::mutate(expressed = n_expressed >= n_min) |>
     distinct(
       celltype,
       gene,
@@ -1266,11 +1267,11 @@ get_frac_exprs_sampleAgnostic <- function(
     )
   for (i in seq(length(unique(expressed_df$celltype)))) {
     celltype_oi <- unique(expressed_df$celltype)[i]
-    n_genes <- expressed_df %>%
-      filter(celltype == celltype_oi) %>%
-      filter(expressed == TRUE) %>%
-      pull(gene) %>%
-      unique() %>%
+    n_genes <- expressed_df |>
+      filter(celltype == celltype_oi) |>
+      filter(expressed == TRUE) |>
+      pull(gene) |>
+      unique() |>
       length()
     print(paste0(
       n_genes,
@@ -1278,11 +1279,12 @@ get_frac_exprs_sampleAgnostic <- function(
       celltype_oi
     ))
   }
-  return(list(
+
+  list(
     frq_df = frq_df,
     frq_df_group = frq_df_group,
     expressed_df = expressed_df
-  ))
+  )
 }
 #' @title process_info_to_ic
 #'
@@ -1301,8 +1303,8 @@ get_frac_exprs_sampleAgnostic <- function(
 #' \dontrun{
 #' library(dplyr)
 #' lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-#' lr_network <- lr_network %>%
-#'   dplyr::rename(ligand = from, receptor = to) %>%
+#' lr_network <- lr_network |>
+#'   dplyr::rename(ligand = from, receptor = to) |>
 #'   dplyr::distinct(ligand, receptor)
 #' sample_id <- "tumor"
 #' group_id <- "pEMT"
@@ -1317,106 +1319,106 @@ get_frac_exprs_sampleAgnostic <- function(
 process_info_to_ic <- function(info_object, ic_type = "sender", lr_network) {
   requireNamespace("dplyr")
 
-  ligands <- lr_network %>%
-    dplyr::pull(ligand) %>%
+  ligands <- lr_network |>
+    dplyr::pull(ligand) |>
     unique()
-  receptors <- lr_network %>%
-    dplyr::pull(receptor) %>%
+  receptors <- lr_network |>
+    dplyr::pull(receptor) |>
     unique()
 
   if (ic_type == "sender") {
-    avg_df <- info_object$avg_df %>%
-      dplyr::filter(gene %in% ligands) %>%
+    avg_df <- info_object$avg_df |>
+      dplyr::filter(gene %in% ligands) |>
       dplyr::rename(
         sender = celltype,
         ligand = gene,
         avg_ligand = average_sample
       )
-    frq_df <- info_object$frq_df %>%
-      dplyr::filter(gene %in% ligands) %>%
+    frq_df <- info_object$frq_df |>
+      dplyr::filter(gene %in% ligands) |>
       dplyr::rename(
         sender = celltype,
         ligand = gene,
         fraction_ligand = fraction_sample
       )
-    pb_df <- info_object$pb_df %>%
-      dplyr::filter(gene %in% ligands) %>%
+    pb_df <- info_object$pb_df |>
+      dplyr::filter(gene %in% ligands) |>
       dplyr::rename(sender = celltype, ligand = gene, pb_ligand = pb_sample)
 
-    avg_df_group <- info_object$avg_df_group %>%
-      dplyr::filter(gene %in% ligands) %>%
+    avg_df_group <- info_object$avg_df_group |>
+      dplyr::filter(gene %in% ligands) |>
       dplyr::rename(
         sender = celltype,
         ligand = gene,
         avg_ligand_group = average_group
       )
-    frq_df_group <- info_object$frq_df_group %>%
-      dplyr::filter(gene %in% ligands) %>%
+    frq_df_group <- info_object$frq_df_group |>
+      dplyr::filter(gene %in% ligands) |>
       dplyr::rename(
         sender = celltype,
         ligand = gene,
         fraction_ligand_group = fraction_group
       )
-    pb_df_group <- info_object$pb_df_group %>%
-      dplyr::filter(gene %in% ligands) %>%
+    pb_df_group <- info_object$pb_df_group |>
+      dplyr::filter(gene %in% ligands) |>
       dplyr::rename(
         sender = celltype,
         ligand = gene,
         pb_ligand_group = pb_group
       )
 
-    rel_abundance_df <- info_object$rel_abundance_df %>%
+    rel_abundance_df <- info_object$rel_abundance_df |>
       dplyr::rename(
         sender = celltype,
         rel_abundance_scaled_sender = rel_abundance_scaled
       )
   }
   if (ic_type == "receiver") {
-    avg_df <- info_object$avg_df %>%
-      dplyr::filter(gene %in% receptors) %>%
+    avg_df <- info_object$avg_df |>
+      dplyr::filter(gene %in% receptors) |>
       dplyr::rename(
         receiver = celltype,
         receptor = gene,
         avg_receptor = average_sample
       )
-    frq_df <- info_object$frq_df %>%
-      dplyr::filter(gene %in% receptors) %>%
+    frq_df <- info_object$frq_df |>
+      dplyr::filter(gene %in% receptors) |>
       dplyr::rename(
         receiver = celltype,
         receptor = gene,
         fraction_receptor = fraction_sample
       )
-    pb_df <- info_object$pb_df %>%
-      dplyr::filter(gene %in% receptors) %>%
+    pb_df <- info_object$pb_df |>
+      dplyr::filter(gene %in% receptors) |>
       dplyr::rename(
         receiver = celltype,
         receptor = gene,
         pb_receptor = pb_sample
       )
 
-    avg_df_group <- info_object$avg_df_group %>%
-      dplyr::filter(gene %in% receptors) %>%
+    avg_df_group <- info_object$avg_df_group |>
+      dplyr::filter(gene %in% receptors) |>
       dplyr::rename(
         receiver = celltype,
         receptor = gene,
         avg_receptor_group = average_group
       )
-    frq_df_group <- info_object$frq_df_group %>%
-      dplyr::filter(gene %in% receptors) %>%
+    frq_df_group <- info_object$frq_df_group |>
+      dplyr::filter(gene %in% receptors) |>
       dplyr::rename(
         receiver = celltype,
         receptor = gene,
         fraction_receptor_group = fraction_group
       )
-    pb_df_group <- info_object$pb_df_group %>%
-      dplyr::filter(gene %in% receptors) %>%
+    pb_df_group <- info_object$pb_df_group |>
+      dplyr::filter(gene %in% receptors) |>
       dplyr::rename(
         receiver = celltype,
         receptor = gene,
         pb_receptor_group = pb_group
       )
 
-    rel_abundance_df <- info_object$rel_abundance_df %>%
+    rel_abundance_df <- info_object$rel_abundance_df |>
       dplyr::rename(
         receiver = celltype,
         rel_abundance_scaled_receiver = rel_abundance_scaled
@@ -1456,13 +1458,13 @@ process_info_to_ic <- function(info_object, ic_type = "sender", lr_network) {
 #' min_cells <- 10
 #' metadata_abundance <- SummarizedExperiment::colData(sce)[, c(sample_id, group_id, celltype_id)]
 #' colnames(metadata_abundance) <- c("sample_id", "group_id", "celltype_id")
-#' abundance_data <- metadata_abundance %>%
-#'   tibble::as_tibble() %>%
-#'   dplyr::group_by(sample_id, celltype_id) %>%
-#'   dplyr::count() %>%
-#'   dplyr::inner_join(metadata_abundance %>% dplyr::distinct(sample_id, group_id))
-#' abundance_data <- abundance_data %>%
-#'   dplyr::mutate(keep = n >= min_cells) %>%
+#' abundance_data <- metadata_abundance |>
+#'   tibble::as_tibble() |>
+#'   dplyr::group_by(sample_id, celltype_id) |>
+#'   dplyr::count() |>
+#'   dplyr::inner_join(metadata_abundance |> dplyr::distinct(sample_id, group_id))
+#' abundance_data <- abundance_data |>
+#'   dplyr::mutate(keep = n >= min_cells) |>
 #'   dplyr::mutate(keep = factor(keep, levels = c(TRUE, FALSE)))
 #' receiver_abundance_data <- process_info_to_ic(abund_data = abundance_data, ic_type = "receiver")
 #' sender_abundance_data <- process_info_to_ic(abund_data = abundance_data, ic_type = "sender")
@@ -1473,28 +1475,28 @@ process_info_to_ic <- function(info_object, ic_type = "sender", lr_network) {
 process_abund_info <- function(abund_data, ic_type = "sender") {
   requireNamespace("dplyr")
 
-  abund_data <- abund_data %>% rename(sample = sample_id, group = group_id)
+  abund_data <- abund_data |> rename(sample = sample_id, group = group_id)
 
   if (ic_type == "sender") {
     if ("celltype_id_sender" %in% colnames(abund_data)) {
-      abund_data <- abund_data %>% rename(sender = celltype_id_sender)
+      abund_data <- abund_data |> rename(sender = celltype_id_sender)
     } else {
-      abund_data <- abund_data %>% rename(sender = celltype_id)
+      abund_data <- abund_data |> rename(sender = celltype_id)
     }
 
-    abund_data <- abund_data %>%
-      rename(keep_sender = keep, n_cells_sender = n) %>%
+    abund_data <- abund_data |>
+      rename(keep_sender = keep, n_cells_sender = n) |>
       mutate(keep_sender = as.double(as.logical(keep_sender)))
   }
   if (ic_type == "receiver") {
     if ("celltype_id_receiver" %in% colnames(abund_data)) {
-      abund_data <- abund_data %>% rename(receiver = celltype_id_receiver)
+      abund_data <- abund_data |> rename(receiver = celltype_id_receiver)
     } else {
-      abund_data <- abund_data %>% rename(receiver = celltype_id)
+      abund_data <- abund_data |> rename(receiver = celltype_id)
     }
 
-    abund_data <- abund_data %>%
-      rename(keep_receiver = keep, n_cells_receiver = n) %>%
+    abund_data <- abund_data |>
+      rename(keep_receiver = keep, n_cells_receiver = n) |>
       mutate(keep_receiver = as.double(as.logical(keep_receiver)))
   }
 
@@ -1520,8 +1522,8 @@ process_abund_info <- function(abund_data, ic_type = "sender") {
 #' \dontrun{
 #' library(dplyr)
 #' lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-#' lr_network <- lr_network %>%
-#'   dplyr::rename(ligand = from, receptor = to) %>%
+#' lr_network <- lr_network |>
+#'   dplyr::rename(ligand = from, receptor = to) |>
 #'   dplyr::distinct(ligand, receptor)
 #' sample_id <- "tumor"
 #' group_id <- "pEMT"
@@ -1529,8 +1531,8 @@ process_abund_info <- function(abund_data, ic_type = "sender") {
 #' celltype_info <- get_avg_frac_exprs_abund(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id)
 #' receiver_info_ic <- process_info_to_ic(info_object = celltype_info, ic_type = "receiver", lr_network = lr_network)
 #' sender_info_ic <- process_info_to_ic(info_object = celltype_info, ic_type = "sender", lr_network = lr_network)
-#' senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>% unique()
-#' receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>% unique()
+#' senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] |> unique()
+#' receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] |> unique()
 #' sender_receiver_info <- combine_sender_receiver_info_ic(sender_info = sender_info_ic, receiver_info = receiver_info_ic, senders_oi = senders_oi, receivers_oi = receivers_oi, lr_network = lr_network)
 #' }
 #'
@@ -1546,16 +1548,16 @@ combine_sender_receiver_info_ic <- function(
   requireNamespace("dplyr")
 
   # combine avg_df
-  avg_df_sender <- sender_info$avg_df %>% dplyr::filter(sender %in% senders_oi)
-  avg_df_receiver <- receiver_info$avg_df %>%
+  avg_df_sender <- sender_info$avg_df |> dplyr::filter(sender %in% senders_oi)
+  avg_df_receiver <- receiver_info$avg_df |>
     dplyr::filter(receiver %in% receivers_oi)
 
-  avg_df_sender_receiver <- avg_df_sender %>%
-    dplyr::inner_join(lr_network, by = "ligand") %>%
+  avg_df_sender_receiver <- avg_df_sender |>
+    dplyr::inner_join(lr_network, by = "ligand") |>
     dplyr::inner_join(avg_df_receiver, by = c("receptor", "sample"))
-  avg_df_sender_receiver <- avg_df_sender_receiver %>%
-    dplyr::mutate(ligand_receptor_prod = avg_ligand * avg_receptor) %>%
-    dplyr::arrange(-ligand_receptor_prod) %>%
+  avg_df_sender_receiver <- avg_df_sender_receiver |>
+    dplyr::mutate(ligand_receptor_prod = avg_ligand * avg_receptor) |>
+    dplyr::arrange(-ligand_receptor_prod) |>
     dplyr::select(
       sample,
       sender,
@@ -1565,23 +1567,23 @@ combine_sender_receiver_info_ic <- function(
       avg_ligand,
       avg_receptor,
       ligand_receptor_prod
-    ) %>%
+    ) |>
     dplyr::distinct()
 
   # combine avg_df_group
-  avg_df_group_sender <- sender_info$avg_df_group %>%
+  avg_df_group_sender <- sender_info$avg_df_group |>
     dplyr::filter(sender %in% senders_oi)
-  avg_df_group_receiver <- receiver_info$avg_df_group %>%
+  avg_df_group_receiver <- receiver_info$avg_df_group |>
     dplyr::filter(receiver %in% receivers_oi)
 
-  avg_df_group_sender_receiver <- avg_df_group_sender %>%
-    dplyr::inner_join(lr_network, by = "ligand") %>%
+  avg_df_group_sender_receiver <- avg_df_group_sender |>
+    dplyr::inner_join(lr_network, by = "ligand") |>
     dplyr::inner_join(avg_df_group_receiver, by = c("receptor", "group"))
-  avg_df_group_sender_receiver <- avg_df_group_sender_receiver %>%
+  avg_df_group_sender_receiver <- avg_df_group_sender_receiver |>
     dplyr::mutate(
       ligand_receptor_prod_group = avg_ligand_group * avg_receptor_group
-    ) %>%
-    dplyr::arrange(-ligand_receptor_prod_group) %>%
+    ) |>
+    dplyr::arrange(-ligand_receptor_prod_group) |>
     dplyr::select(
       group,
       sender,
@@ -1591,23 +1593,23 @@ combine_sender_receiver_info_ic <- function(
       avg_ligand_group,
       avg_receptor_group,
       ligand_receptor_prod_group
-    ) %>%
+    ) |>
     dplyr::distinct()
 
   # combine frq_df
 
-  frq_df_sender <- sender_info$frq_df %>% dplyr::filter(sender %in% senders_oi)
-  frq_df_receiver <- receiver_info$frq_df %>%
+  frq_df_sender <- sender_info$frq_df |> dplyr::filter(sender %in% senders_oi)
+  frq_df_receiver <- receiver_info$frq_df |>
     dplyr::filter(receiver %in% receivers_oi)
 
-  frq_df_sender_receiver <- frq_df_sender %>%
-    dplyr::inner_join(lr_network, by = "ligand") %>%
+  frq_df_sender_receiver <- frq_df_sender |>
+    dplyr::inner_join(lr_network, by = "ligand") |>
     dplyr::inner_join(frq_df_receiver, by = c("receptor", "sample"))
-  frq_df_sender_receiver <- frq_df_sender_receiver %>%
+  frq_df_sender_receiver <- frq_df_sender_receiver |>
     dplyr::mutate(
       ligand_receptor_fraction_prod = fraction_ligand * fraction_receptor
-    ) %>%
-    dplyr::arrange(-ligand_receptor_fraction_prod) %>%
+    ) |>
+    dplyr::arrange(-ligand_receptor_fraction_prod) |>
     dplyr::select(
       sample,
       sender,
@@ -1617,25 +1619,25 @@ combine_sender_receiver_info_ic <- function(
       fraction_ligand,
       fraction_receptor,
       ligand_receptor_fraction_prod
-    ) %>%
+    ) |>
     dplyr::distinct()
 
   # combine frq_df_group
 
-  frq_df_group_sender <- sender_info$frq_df_group %>%
+  frq_df_group_sender <- sender_info$frq_df_group |>
     dplyr::filter(sender %in% senders_oi)
-  frq_df_group_receiver <- receiver_info$frq_df_group %>%
+  frq_df_group_receiver <- receiver_info$frq_df_group |>
     dplyr::filter(receiver %in% receivers_oi)
 
-  frq_df_group_sender_receiver <- frq_df_group_sender %>%
-    dplyr::inner_join(lr_network, by = "ligand") %>%
+  frq_df_group_sender_receiver <- frq_df_group_sender |>
+    dplyr::inner_join(lr_network, by = "ligand") |>
     dplyr::inner_join(frq_df_group_receiver, by = c("receptor", "group"))
-  frq_df_group_sender_receiver <- frq_df_group_sender_receiver %>%
+  frq_df_group_sender_receiver <- frq_df_group_sender_receiver |>
     dplyr::mutate(
       ligand_receptor_fraction_prod_group = fraction_ligand_group *
         fraction_receptor_group
-    ) %>%
-    dplyr::arrange(-ligand_receptor_fraction_prod_group) %>%
+    ) |>
+    dplyr::arrange(-ligand_receptor_fraction_prod_group) |>
     dplyr::select(
       group,
       sender,
@@ -1645,20 +1647,20 @@ combine_sender_receiver_info_ic <- function(
       fraction_ligand_group,
       fraction_receptor_group,
       ligand_receptor_fraction_prod_group
-    ) %>%
+    ) |>
     dplyr::distinct()
 
   # combine pb_df
-  pb_df_sender <- sender_info$pb_df %>% dplyr::filter(sender %in% senders_oi)
-  pb_df_receiver <- receiver_info$pb_df %>%
+  pb_df_sender <- sender_info$pb_df |> dplyr::filter(sender %in% senders_oi)
+  pb_df_receiver <- receiver_info$pb_df |>
     dplyr::filter(receiver %in% receivers_oi)
 
-  pb_df_sender_receiver <- pb_df_sender %>%
-    dplyr::inner_join(lr_network, by = "ligand") %>%
+  pb_df_sender_receiver <- pb_df_sender |>
+    dplyr::inner_join(lr_network, by = "ligand") |>
     dplyr::inner_join(pb_df_receiver, by = c("receptor", "sample"))
-  pb_df_sender_receiver <- pb_df_sender_receiver %>%
-    dplyr::mutate(ligand_receptor_pb_prod = pb_ligand * pb_receptor) %>%
-    dplyr::arrange(-ligand_receptor_pb_prod) %>%
+  pb_df_sender_receiver <- pb_df_sender_receiver |>
+    dplyr::mutate(ligand_receptor_pb_prod = pb_ligand * pb_receptor) |>
+    dplyr::arrange(-ligand_receptor_pb_prod) |>
     dplyr::select(
       sample,
       sender,
@@ -1668,23 +1670,23 @@ combine_sender_receiver_info_ic <- function(
       pb_ligand,
       pb_receptor,
       ligand_receptor_pb_prod
-    ) %>%
+    ) |>
     dplyr::distinct()
 
   # combine pb_df_group
-  pb_df_group_sender <- sender_info$pb_df_group %>%
+  pb_df_group_sender <- sender_info$pb_df_group |>
     dplyr::filter(sender %in% senders_oi)
-  pb_df_group_receiver <- receiver_info$pb_df_group %>%
+  pb_df_group_receiver <- receiver_info$pb_df_group |>
     dplyr::filter(receiver %in% receivers_oi)
 
-  pb_df_group_sender_receiver <- pb_df_group_sender %>%
-    dplyr::inner_join(lr_network, by = "ligand") %>%
+  pb_df_group_sender_receiver <- pb_df_group_sender |>
+    dplyr::inner_join(lr_network, by = "ligand") |>
     dplyr::inner_join(pb_df_group_receiver, by = c("receptor", "group"))
-  pb_df_group_sender_receiver <- pb_df_group_sender_receiver %>%
+  pb_df_group_sender_receiver <- pb_df_group_sender_receiver |>
     dplyr::mutate(
       ligand_receptor_pb_prod_group = pb_ligand_group * pb_receptor_group
-    ) %>%
-    dplyr::arrange(-ligand_receptor_pb_prod_group) %>%
+    ) |>
+    dplyr::arrange(-ligand_receptor_pb_prod_group) |>
     dplyr::select(
       group,
       sender,
@@ -1694,17 +1696,17 @@ combine_sender_receiver_info_ic <- function(
       pb_ligand_group,
       pb_receptor_group,
       ligand_receptor_pb_prod_group
-    ) %>%
+    ) |>
     dplyr::distinct()
 
   # combine relative abundances
-  rel_abundance_df_sender <- sender_info$rel_abundance_df %>%
+  rel_abundance_df_sender <- sender_info$rel_abundance_df |>
     dplyr::filter(sender %in% senders_oi)
-  rel_abundance_df_receiver <- receiver_info$rel_abundance_df %>%
+  rel_abundance_df_receiver <- receiver_info$rel_abundance_df |>
     dplyr::filter(receiver %in% receivers_oi)
 
-  rel_abundance_df_sender_receiver <- rel_abundance_df_sender %>%
-    dplyr::inner_join(rel_abundance_df_receiver, by = "group") %>%
+  rel_abundance_df_sender_receiver <- rel_abundance_df_sender |>
+    dplyr::inner_join(rel_abundance_df_receiver, by = "group") |>
     dplyr::mutate(
       sender_receiver_rel_abundance_avg = 0.5 *
         (rel_abundance_scaled_sender + rel_abundance_scaled_receiver)
@@ -1741,16 +1743,16 @@ combine_sender_receiver_info_ic <- function(
 #' \dontrun{
 #' library(dplyr)
 #' lr_network <- readRDS(url("https://zenodo.org/record/3260758/files/lr_network.rds"))
-#' lr_network <- lr_network %>%
-#'   dplyr::rename(ligand = from, receptor = to) %>%
+#' lr_network <- lr_network |>
+#'   dplyr::rename(ligand = from, receptor = to) |>
 #'   dplyr::distinct(ligand, receptor)
 #' sample_id <- "tumor"
 #' group_id <- "pEMT"
 #' celltype_id <- "celltype"
 #' batches <- NA
 #' contrasts_oi <- c("'High-Low','Low-High'")
-#' senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>% unique()
-#' receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>% unique()
+#' senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] |> unique()
+#' receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] |> unique()
 #' celltype_de <- perform_muscat_de_analysis(
 #'   sce = sce,
 #'   sample_id = sample_id,
@@ -1779,14 +1781,14 @@ combine_sender_receiver_de <- function(
 ) {
   requireNamespace("dplyr")
 
-  de_output_tidy_sender <- sender_de %>%
+  de_output_tidy_sender <- sender_de |>
     dplyr::filter(cluster_id %in% senders_oi)
-  de_output_tidy_receiver <- receiver_de %>%
+  de_output_tidy_receiver <- receiver_de |>
     dplyr::filter(cluster_id %in% receivers_oi)
 
-  de_output_tidy_sender <- de_output_tidy_sender %>%
-    dplyr::select(gene, cluster_id, logFC, p_val, p_adj, contrast) %>%
-    dplyr::filter(cluster_id %in% senders_oi) %>%
+  de_output_tidy_sender <- de_output_tidy_sender |>
+    dplyr::select(gene, cluster_id, logFC, p_val, p_adj, contrast) |>
+    dplyr::filter(cluster_id %in% senders_oi) |>
     dplyr::rename(
       ligand = gene,
       lfc_ligand = logFC,
@@ -1794,9 +1796,9 @@ combine_sender_receiver_de <- function(
       p_adj_ligand = p_adj,
       sender = cluster_id
     )
-  de_output_tidy_receiver <- de_output_tidy_receiver %>%
-    dplyr::select(gene, cluster_id, logFC, p_val, p_adj, contrast) %>%
-    dplyr::filter(cluster_id %in% receivers_oi) %>%
+  de_output_tidy_receiver <- de_output_tidy_receiver |>
+    dplyr::select(gene, cluster_id, logFC, p_val, p_adj, contrast) |>
+    dplyr::filter(cluster_id %in% receivers_oi) |>
     dplyr::rename(
       receptor = gene,
       lfc_receptor = logFC,
@@ -1805,12 +1807,12 @@ combine_sender_receiver_de <- function(
       receiver = cluster_id
     )
 
-  de_tbl_sender_receiver <- de_output_tidy_sender %>%
-    dplyr::inner_join(lr_network, by = "ligand") %>%
+  de_tbl_sender_receiver <- de_output_tidy_sender |>
+    dplyr::inner_join(lr_network, by = "ligand") |>
     dplyr::inner_join(de_output_tidy_receiver, by = c("receptor", "contrast"))
-  de_tbl_sender_receiver <- de_tbl_sender_receiver %>%
-    dplyr::mutate(ligand_receptor_lfc_avg = (lfc_receptor + lfc_ligand) / 2) %>%
-    dplyr::arrange(-ligand_receptor_lfc_avg) %>%
+  de_tbl_sender_receiver <- de_tbl_sender_receiver |>
+    dplyr::mutate(ligand_receptor_lfc_avg = (lfc_receptor + lfc_ligand) / 2) |>
+    dplyr::arrange(-ligand_receptor_lfc_avg) |>
     dplyr::select(
       contrast,
       sender,
@@ -1824,7 +1826,7 @@ combine_sender_receiver_de <- function(
       p_adj_ligand,
       p_val_receptor,
       p_adj_receptor
-    ) %>%
+    ) |>
     dplyr::distinct()
 
   return(de_tbl_sender_receiver)
