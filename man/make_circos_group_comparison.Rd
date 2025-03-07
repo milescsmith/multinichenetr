@@ -45,8 +45,8 @@ output <- multi_nichenet_analysis(
   contrast_tbl = contrast_tbl
 )
 #  distinct(id, sender, receiver, ligand, receptor, group, prioritization_score, ligand_receptor_lfc_avg, fraction_expressing_ligand_receptor) \%>\%
-#  filter(ligand_receptor_lfc_avg > 0 & fraction_expressing_ligand_receptor > 0) \%>\% top_n(30, prioritization_score)
-#  filter(id \%in\% prioritized_tbl_oi_prep$id) \%>\%
+#  dplyr::filter(ligand_receptor_lfc_avg > 0 & fraction_expressing_ligand_receptor > 0) \%>\% top_n(30, prioritization_score)
+#  dplyr::filter(id \%in\% prioritized_tbl_oi_prep$id) \%>\%
 #  distinct(id, sender, receiver, ligand, receptor, group) \%>\% left_join(prioritized_tbl_oi_prep)
 }
 }

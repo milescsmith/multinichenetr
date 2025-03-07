@@ -511,7 +511,7 @@ perform_muscat_de_analysis <- function(
     contrast = contrast,
     min_cells = min_cells,
     verbose = FALSE,
-    dplyr::filter = "none"
+    filter = "none"
   )
   de_output_tidy <- muscat::resDS(
     sce,

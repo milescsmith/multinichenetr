@@ -4794,8 +4794,8 @@ make_circos_group_comparison <- function(
     xaxt = "n",
     yaxt = "n",
     bty = "n",
-    ggplot2::ylab = "",
-    ggplot2::xlab = "",
+    ylab = "",
+    xlab = "",
     xlim = 0:1,
     ylim = 0:1
   )
@@ -5125,8 +5125,8 @@ make_circos_one_group <- function(
     xaxt = "n",
     yaxt = "n",
     bty = "n",
-    ggplot2::ylab = "",
-    ggplot2::xlab = "",
+    ylab = "",
+    xlab = "",
     xlim = 0:1,
     ylim = 0:1
   )

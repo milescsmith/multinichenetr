@@ -52,7 +52,7 @@ ligands_oi <- output$prioritization_tables$ligand_activities_target_de_tbl \%>\%
   group_by(group, receiver) \%>\%
   distinct(ligand, receiver, group, activity) \%>\%
   top_n(5, activity) \%>\%
-  pull(ligand) \%>\%
+  dplyr::pull(ligand) \%>\%
   unique()
 plot_oi <- make_ligand_activity_plots(output$prioritization_tables, ligands_oi, contrast_tbl)
 plot_oi

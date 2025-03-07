@@ -135,7 +135,7 @@ get_muscat_exprs_frac <- function(sce, sample_id, celltype_id, group_id) {
 #' @param samples
 #'
 #' @import SingleCellExperiment
-#' @importFrom dplyr dplyr::mutate
+#' @importFrom dplyr mutate
 #' @importFrom tibble rownames_to_column as_tibble
 #' @importFrom tidyr gather
 #' @returns

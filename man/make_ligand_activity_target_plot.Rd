@@ -67,8 +67,8 @@ output <- multi_nichenet_analysis(
 group_oi <- "High"
 receiver_oi <- "Malignant"
 prioritized_tbl_oi <- output$prioritization_tables$group_prioritization_tbl \%>\%
-  filter(fraction_expressing_ligand_receptor > 0) \%>\%
-  filter(group == group_oi & receiver == receiver_oi) \%>\%
+  dplyr::filter(fraction_expressing_ligand_receptor > 0) \%>\%
+  dplyr::filter(group == group_oi & receiver == receiver_oi) \%>\%
   top_n(50, prioritization_score) \%>\%
   top_n(25, activity_scaled) \%>\%
   arrange(-activity_scaled)

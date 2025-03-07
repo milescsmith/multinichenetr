@@ -54,10 +54,10 @@ group_oi <- "High"
 receiver_oi <- "Malignant"
 targets_oi <- output$ligand_activities_targets_DEgenes$de_genes_df \%>\%
   inner_join(contrast_tbl) \%>\%
-  filter(group == group_oi) \%>\%
+  dplyr::filter(group == group_oi) \%>\%
   arrange(p_val) \%>\%
-  filter(receiver == receiver_oi) \%>\%
-  pull(gene) \%>\%
+  dplyr::filter(receiver == receiver_oi) \%>\%
+  dplyr::pull(gene) \%>\%
   unique()
 p_target <- make_DEgene_dotplot_pseudobulk(genes_oi = targets_oi, celltype_info = output$celltype_info, prioritization_tables = output$prioritization_tables, celltype_oi = receiver_oi, output$grouping_tbl)
 }

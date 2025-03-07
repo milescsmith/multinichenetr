@@ -10,7 +10,7 @@
 #'
 #' @import dplyr
 #' @import tibble
-#' @import ggplot2::ggplot2
+#' @import ggplot2
 #' @importFrom tidyr gather expand
 #' @importFrom SummarizedExperiment colData
 #'
@@ -38,7 +38,7 @@ get_abundance_info <- function(
   batches = NA
 ) {
   requireNamespace("dplyr")
-  requireNamespace("ggplot2::ggplot2")
+  requireNamespace("ggplot2")
 
   # if some of these are factors, and not all levels have syntactically valid names - prompt to change this
   if (is.factor(SummarizedExperiment::colData(sce)[, celltype_id])) {
@@ -534,7 +534,7 @@ get_abundance_info <- function(
 #'
 #' @import dplyr
 #' @import tibble
-#' @import ggplot2::ggplot2
+#' @import ggplot2
 #' @importFrom tidyr gather
 #' @importFrom SummarizedExperiment colData
 #'
@@ -741,7 +741,7 @@ process_abundance_expression_info <- function(
 #'
 #' @import dplyr
 #' @import muscat
-#' @import ggplot2::ggplot2
+#' @import ggplot2
 #' @importFrom scran findMarkers
 #'
 #' @examples
@@ -1299,7 +1299,7 @@ get_DE_info <- function(
 #'
 #' @import dplyr
 #' @import muscat
-#' @import ggplot2::ggplot2
+#' @import ggplot2
 #' @importFrom scran findMarkers
 #'
 #' @examples
@@ -1659,7 +1659,7 @@ get_DE_info_sampleAgnostic <- function(
 #' @return `de_output_tidy`, but now 2 columns added with the empirical pvalues (normal and adjusted for multiple testing); Histogram plot of the empirical p-values is also returned.
 #'
 #' @import dplyr
-#' @import ggplot2::ggplot2
+#' @import ggplot2
 #'
 #' @examples
 #' \dontrun{
@@ -1691,7 +1691,7 @@ get_DE_info_sampleAgnostic <- function(
 #'
 get_empirical_pvals <- function(de_output_tidy) {
   requireNamespace("dplyr")
-  requireNamespace("ggplot2::ggplot2")
+  requireNamespace("ggplot2")
 
   de_output_tidy_emp <- add_empirical_pval_fdr(de_output_tidy, plot = FALSE)
   z_distr_plots_emp_pval <- get_FDR_empirical_plots_all(de_output_tidy)

@@ -46,8 +46,8 @@ output <- multi_nichenet_analysis(
 )
 group_oi <- "High"
 prioritized_tbl_oi <- output$prioritization_tables$group_prioritization_tbl \%>\%
-  filter(fraction_expressing_ligand_receptor > 0) \%>\%
-  filter(group == group_oi) \%>\%
+  dplyr::filter(fraction_expressing_ligand_receptor > 0) \%>\%
+  dplyr::filter(group == group_oi) \%>\%
   top_n(50, prioritization_score)
 plot_oi <- make_sample_lr_prod_activity_plots(output$prioritization_tables, prioritized_tbl_oi)
 plot_oi
