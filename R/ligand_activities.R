@@ -1267,51 +1267,51 @@ process_geneset_data <- function(
   background_df <- celltype_de %>%
     group_by(cluster_id) %>%
     count() %>%
-    ungroup() %>%
+    dplyr::ungroup() %>%
     rename(n_background = n)
   if (p_val_adj == FALSE) {
     geneset_oi_up_df <- celltype_de %>%
-      filter(logFC >= logFC_threshold & p_val <= p_val_threshold) %>%
+      dplyr::filter(logFC >= logFC_threshold & p_val <= p_val_threshold) %>%
       group_by(cluster_id) %>%
       count() %>%
-      ungroup() %>%
+      dplyr::ungroup() %>%
       rename(n_geneset_up = n)
     geneset_oi_down_df <- celltype_de %>%
-      filter(logFC <= -logFC_threshold & p_val <= p_val_threshold) %>%
+      dplyr::filter(logFC <= -logFC_threshold & p_val <= p_val_threshold) %>%
       group_by(cluster_id) %>%
       count() %>%
-      ungroup() %>%
+      dplyr::ungroup() %>%
       rename(n_geneset_down = n)
   } else {
     geneset_oi_up_df <- celltype_de %>%
-      filter(logFC >= logFC_threshold & p_adj <= p_val_threshold) %>%
+      dplyr::filter(logFC >= logFC_threshold & p_adj <= p_val_threshold) %>%
       group_by(cluster_id) %>%
       count() %>%
-      ungroup() %>%
+      dplyr::ungroup() %>%
       rename(n_geneset_up = n)
     geneset_oi_down_df <- celltype_de %>%
-      filter(logFC <= -logFC_threshold & p_adj <= p_val_threshold) %>%
+      dplyr::filter(logFC <= -logFC_threshold & p_adj <= p_val_threshold) %>%
       group_by(cluster_id) %>%
       count() %>%
-      ungroup() %>%
+      dplyr::ungroup() %>%
       rename(n_geneset_down = n)
   }
 
   n_df <- background_df %>%
     left_join(geneset_oi_up_df) %>%
     left_join(geneset_oi_down_df) %>%
-    mutate(
+    dplyr::mutate(
       n_geneset_up = n_geneset_up %>% tidyr::replace_na(0),
       n_geneset_down = n_geneset_down %>% tidyr::replace_na(0)
     )
 
   geneset_df <- n_df %>%
-    mutate(
+    dplyr::mutate(
       prop_geneset_up = n_geneset_up / n_background,
       prop_geneset_down = n_geneset_down / n_background
     )
   geneset_df <- geneset_df %>%
-    mutate(
+    dplyr::mutate(
       in_range_up = prop_geneset_up >= 1 / 200 & prop_geneset_up <= 1 / 10,
       in_range_down = prop_geneset_down >= 1 / 200 &
         prop_geneset_down <= 1 / 10,
@@ -1319,7 +1319,7 @@ process_geneset_data <- function(
     )
 
   geneset_df <- geneset_df %>%
-    mutate(
+    dplyr::mutate(
       logFC_threshold = logFC_threshold,
       p_val_threshold = p_val_threshold,
       adjusted = p_val_adj

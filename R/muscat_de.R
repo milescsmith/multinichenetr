@@ -498,8 +498,8 @@ perform_muscat_de_analysis <- function(
   # filter genes
   celltype_oi <- SummarizedExperiment::assayNames(pb) %>% .[1]
   genes_to_keep <- expressed_df %>%
-    filter(celltype == celltype_oi & expressed == TRUE) %>%
-    pull(gene) %>%
+    dplyr::filter(celltype == celltype_oi & expressed == TRUE) %>%
+    dplyr::pull(gene) %>%
     unique()
   pb <- pb[genes_to_keep, ]
 
@@ -511,7 +511,7 @@ perform_muscat_de_analysis <- function(
     contrast = contrast,
     min_cells = min_cells,
     verbose = FALSE,
-    filter = "none"
+    dplyr::filter = "none"
   )
   de_output_tidy <- muscat::resDS(
     sce,
@@ -672,16 +672,16 @@ p.adjust_empirical <- function(
 
     gg_data <- as.data.frame(zzz)
     gg_plot <- ggplot(data = gg_data, aes(x = zzz)) +
-      geom_histogram(
+      geom::geom_histogram(
         aes(y = ..density..),
         breaks = breaks,
         color = "black",
         fill = "grey84"
       ) +
       theme_bw() +
-      ggtitle("Empirical Z-scores") +
+      ggplot2::ggtitle("Empirical Z-scores") +
       theme(plot.title = element_text(size = 14, face = "bold")) +
-      xlab("Empirical Z-scores")
+      ggplot2::xlab("Empirical Z-scores")
 
     # add standard-normal density
     xfit <- seq(min(zzz), max(zzz), length = 4000)
@@ -690,13 +690,13 @@ p.adjust_empirical <- function(
     colnames(dens_theor) <- "standardNormal"
     dens_theor$range <- xfit
     gg_plot <- gg_plot +
-      geom_line(
+      geom::geom_line(
         data = dens_theor,
         aes(x = range, y = standardNormal),
         color = "darkgreen",
         lwd = 1
       ) +
-      ggtitle(paste0(
+      ggplot2::ggtitle(paste0(
         "Empirical distribution of z-scores\n",
         celltype,
         " : ",
@@ -737,7 +737,7 @@ get_FDR_empirical <- function(
   plot = FALSE
 ) {
   de_oi <- de_output_tidy %>%
-    filter(cluster_id == cluster_id_oi & contrast == contrast_oi)
+    dplyr::filter(cluster_id == cluster_id_oi & contrast == contrast_oi)
   emp_res <- p.adjust_empirical(
     de_oi %>% pull(p_val),
     de_oi %>% pull(logFC),
@@ -792,6 +792,8 @@ add_empirical_pval_fdr <- function(de_output_tidy, plot = FALSE) {
   all_celltypes <- de_output_tidy$cluster_id %>% unique()
   all_contrasts <- de_output_tidy$contrast %>% unique()
 
+  inner_loop
+
   de_output_tidy_new <- all_celltypes %>%
     lapply(
       function(cluster_id_oi, de_output_tidy) {
@@ -831,7 +833,7 @@ get_FDR_empirical_plots <- function(
   contrast_oi
 ) {
   de_oi <- de_output_tidy %>%
-    filter(cluster_id == cluster_id_oi & contrast == contrast_oi)
+    dplyr::filter(cluster_id == cluster_id_oi & contrast == contrast_oi)
   emp_res <- p.adjust_empirical(
     de_oi %>% pull(p_val),
     de_oi %>% pull(logFC),

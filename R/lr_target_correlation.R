@@ -416,8 +416,8 @@ lr_target_prior_cor_inference <- function(
 #' lr_target_prior_cor_filtered <- output$lr_target_prior_cor %>% filter(scaled_prior_score > 0.50 & (pearson > 0.66 | spearman > 0.66))
 #' prioritized_tbl_oi <- output$prioritization_tables$group_prioritization_tbl %>%
 #'   distinct(id, ligand, receptor, sender, receiver, lr_interaction, group, ligand_receptor_lfc_avg, activity_scaled, fraction_expressing_ligand_receptor, prioritization_score) %>%
-#'   filter(fraction_expressing_ligand_receptor > 0 & ligand_receptor_lfc_avg > 0) %>%
-#'   filter(group == group_oi & receiver == receiver_oi) %>%
+#'   dplyr::filter(fraction_expressing_ligand_receptor > 0 & ligand_receptor_lfc_avg > 0) %>%
+#'   dplyr::filter(group == group_oi & receiver == receiver_oi) %>%
 #'   top_n(250, prioritization_score)
 #' prioritized_tbl_oi <- prioritized_tbl_oi %>% filter(id %in% lr_target_prior_cor_filtered$id)
 #' prioritized_tbl_oi <- prioritized_tbl_oi %>%
@@ -553,7 +553,7 @@ infer_intercellular_regulatory_network <- function(
     dplyr::group_by(node) %>%
     dplyr::count() %>%
     dplyr::filter(n > 1) %>%
-    pull(node)
+    dplyr::pull(node)
   nodes <- dplyr::bind_rows(
     nodes %>%
       dplyr::filter(node %in% double_nodes) %>%

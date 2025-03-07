@@ -427,7 +427,7 @@ generate_prioritization_tables <- function(
       dplyr::inner_join(receptor_celltype_specificity_prioritization_frq) %>%
       dplyr::inner_join(receptor_celltype_specificity_prioritization_pb) %>%
       dplyr::inner_join(ligand_receptor_expressed_prioritization) %>%
-      mutate(
+      dplyr::mutate(
         max_scaled_activity = pmax(
           scaled_activity_scaled_up,
           scaled_activity_scaled_down,
@@ -457,7 +457,7 @@ generate_prioritization_tables <- function(
       dplyr::inner_join(receptor_celltype_specificity_prioritization_frq) %>%
       dplyr::inner_join(receptor_celltype_specificity_prioritization_pb) %>%
       dplyr::inner_join(ligand_receptor_expressed_prioritization) %>%
-      mutate(max_scaled_activity = scaled_activity_scaled_up)
+      dplyr::mutate(max_scaled_activity = scaled_activity_scaled_up)
   }
 
   # have a weighted average the final score (no product!!)
@@ -554,7 +554,7 @@ generate_prioritization_tables <- function(
     sample_prioritization_tbl$keep_sender_receiver == 2
   ] <- "Sender & Receiver present"
   sample_prioritization_tbl <- sample_prioritization_tbl %>%
-    mutate(
+    dplyr::mutate(
       keep_sender_receiver = factor(
         keep_sender_receiver,
         levels = c(
@@ -1349,7 +1349,7 @@ generate_prioritization_tables_tests <- function(
       dplyr::inner_join(receptor_celltype_specificity_prioritization_frq) %>%
       dplyr::inner_join(receptor_celltype_specificity_prioritization_pb) %>%
       dplyr::inner_join(ligand_receptor_expressed_prioritization) %>%
-      mutate(
+      dplyr::mutate(
         max_scaled_activity = pmax(
           scaled_activity_scaled_up,
           scaled_activity_scaled_down,
@@ -1379,7 +1379,7 @@ generate_prioritization_tables_tests <- function(
       dplyr::inner_join(receptor_celltype_specificity_prioritization_frq) %>%
       dplyr::inner_join(receptor_celltype_specificity_prioritization_pb) %>%
       dplyr::inner_join(ligand_receptor_expressed_prioritization) %>%
-      mutate(max_scaled_activity = scaled_activity_scaled_up)
+      dplyr::mutate(max_scaled_activity = scaled_activity_scaled_up)
   }
 
   # have a weighted average the final score (no product!!)
@@ -1476,7 +1476,7 @@ generate_prioritization_tables_tests <- function(
     sample_prioritization_tbl$keep_sender_receiver == 2
   ] <- "Sender & Receiver present"
   sample_prioritization_tbl <- sample_prioritization_tbl %>%
-    mutate(
+    dplyr::mutate(
       keep_sender_receiver = factor(
         keep_sender_receiver,
         levels = c(
@@ -2018,7 +2018,7 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(
       dplyr::inner_join(receptor_celltype_specificity_prioritization_frq) %>%
       dplyr::inner_join(receptor_celltype_specificity_prioritization_pb) %>%
       dplyr::inner_join(ligand_receptor_expressed_prioritization) %>%
-      mutate(
+      dplyr::mutate(
         max_scaled_activity = pmax(
           scaled_activity_scaled_up,
           scaled_activity_scaled_down,
@@ -2048,7 +2048,7 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(
       dplyr::inner_join(receptor_celltype_specificity_prioritization_frq) %>%
       dplyr::inner_join(receptor_celltype_specificity_prioritization_pb) %>%
       dplyr::inner_join(ligand_receptor_expressed_prioritization) %>%
-      mutate(max_scaled_activity = scaled_activity_scaled_up)
+      dplyr::mutate(max_scaled_activity = scaled_activity_scaled_up)
   }
 
   # have a weighted average the final score (no product!!)
@@ -2137,7 +2137,7 @@ generate_prioritization_tables_sampleAgnostic_multifactorial <- function(
     sample_prioritization_tbl$keep_sender_receiver == 2
   ] <- "Sender & Receiver present"
   sample_prioritization_tbl <- sample_prioritization_tbl %>%
-    mutate(
+    dplyr::mutate(
       keep_sender_receiver = factor(
         keep_sender_receiver,
         levels = c(

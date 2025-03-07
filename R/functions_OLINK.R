@@ -29,9 +29,9 @@ generate_prioritization_tables_OLINK <- function(
   olink_df_receptor <- sender_receiver_de %>%
     distinct(receptor) %>%
     left_join(olink_df %>% rename(receptor = gene)) %>%
-    mutate(contrast = "M-S")
+    dplyr::mutate(contrast = "M-S")
   olink_df_reverse_receptor <- olink_df_receptor %>%
-    mutate(contrast = "S-M", logFC = -1 * logFC)
+    dplyr::mutate(contrast = "S-M", logFC = -1 * logFC)
   olink_df_receptor <- olink_df_receptor %>%
     bind_rows(olink_df_reverse_receptor)
   olink_df_receptor$logFC[is.na(olink_df_receptor$logFC)] <- 0
@@ -40,9 +40,9 @@ generate_prioritization_tables_OLINK <- function(
   olink_df_ligand <- sender_receiver_de %>%
     distinct(ligand) %>%
     left_join(olink_df %>% rename(ligand = gene)) %>%
-    mutate(contrast = "M-S")
+    dplyr::mutate(contrast = "M-S")
   olink_df_reverse_ligand <- olink_df_ligand %>%
-    mutate(contrast = "S-M", logFC = -1 * logFC)
+    dplyr::mutate(contrast = "S-M", logFC = -1 * logFC)
   olink_df_ligand <- olink_df_ligand %>% bind_rows(olink_df_reverse_ligand)
   olink_df_ligand$logFC[is.na(olink_df_ligand$logFC)] <- 0
   olink_df_ligand$pval[is.na(olink_df_ligand$pval)] <- 1
@@ -429,7 +429,7 @@ generate_prioritization_tables_OLINK <- function(
     dplyr::inner_join(sender_abundance_prioritization) %>%
     dplyr::inner_join(receiver_abundance_prioritization) %>%
     dplyr::inner_join(OLINK_ligand_activity_prioritization_up) %>%
-    mutate(
+    dplyr::mutate(
       max_scaled_activity = pmax(
         scaled_activity_scaled_up,
         scaled_activity_scaled_down
@@ -547,7 +547,7 @@ generate_prioritization_tables_OLINK <- function(
     sample_prioritization_tbl$keep_sender_receiver == 2
   ] <- "Sender & Receiver present"
   sample_prioritization_tbl <- sample_prioritization_tbl %>%
-    mutate(
+    dplyr::mutate(
       keep_sender_receiver = factor(
         keep_sender_receiver,
         levels = c(
@@ -644,7 +644,7 @@ get_ligand_activities_targets_OLINK <- function(
 
   olink_df <- olink_df %>% mutate(contrast = contrast_tbl$contrast %>% .[1])
   olink_df_reverse <- olink_df %>%
-    mutate(contrast = contrast_tbl$contrast %>% .[2], logFC = -1 * logFC)
+    dplyr::mutate(contrast = contrast_tbl$contrast %>% .[2], logFC = -1 * logFC)
   de_output_tidy <- olink_df %>% bind_rows(olink_df_reverse)
 
   background_expressed_genes <- de_output_tidy$gene %>%

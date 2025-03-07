@@ -487,16 +487,16 @@ multi_nichenet_analysis <- function(
 
   ## check for condition-specific cell types
   abundance_df_summarized <- abundance_info$abundance_data %>%
-    mutate(keep = as.logical(keep)) %>%
+    dplyr::mutate(keep = as.logical(keep)) %>%
     group_by(group_id, celltype_id) %>%
     summarise(samples_present = sum((keep)))
   celltypes_absent_one_condition <- abundance_df_summarized %>%
-    filter(samples_present == 0) %>%
-    pull(celltype_id) %>%
+    dplyr::filter(samples_present == 0) %>%
+    dplyr::pull(celltype_id) %>%
     unique() # find truly condition-specific cell types by searching for cell types truely absent in at least one condition
   celltypes_present_one_condition <- abundance_df_summarized %>%
-    filter(samples_present >= 2) %>%
-    pull(celltype_id) %>%
+    dplyr::filter(samples_present >= 2) %>%
+    dplyr::pull(celltype_id) %>%
     unique() # require presence in at least 2 samples of one group so it is really present in at least one condition
   condition_specific_celltypes <- intersect(
     celltypes_absent_one_condition,
@@ -550,8 +550,8 @@ multi_nichenet_analysis <- function(
 
   ## filter out non-expressed genes
   genes_oi <- frq_list$expressed_df %>%
-    filter(expressed == TRUE) %>%
-    pull(gene) %>%
+    dplyr::filter(expressed == TRUE) %>%
+    dplyr::pull(gene) %>%
     unique()
   sce <- sce[genes_oi, ]
 
@@ -807,9 +807,9 @@ multi_nichenet_analysis <- function(
     combined_prioritization_tables <- list(
       group_prioritization_tbl = bind_rows(
         prioritization_tables_with_condition_specific_celltype_receiver$group_prioritization_tbl %>%
-          filter(receiver %in% condition_specific_celltypes),
+          dplyr::filter(receiver %in% condition_specific_celltypes),
         prioritization_tables_with_condition_specific_celltype_sender$group_prioritization_tbl %>%
-          filter(sender %in% condition_specific_celltypes)
+          dplyr::filter(sender %in% condition_specific_celltypes)
       ) %>%
         bind_rows(prioritization_tables$group_prioritization_tbl) %>%
         arrange(-prioritization_score) %>%
@@ -1308,8 +1308,8 @@ multi_nichenet_analysis_sampleAgnostic <- function(
 
   ## check for condition-specific cell types
   sample_group_celltype_df <- abundance_info$abundance_data %>%
-    filter(n > min_cells) %>%
-    ungroup() %>%
+    dplyr::filter(n > min_cells) %>%
+    dplyr::ungroup() %>%
     distinct(sample_id, group_id) %>%
     cross_join(
       abundance_info$abundance_data %>% ungroup() %>% distinct(celltype_id)
@@ -1320,16 +1320,16 @@ multi_nichenet_analysis_sampleAgnostic <- function(
   abundance_df$n[is.na(abundance_df$n)] <- 0
   abundance_df$keep[is.na(abundance_df$keep)] <- FALSE
   abundance_df_summarized <- abundance_df %>%
-    mutate(keep = as.logical(keep)) %>%
+    dplyr::mutate(keep = as.logical(keep)) %>%
     group_by(group_id, celltype_id) %>%
     summarise(samples_present = sum((keep)))
   celltypes_absent_one_condition <- abundance_df_summarized %>%
-    filter(samples_present == 0) %>%
-    pull(celltype_id) %>%
+    dplyr::filter(samples_present == 0) %>%
+    dplyr::pull(celltype_id) %>%
     unique() # find truly condition-specific cell types by searching for cell types truely absent in at least one condition
   celltypes_present_one_condition <- abundance_df_summarized %>%
-    filter(samples_present >= 1) %>%
-    pull(celltype_id) %>%
+    dplyr::filter(samples_present >= 1) %>%
+    dplyr::pull(celltype_id) %>%
     unique() # require presence in at least 2 samples of one group so it is really present in at least one condition
   condition_specific_celltypes <- intersect(
     celltypes_absent_one_condition,
@@ -1459,7 +1459,7 @@ multi_nichenet_analysis_sampleAgnostic <- function(
       dplyr::distinct()
     colnames(grouping_tbl) <- c("group")
     grouping_tbl <- grouping_tbl %>%
-      mutate(sample = group) %>%
+      dplyr::mutate(sample = group) %>%
       select(sample, group)
   }
 
@@ -1544,9 +1544,9 @@ multi_nichenet_analysis_sampleAgnostic <- function(
     combined_prioritization_tables <- list(
       group_prioritization_tbl = bind_rows(
         prioritization_tables_with_condition_specific_celltype_receiver$group_prioritization_tbl %>%
-          filter(receiver %in% condition_specific_celltypes),
+          dplyr::filter(receiver %in% condition_specific_celltypes),
         prioritization_tables_with_condition_specific_celltype_sender$group_prioritization_tbl %>%
-          filter(sender %in% condition_specific_celltypes)
+          dplyr::filter(sender %in% condition_specific_celltypes)
       ) %>%
         bind_rows(prioritization_tables$group_prioritization_tbl) %>%
         arrange(-prioritization_score) %>%

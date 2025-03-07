@@ -135,7 +135,7 @@ get_muscat_exprs_frac <- function(sce, sample_id, celltype_id, group_id) {
 #' @param samples
 #'
 #' @import SingleCellExperiment
-#' @importFrom dplyr mutate
+#' @importFrom dplyr dplyr::mutate
 #' @importFrom tibble rownames_to_column as_tibble
 #' @importFrom tidyr gather
 #' @returns
@@ -284,7 +284,7 @@ get_muscat_exprs_avg <- function(sce, sample_id, celltype_id, group_id) {
   # ) |>
   # dplyr::bind_rows()
 
-  return(avg_df)
+  avg_df
 }
 #' @title get_pseudobulk_logCPM_exprs
 #'
@@ -817,7 +817,7 @@ get_avg_pb_exprs <- function(
   # Add group information
   abundance_data <- abundance_data |>
     dplyr::left_join(
-      metadata_abundance |> distinct(sample, group),
+      metadata_abundance |> dplyr::distinct(sample, group),
       by = "sample"
     )
 
@@ -835,8 +835,8 @@ get_avg_pb_exprs <- function(
     )
 
   grouping_df_filtered <- grouping_df |>
-    inner_join(abundance_data) |>
-    filter(keep_sample == TRUE) # continue only with samples that have sufficient cells of a cell type in a sample
+    dplyr::inner_join(abundance_data) |>
+    dplyr::filter(keep_sample == TRUE) # continue only with samples that have sufficient cells of a cell type in a sample
 
   avg_df_group <- avg_df |>
     dplyr::inner_join(grouping_df_filtered) |>
@@ -1038,7 +1038,7 @@ get_frac_exprs <- function(
   # Add group information
   abundance_data <- abundance_data |>
     dplyr::left_join(
-      metadata_abundance |> distinct(sample, group),
+      metadata_abundance |> dplyr::distinct(sample, group),
       by = "sample"
     )
 
@@ -1056,8 +1056,8 @@ get_frac_exprs <- function(
     )
 
   grouping_df_filtered <- grouping_df |>
-    inner_join(abundance_data) |>
-    filter(keep_sample == TRUE) # continue only with samples that have sufficient cells of a cell type in a sample
+    dplyr::inner_join(abundance_data) |>
+    dplyr::filter(keep_sample == TRUE) # continue only with samples that have sufficient cells of a cell type in a sample
 
   print(paste0(
     "Samples are considered if they have more than ",
@@ -1082,7 +1082,7 @@ get_frac_exprs <- function(
     dplyr::summarize(n_smallest_group = min(n)) |>
     dplyr::mutate(n_min = min_sample_prop * n_smallest_group) |>
     dplyr::mutate(n_min = pmax(n_min, 2)) |>
-    distinct()
+    dplyr::distinct()
 
   print(paste0(
     "Genes with non-zero counts in at least ",
@@ -1093,8 +1093,8 @@ get_frac_exprs <- function(
   for (i in seq(length(unique(n_smallest_group_tbl$celltype)))) {
     celltype_oi <- unique(n_smallest_group_tbl$celltype)[i]
     n_min <- n_smallest_group_tbl |>
-      filter(celltype == celltype_oi) |>
-      pull(n_min)
+      dplyr::filter(celltype == celltype_oi) |>
+      dplyr::pull(n_min)
     print(paste0(
       "Genes expressed in at least ",
       n_min,
@@ -1108,18 +1108,18 @@ get_frac_exprs <- function(
     dplyr::mutate(expressed_sample = fraction_sample >= fraction_cutoff)
 
   expressed_df <- frq_df |>
-    inner_join(n_smallest_group_tbl) |>
-    inner_join(abundance_data) |>
+    dplyr::inner_join(n_smallest_group_tbl) |>
+    dplyr::inner_join(abundance_data) |>
     dplyr::group_by(gene, celltype) |>
     dplyr::summarise(n_expressed = sum(expressed_sample)) |>
     dplyr::mutate(expressed = n_expressed >= n_min) |>
-    distinct(celltype, gene, expressed)
+    dplyr::distinct(celltype, gene, expressed)
   for (i in seq(length(unique(expressed_df$celltype)))) {
     celltype_oi <- unique(expressed_df$celltype)[i]
     n_genes <- expressed_df |>
-      filter(celltype == celltype_oi) |>
-      filter(expressed == TRUE) |>
-      pull(gene) |>
+      dplyr::filter(celltype == celltype_oi) |>
+      dplyr::filter(expressed == TRUE) |>
+      dplyr::pull(gene) |>
       unique() |>
       length()
     print(paste0(
@@ -1206,8 +1206,8 @@ get_frac_exprs_sampleAgnostic <- function(
     tibble::as_tibble() |>
     dplyr::distinct()
   grouping_df_filtered <- grouping_df |>
-    inner_join(abundance_data) |>
-    filter(keep_sample == TRUE)
+    dplyr::inner_join(abundance_data) |>
+    dplyr::filter(keep_sample == TRUE)
   print(paste0(
     "Groups are considered if they have more than ",
     min_cells,
@@ -1229,7 +1229,7 @@ get_frac_exprs_sampleAgnostic <- function(
       n_min = min_sample_prop *
         n_smallest_group
     ) |>
-    distinct()
+    dplyr::distinct()
   print(paste0(
     "Genes with non-zero counts in at least ",
     fraction_cutoff *
@@ -1239,8 +1239,8 @@ get_frac_exprs_sampleAgnostic <- function(
   for (i in seq(length(unique(n_smallest_group_tbl$celltype)))) {
     celltype_oi <- unique(n_smallest_group_tbl$celltype)[i]
     n_min <- n_smallest_group_tbl |>
-      filter(celltype == celltype_oi) |>
-      pull(n_min)
+      dplyr::filter(celltype == celltype_oi) |>
+      dplyr::pull(n_min)
     print(paste0(
       "Genes expressed in at least ",
       n_min,
@@ -1252,15 +1252,15 @@ get_frac_exprs_sampleAgnostic <- function(
     dplyr::inner_join(grouping_df) |>
     dplyr::mutate(expressed_sample = fraction_sample >= fraction_cutoff)
   expressed_df <- frq_df |>
-    inner_join(n_smallest_group_tbl) |>
-    inner_join(abundance_data) |>
+    dplyr::inner_join(n_smallest_group_tbl) |>
+    dplyr::inner_join(abundance_data) |>
     dplyr::group_by(
       gene,
       celltype
     ) |>
     dplyr::summarise(n_expressed = sum(expressed_sample)) |>
     dplyr::mutate(expressed = n_expressed >= n_min) |>
-    distinct(
+    dplyr::distinct(
       celltype,
       gene,
       expressed
@@ -1268,9 +1268,9 @@ get_frac_exprs_sampleAgnostic <- function(
   for (i in seq(length(unique(expressed_df$celltype)))) {
     celltype_oi <- unique(expressed_df$celltype)[i]
     n_genes <- expressed_df |>
-      filter(celltype == celltype_oi) |>
-      filter(expressed == TRUE) |>
-      pull(gene) |>
+      dplyr::filter(celltype == celltype_oi) |>
+      dplyr::filter(expressed == TRUE) |>
+      dplyr::pull(gene) |>
       unique() |>
       length()
     print(paste0(
@@ -1486,7 +1486,7 @@ process_abund_info <- function(abund_data, ic_type = "sender") {
 
     abund_data <- abund_data |>
       rename(keep_sender = keep, n_cells_sender = n) |>
-      mutate(keep_sender = as.double(as.logical(keep_sender)))
+      dplyr::mutate(keep_sender = as.double(as.logical(keep_sender)))
   }
   if (ic_type == "receiver") {
     if ("celltype_id_receiver" %in% colnames(abund_data)) {
@@ -1497,7 +1497,7 @@ process_abund_info <- function(abund_data, ic_type = "sender") {
 
     abund_data <- abund_data |>
       rename(keep_receiver = keep, n_cells_receiver = n) |>
-      mutate(keep_receiver = as.double(as.logical(keep_receiver)))
+      dplyr::mutate(keep_receiver = as.double(as.logical(keep_receiver)))
   }
 
   return(abund_data)

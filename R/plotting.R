@@ -39,8 +39,8 @@
 #' )
 #' group_oi <- "High"
 #' prioritized_tbl_oi <- output$prioritization_tables$group_prioritization_tbl %>%
-#'   filter(fraction_expressing_ligand_receptor > 0) %>%
-#'   filter(group == group_oi) %>%
+#'   dplyr::filter(fraction_expressing_ligand_receptor > 0) %>%
+#'   dplyr::filter(group == group_oi) %>%
 #'   top_n(50, prioritization_score)
 #' plot_oi <- make_sample_lr_prod_plots(output$prioritization_tables, prioritized_tbl_oi)
 #' plot_oi
@@ -84,7 +84,7 @@ make_sample_lr_prod_plots <- function(
       color = scaled_LR_pb_prod,
       size = keep_sender_receiver
     )) +
-    geom_point() +
+    geom::geom_point() +
     facet_grid(sender_receiver ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -117,8 +117,8 @@ make_sample_lr_prod_plots <- function(
       color = "Scaled L-R\npseudobulk exprs product",
       size = "Sufficient presence\nof sender & receiver"
     ) +
-    xlab("") +
-    ylab("") +
+    ggplot2::xlab("") +
+    ggplot2::ylab("") +
     scale_size_manual(values = keep_sender_receiver_values)
   max_lfc <- abs(pb_exprs_data_subset$scaled_LR_pb_prod) %>% max()
   custom_scale_fill <- scale_color_gradientn(
@@ -175,8 +175,8 @@ make_sample_lr_prod_plots <- function(
 #' )
 #' group_oi <- "High"
 #' prioritized_tbl_oi <- output$prioritization_tables$group_prioritization_tbl %>%
-#'   filter(fraction_expressing_ligand_receptor > 0) %>%
-#'   filter(group == group_oi) %>%
+#'   dplyr::filter(fraction_expressing_ligand_receptor > 0) %>%
+#'   dplyr::filter(group == group_oi) %>%
 #'   top_n(50, prioritization_score)
 #' plot_oi <- make_sample_lr_prod_activity_plots(output$prioritization_tables, prioritized_tbl_oi)
 #' plot_oi
@@ -315,7 +315,7 @@ make_sample_lr_prod_activity_plots <- function(
       color = scaled_LR_pb_prod,
       size = keep_sender_receiver
     )) +
-    geom_point() +
+    geom::geom_point() +
     facet_grid(
       sender_receiver ~ group,
       scales = "free",
@@ -369,7 +369,7 @@ make_sample_lr_prod_activity_plots <- function(
 
   p2 <- group_data %>%
     ggplot(aes(direction_regulation, lr_interaction, fill = activity_scaled)) +
-    geom_tile(color = "whitesmoke") +
+    geom::geom_tile(color = "whitesmoke") +
     facet_grid(sender_receiver ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -407,7 +407,7 @@ make_sample_lr_prod_activity_plots <- function(
 
   p3 <- group_data %>%
     ggplot(aes(direction_regulation, lr_interaction, fill = activity)) +
-    geom_tile(color = "whitesmoke") +
+    geom::geom_tile(color = "whitesmoke") +
     facet_grid(sender_receiver ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     # xlab("Ligand activities in receiver cell types\n\n") +
@@ -483,7 +483,7 @@ make_sample_lr_prod_activity_plots <- function(
       color = celltype_specificity,
       size = fraction_expression
     )) +
-    geom_point() +
+    geom::geom_point() +
     facet_grid(sender_receiver ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -585,8 +585,8 @@ make_sample_lr_prod_activity_plots <- function(
 #' )
 #' group_oi <- "High"
 #' prioritized_tbl_oi <- output$prioritization_tables$group_prioritization_tbl %>%
-#'   filter(fraction_expressing_ligand_receptor > 0) %>%
-#'   filter(group == group_oi) %>%
+#'   dplyr::filter(fraction_expressing_ligand_receptor > 0) %>%
+#'   dplyr::filter(group == group_oi) %>%
 #'   top_n(50, prioritization_score)
 #' plot_oi <- make_sample_lr_prod_activity_plots_Omnipath(output$prioritization_tables, prioritized_tbl_oi %>% inner_join(lr_network_all))
 #' plot_oi
@@ -747,7 +747,7 @@ make_sample_lr_prod_activity_plots_Omnipath <- function(
       color = scaled_LR_pb_prod,
       size = keep_sender_receiver
     )) +
-    geom_point() +
+    geom::geom_point() +
     facet_grid(
       sender_receiver ~ group,
       scales = "free",
@@ -801,7 +801,7 @@ make_sample_lr_prod_activity_plots_Omnipath <- function(
 
   p2 <- group_data %>%
     ggplot(aes(direction_regulation, lr_interaction, fill = activity_scaled)) +
-    geom_tile(color = "whitesmoke") +
+    geom::geom_tile(color = "whitesmoke") +
     facet_grid(sender_receiver ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -875,7 +875,7 @@ make_sample_lr_prod_activity_plots_Omnipath <- function(
       color = celltype_specificity,
       size = fraction_expression
     )) +
-    geom_point() +
+    geom::geom_point() +
     facet_grid(sender_receiver ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -938,7 +938,7 @@ make_sample_lr_prod_activity_plots_Omnipath <- function(
   omnipath_data <- omnipath_data %>% mutate(omnipath = "Omnipath")
   p_omnipath <- omnipath_data %>%
     ggplot(aes(omnipath_score_type, lr_interaction, size = omnipath_score)) +
-    geom_point(color = "grey40") +
+    geom::geom_point(color = "grey40") +
     facet_grid(sender_receiver ~ omnipath, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -1038,8 +1038,8 @@ make_sample_lr_prod_activity_plots_Omnipath <- function(
 #' group_oi <- "High"
 #' batch_oi <- "batch"
 #' prioritized_tbl_oi <- output$prioritization_tables$group_prioritization_tbl %>%
-#'   filter(fraction_expressing_ligand_receptor > 0) %>%
-#'   filter(group == group_oi) %>%
+#'   dplyr::filter(fraction_expressing_ligand_receptor > 0) %>%
+#'   dplyr::filter(group == group_oi) %>%
 #'   top_n(50, prioritization_score)
 #' plot_oi <- make_sample_lr_prod_activity_batch_plots(output$prioritization_tables, prioritized_tbl_oi, output$grouping_tbl, batch_oi = batch_oi)
 #' plot_oi
@@ -1181,7 +1181,7 @@ make_sample_lr_prod_activity_batch_plots <- function(
       color = scaled_LR_pb_prod,
       size = keep_sender_receiver
     )) +
-    geom_point() +
+    geom::geom_point() +
     facet_grid(
       sender_receiver ~ group,
       scales = "free",
@@ -1234,7 +1234,7 @@ make_sample_lr_prod_activity_batch_plots <- function(
 
   p2 <- group_data %>%
     ggplot(aes(direction_regulation, lr_interaction, fill = activity_scaled)) +
-    geom_tile(color = "whitesmoke") +
+    geom::geom_tile(color = "whitesmoke") +
     facet_grid(sender_receiver ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -1272,7 +1272,7 @@ make_sample_lr_prod_activity_batch_plots <- function(
 
   p3 <- group_data %>%
     ggplot(aes(direction_regulation, lr_interaction, fill = activity)) +
-    geom_tile(color = "whitesmoke") +
+    geom::geom_tile(color = "whitesmoke") +
     facet_grid(sender_receiver ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -1309,14 +1309,14 @@ make_sample_lr_prod_activity_batch_plots <- function(
   p3 <- p3 + custom_scale_fill
 
   grouping_tbl_plot <- grouping_tbl %>%
-    mutate(
+    dplyr::mutate(
       batch_ = paste0(" ", batch_oi, " "),
       mock = "",
       batch = grouping_tbl[[batch_oi]]
     )
   p_batch <- grouping_tbl_plot %>%
     ggplot(aes(sample, mock, fill = batch)) +
-    geom_tile(color = "black") +
+    geom::geom_tile(color = "black") +
     facet_grid(batch_ ~ group, scales = "free", space = "free", switch = "y") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -1346,11 +1346,11 @@ make_sample_lr_prod_activity_batch_plots <- function(
       )
     ) +
     scale_fill_brewer(palette = "Set2") +
-    xlab("")
+    ggplot2::xlab("")
 
   # add the plot visualizing cell-type specificity
   cs_data <- group_data %>%
-    filter(group %in% prioritized_tbl_oi$group) %>%
+    dplyr::filter(group %in% prioritized_tbl_oi$group) %>%
     distinct(
       sender_receiver,
       lr_interaction,
@@ -1400,7 +1400,7 @@ make_sample_lr_prod_activity_batch_plots <- function(
       color = celltype_specificity,
       size = fraction_expression
     )) +
-    geom_point() +
+    geom::geom_point() +
     facet_grid(sender_receiver ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -1505,7 +1505,7 @@ make_sample_lr_prod_activity_batch_plots <- function(
 #'   group_by(group, receiver) %>%
 #'   distinct(ligand, receiver, group, activity) %>%
 #'   top_n(5, activity) %>%
-#'   pull(ligand) %>%
+#'   dplyr::pull(ligand) %>%
 #'   unique()
 #' plot_oi <- make_ligand_activity_plots(output$prioritization_tables, ligands_oi, contrast_tbl)
 #' plot_oi
@@ -1538,7 +1538,7 @@ make_ligand_activity_plots <- function(
 
   p1 <- group_data %>%
     ggplot(aes(receiver, ligand, fill = activity_scaled)) +
-    geom_tile(color = "whitesmoke") +
+    geom::geom_tile(color = "whitesmoke") +
     facet_grid(
       . ~ group_direction_regulation,
       scales = "free",
@@ -1582,7 +1582,7 @@ make_ligand_activity_plots <- function(
 
   p2 <- group_data %>%
     ggplot(aes(receiver, ligand, fill = activity)) +
-    geom_tile(color = "whitesmoke") +
+    geom::geom_tile(color = "whitesmoke") +
     facet_grid(
       . ~ group_direction_regulation,
       scales = "free",
@@ -1696,10 +1696,10 @@ make_ligand_activity_plots <- function(
 #' receiver_oi <- "Malignant"
 #' targets_oi <- output$ligand_activities_targets_DEgenes$de_genes_df %>%
 #'   inner_join(contrast_tbl) %>%
-#'   filter(group == group_oi) %>%
+#'   dplyr::filter(group == group_oi) %>%
 #'   arrange(p_val) %>%
-#'   filter(receiver == receiver_oi) %>%
-#'   pull(gene) %>%
+#'   dplyr::filter(receiver == receiver_oi) %>%
+#'   dplyr::pull(gene) %>%
 #'   unique()
 #' p_target <- make_DEgene_dotplot_pseudobulk(genes_oi = targets_oi, celltype_info = output$celltype_info, prioritization_tables = output$prioritization_tables, celltype_oi = receiver_oi, output$grouping_tbl)
 #' }
@@ -1745,7 +1745,7 @@ make_DEgene_dotplot_pseudobulk <- function(
 
   p1 <- plot_data %>%
     ggplot(aes(sample, gene, color = scaled_gene_exprs, size = keep_receiver)) +
-    geom_point() +
+    geom::geom_point() +
     facet_grid(. ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -1775,8 +1775,8 @@ make_DEgene_dotplot_pseudobulk <- function(
       )
     ) +
     labs(color = "Scaled pseudobulk\nexpression", size = "Celltype present") +
-    xlab("Samples") +
-    ylab("Genes") +
+    ggplot2::xlab("Samples") +
+    ggplot2::ylab("Genes") +
     scale_size_manual(values = keep_sender_receiver_values)
   max_lfc <- abs(plot_data$scaled_gene_exprs) %>% max()
   custom_scale_fill <- scale_color_gradientn(
@@ -1804,7 +1804,7 @@ make_DEgene_dotplot_pseudobulk <- function(
       color = scaled_gene_exprs,
       size = fraction_sample
     )) +
-    geom_point() +
+    geom::geom_point() +
     facet_grid(. ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -1837,8 +1837,8 @@ make_DEgene_dotplot_pseudobulk <- function(
       color = "Scaled pseudobulk\nexpression",
       size = "Fraction of\nexpressing cells"
     ) +
-    xlab("Samples") +
-    ylab("Genes")
+    ggplot2::xlab("Samples") +
+    ggplot2::ylab("Genes")
   max_lfc <- abs(plot_data$scaled_gene_exprs) %>% max()
   custom_scale_fill <- scale_color_gradientn(
     colours = RColorBrewer::brewer.pal(n = 7, name = "RdBu") %>% rev(),
@@ -1892,10 +1892,10 @@ make_DEgene_dotplot_pseudobulk <- function(
 #' receiver_oi <- "Malignant"
 #' targets_oi <- output$ligand_activities_targets_DEgenes$de_genes_df %>%
 #'   inner_join(contrast_tbl) %>%
-#'   filter(group == group_oi) %>%
+#'   dplyr::filter(group == group_oi) %>%
 #'   arrange(p_val) %>%
-#'   filter(receiver == receiver_oi) %>%
-#'   pull(gene) %>%
+#'   dplyr::filter(receiver == receiver_oi) %>%
+#'   dplyr::pull(gene) %>%
 #'   unique()
 #' p_target <- make_DEgene_dotplot_pseudobulk_reversed(genes_oi = targets_oi, celltype_info = output$celltype_info, prioritization_tables = output$prioritization_tables, celltype_oi = receiver_oi, output$grouping_tbl)
 #' }
@@ -1948,7 +1948,7 @@ make_DEgene_dotplot_pseudobulk_reversed <- function(
         color = scaled_gene_exprs,
         size = keep_receiver
       )) +
-      geom_point() +
+      geom::geom_point() +
       facet_grid(group ~ ., scales = "free", space = "free") +
       scale_x_discrete(position = "top") +
       theme_light() +
@@ -1983,8 +1983,8 @@ make_DEgene_dotplot_pseudobulk_reversed <- function(
         )
       ) +
       labs(color = "Scaled pseudobulk\nexpression", size = "Celltype present") +
-      xlab("Genes") +
-      ylab("Samples") +
+      ggplot2::xlab("Genes") +
+      ggplot2::ylab("Samples") +
       scale_size_manual(values = keep_sender_receiver_values)
     max_lfc <- abs(plot_data$scaled_gene_exprs) %>% max()
     custom_scale_fill <- scale_color_gradientn(
@@ -2012,7 +2012,7 @@ make_DEgene_dotplot_pseudobulk_reversed <- function(
         color = scaled_gene_exprs,
         size = fraction_sample
       )) +
-      geom_point() +
+      geom::geom_point() +
       facet_grid(group ~ ., scales = "free", space = "free") +
       scale_x_discrete(position = "top") +
       theme_light() +
@@ -2050,8 +2050,8 @@ make_DEgene_dotplot_pseudobulk_reversed <- function(
         color = "Scaled pseudobulk\nexpression",
         size = "Fraction of\nexpressing cells"
       ) +
-      xlab("Genes") +
-      ylab("Samples")
+      ggplot2::xlab("Genes") +
+      ggplot2::ylab("Samples")
     max_lfc <- abs(plot_data$scaled_gene_exprs) %>% max()
     custom_scale_fill <- scale_color_gradientn(
       colours = RColorBrewer::brewer.pal(n = 7, name = "RdBu") %>% rev(),
@@ -2096,7 +2096,7 @@ make_DEgene_dotplot_pseudobulk_reversed <- function(
         color = scaled_gene_exprs,
         size = keep_receiver
       )) +
-      geom_point() +
+      geom::geom_point() +
       facet_grid(
         group ~ direction_regulation,
         scales = "free",
@@ -2130,8 +2130,8 @@ make_DEgene_dotplot_pseudobulk_reversed <- function(
         )
       ) +
       labs(color = "Scaled pseudobulk\nexpression", size = "Celltype present") +
-      xlab("Genes") +
-      ylab("Samples") +
+      ggplot2::xlab("Genes") +
+      ggplot2::ylab("Samples") +
       scale_size_manual(values = keep_sender_receiver_values)
     max_lfc <- abs(plot_data$scaled_gene_exprs) %>% max()
     custom_scale_fill <- scale_color_gradientn(
@@ -2159,7 +2159,7 @@ make_DEgene_dotplot_pseudobulk_reversed <- function(
         color = scaled_gene_exprs,
         size = fraction_sample
       )) +
-      geom_point() +
+      geom::geom_point() +
       facet_grid(
         group ~ direction_regulation,
         scales = "free",
@@ -2195,8 +2195,8 @@ make_DEgene_dotplot_pseudobulk_reversed <- function(
         color = "Scaled pseudobulk\nexpression",
         size = "Fraction of\nexpressing cells"
       ) +
-      xlab("Genes") +
-      ylab("Samples")
+      ggplot2::xlab("Genes") +
+      ggplot2::ylab("Samples")
     max_lfc <- abs(plot_data$scaled_gene_exprs) %>% max()
     custom_scale_fill <- scale_color_gradientn(
       colours = RColorBrewer::brewer.pal(n = 7, name = "RdBu") %>% rev(),
@@ -2257,10 +2257,10 @@ make_DEgene_dotplot_pseudobulk_reversed <- function(
 #' receiver_oi <- "Malignant"
 #' targets_oi <- output$ligand_activities_targets_DEgenes$de_genes_df %>%
 #'   inner_join(contrast_tbl) %>%
-#'   filter(group == group_oi) %>%
+#'   dplyr::filter(group == group_oi) %>%
 #'   arrange(p_val) %>%
-#'   filter(receiver == receiver_oi) %>%
-#'   pull(gene) %>%
+#'   dplyr::filter(receiver == receiver_oi) %>%
+#'   dplyr::pull(gene) %>%
 #'   unique()
 #' p_target <- make_DEgene_dotplot_pseudobulk_batch(genes_oi = targets_oi, celltype_info = output$celltype_info, prioritization_tables = output$prioritization_tables, celltype_oi = receiver_oi, batch_oi = batches, output$grouping_tbl)
 #' }
@@ -2307,7 +2307,7 @@ make_DEgene_dotplot_pseudobulk_batch <- function(
 
   p1 <- plot_data %>%
     ggplot(aes(sample, gene, color = scaled_gene_exprs, size = keep_receiver)) +
-    geom_point() +
+    geom::geom_point() +
     facet_grid(. ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -2337,8 +2337,8 @@ make_DEgene_dotplot_pseudobulk_batch <- function(
       )
     ) +
     labs(color = "Scaled pseudobulk\nexpression", size = "Celltype present") +
-    xlab("") +
-    ylab("Genes") +
+    ggplot2::xlab("") +
+    ggplot2::ylab("Genes") +
     scale_size_manual(values = keep_sender_receiver_values)
   max_lfc <- abs(plot_data$scaled_gene_exprs) %>% max()
   custom_scale_fill <- scale_color_gradientn(
@@ -2366,7 +2366,7 @@ make_DEgene_dotplot_pseudobulk_batch <- function(
       color = scaled_gene_exprs,
       size = fraction_sample
     )) +
-    geom_point() +
+    geom::geom_point() +
     facet_grid(. ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -2399,8 +2399,8 @@ make_DEgene_dotplot_pseudobulk_batch <- function(
       color = "Scaled pseudobulk\nexpression",
       size = "Fraction of\nexpressing cells"
     ) +
-    xlab("") +
-    ylab("Genes")
+    ggplot2::xlab("") +
+    ggplot2::ylab("Genes")
   max_lfc <- abs(plot_data$scaled_gene_exprs) %>% max()
   custom_scale_fill <- scale_color_gradientn(
     colours = RColorBrewer::brewer.pal(n = 7, name = "RdBu") %>% rev(),
@@ -2414,14 +2414,14 @@ make_DEgene_dotplot_pseudobulk_batch <- function(
   # grouping_tbl = plot_data %>% distinct(sample, group, batch_oi) %>% rename(batch = batch_oi)
   # grouping_tbl_plot = grouping_tbl %>% mutate(batch_ = paste0(" ",batch_oi," "), mock = "")
   grouping_tbl_plot <- grouping_tbl %>%
-    mutate(
+    dplyr::mutate(
       batch_ = paste0(" ", batch_oi, " "),
       mock = "",
       batch = grouping_tbl[[batch_oi]]
     )
   p_batch <- grouping_tbl_plot %>%
     ggplot(aes(sample, mock, fill = batch)) +
-    geom_tile(color = "black") +
+    geom::geom_tile(color = "black") +
     facet_grid(. ~ group, scales = "free", space = "free", switch = "y") +
     scale_x_discrete(position = "top") +
     theme_light() +
@@ -2451,7 +2451,7 @@ make_DEgene_dotplot_pseudobulk_batch <- function(
       )
     ) +
     scale_fill_brewer(palette = "Set2") +
-    xlab("") +
+    ggplot2::xlab("") +
     labs(fill = batch_oi)
 
   p1 <- patchwork::wrap_plots(
@@ -2592,7 +2592,7 @@ make_ligand_receptor_violin_plot <- function(
   if (is.na(batch_oi)) {
     p_sender <- exprs_df %>%
       ggplot(aes(sample_id, expression, group = sample_id, color = group_id)) +
-      geom_violin(color = "grey10") +
+      geom::geom_violin(color = "grey10") +
       ggbeeswarm::geom_quasirandom(bandwidth = 1.25, varwidth = TRUE) +
       facet_grid(. ~ group_id, scales = "free", space = "free") +
       scale_x_discrete(position = "bottom") +
@@ -2619,7 +2619,7 @@ make_ligand_receptor_violin_plot <- function(
         )
       ) +
       scale_color_brewer(palette = "Set2") +
-      ggtitle(paste(
+      ggplot2::ggtitle(paste(
         "Expression of the ligand ",
         ligand_oi,
         " in sender cell type ",
@@ -2637,7 +2637,7 @@ make_ligand_receptor_violin_plot <- function(
 
     p_sender <- exprs_df %>%
       ggplot(aes(sample_id, expression, group = sample_id, color = group_id)) +
-      geom_violin(color = "grey10") +
+      geom::geom_violin(color = "grey10") +
       ggbeeswarm::geom_quasirandom(bandwidth = 1.25, varwidth = TRUE) +
       facet_grid(batch_oi ~ group_id, scales = "free", space = "free") +
       scale_x_discrete(position = "bottom") +
@@ -2664,7 +2664,7 @@ make_ligand_receptor_violin_plot <- function(
         )
       ) +
       scale_color_brewer(palette = "Set2") +
-      ggtitle(paste(
+      ggplot2::ggtitle(paste(
         "Expression of the ligand ",
         ligand_oi,
         " in sender cell type ",
@@ -2706,7 +2706,7 @@ make_ligand_receptor_violin_plot <- function(
   if (is.na(batch_oi)) {
     p_receiver <- exprs_df %>%
       ggplot(aes(sample_id, expression, group = sample_id, color = group_id)) +
-      geom_violin(color = "grey10") +
+      geom::geom_violin(color = "grey10") +
       ggbeeswarm::geom_quasirandom(bandwidth = 1.25, varwidth = TRUE) +
       facet_grid(. ~ group_id, scales = "free", space = "free") +
       scale_x_discrete(position = "bottom") +
@@ -2733,7 +2733,7 @@ make_ligand_receptor_violin_plot <- function(
         )
       ) +
       scale_color_brewer(palette = "Set2") +
-      ggtitle(paste(
+      ggplot2::ggtitle(paste(
         "Expression of the receptor ",
         receptor_oi,
         " in receiver cell type ",
@@ -2751,7 +2751,7 @@ make_ligand_receptor_violin_plot <- function(
 
     p_receiver <- exprs_df %>%
       ggplot(aes(sample_id, expression, group = sample_id, color = group_id)) +
-      geom_violin(color = "grey10") +
+      geom::geom_violin(color = "grey10") +
       ggbeeswarm::geom_quasirandom(bandwidth = 1.25, varwidth = TRUE) +
       facet_grid(batch_oi ~ group_id, scales = "free", space = "free") +
       scale_x_discrete(position = "bottom") +
@@ -2778,7 +2778,7 @@ make_ligand_receptor_violin_plot <- function(
         )
       ) +
       scale_color_brewer(palette = "Set2") +
-      ggtitle(paste(
+      ggplot2::ggtitle(paste(
         "Expression of the receptor ",
         receptor_oi,
         " in receiver cell type ",
@@ -2892,7 +2892,7 @@ make_target_violin_plot <- function(
   if (is.na(batch_oi)) {
     p_violin <- exprs_df %>%
       ggplot(aes(sample_id, expression, group = sample_id, color = group_id)) +
-      geom_violin(color = "grey10") +
+      geom::geom_violin(color = "grey10") +
       ggbeeswarm::geom_quasirandom(bandwidth = 1.25, varwidth = TRUE) +
       facet_grid(. ~ group_id, scales = "free", space = "free") +
       scale_x_discrete(position = "bottom") +
@@ -2919,7 +2919,7 @@ make_target_violin_plot <- function(
         )
       ) +
       scale_color_brewer(palette = "Set2") +
-      ggtitle(paste(
+      ggplot2::ggtitle(paste(
         "Expression of the target ",
         target_oi,
         " in receiver cell type ",
@@ -2937,7 +2937,7 @@ make_target_violin_plot <- function(
 
     p_violin <- exprs_df %>%
       ggplot(aes(sample_id, expression, group = sample_id, color = group_id)) +
-      geom_violin(color = "grey10") +
+      geom::geom_violin(color = "grey10") +
       ggbeeswarm::geom_quasirandom(bandwidth = 1.25, varwidth = TRUE) +
       facet_grid(batch_oi ~ group_id, scales = "free", space = "free") +
       scale_x_discrete(position = "bottom") +
@@ -2964,7 +2964,7 @@ make_target_violin_plot <- function(
         )
       ) +
       scale_color_brewer(palette = "Set2") +
-      ggtitle(paste(
+      ggplot2::ggtitle(paste(
         "Expression of the target ",
         target_oi,
         " in receiver cell type ",
@@ -3073,12 +3073,12 @@ make_lr_target_scatter_plot <- function(
 
   p <- ligand_receptor_target_pb_df %>%
     ggplot(aes(ligand_receptor_pb_prod, target_pb)) +
-    geom_point(aes(color = group), size = 2) +
-    geom_smooth(method = "lm", alpha = 0.10, color = "grey50") +
+    geom::geom_point(aes(color = group), size = 2) +
+    geom::geom_smooth(method = "lm", alpha = 0.10, color = "grey50") +
     facet_grid(. ~ gene) +
     theme_bw() +
     scale_color_brewer(palette = "Set2") +
-    ggtitle(paste(
+    ggplot2::ggtitle(paste(
       ligand_oi,
       "-",
       receptor_oi,
@@ -3089,8 +3089,8 @@ make_lr_target_scatter_plot <- function(
       " cells.",
       sep = ""
     )) +
-    xlab("LR pair pseudobulk expression product") +
-    ylab("Target gene pseudobulk expression")
+    ggplot2::xlab("LR pair pseudobulk expression product") +
+    ggplot2::ylab("Target gene pseudobulk expression")
   return(p)
 }
 #' @title make_lr_target_prior_cor_heatmap
@@ -3154,7 +3154,7 @@ make_lr_target_prior_cor_heatmap <- function(
         lr_interaction = paste(ligand, receptor, sep = " - ")
       ) %>%
       ggplot(aes(target, lr_interaction, color = prior_score, size = pearson)) + # alternative to scaled_prior_score: scaled_ligand or prior_score
-      geom_point() +
+      geom::geom_point() +
       facet_grid(sender_receiver ~ target, scales = "free", space = "free") +
       scale_x_discrete(position = "top") +
       theme_light() +
@@ -3209,7 +3209,7 @@ make_lr_target_prior_cor_heatmap <- function(
         lr_interaction = paste(ligand, receptor, sep = " - ")
       ) %>%
       ggplot(aes(target, lr_interaction, color = prior_score, size = pearson)) + # alternative to scaled_prior_score: scaled_ligand or prior_score
-      geom_point() +
+      geom::geom_point() +
       facet_grid(sender_receiver ~ ., scales = "free", space = "free") +
       scale_x_discrete(position = "top") +
       theme_light() +
@@ -3273,8 +3273,8 @@ make_lr_target_prior_cor_heatmap <- function(
 
   p_lr_target <- p_lr_target +
     custom_scale_color +
-    xlab("Correlated target genes\nsupported by prior knowledge") +
-    ylab("Prioritzed LR pairs")
+    ggplot2::xlab("Correlated target genes\nsupported by prior knowledge") +
+    ggplot2::ylab("Prioritzed LR pairs")
   p_lr_target
 }
 #' @title make_lr_target_correlation_plot
@@ -3324,8 +3324,8 @@ make_lr_target_prior_cor_heatmap <- function(
 #' receiver_oi <- "Malignant"
 #' prioritized_tbl_oi <- output$prioritization_tables$group_prioritization_tbl %>%
 #'   distinct(id, ligand, receptor, sender, receiver, lr_interaction, group, ligand_receptor_lfc_avg, activity_scaled, fraction_expressing_ligand_receptor, prioritization_score) %>%
-#'   filter(fraction_expressing_ligand_receptor > 0 & ligand_receptor_lfc_avg > 0) %>%
-#'   filter(group == group_oi & receiver == receiver_oi) %>%
+#'   dplyr::filter(fraction_expressing_ligand_receptor > 0 & ligand_receptor_lfc_avg > 0) %>%
+#'   dplyr::filter(group == group_oi & receiver == receiver_oi) %>%
 #'   top_n(250, prioritization_score)
 #' lr_target_prior_cor_filtered <- output$lr_target_prior_cor %>% filter(scaled_prior_score > 0.50 & (pearson > 0.66 | spearman > 0.66))
 #' prioritized_tbl_oi <- prioritized_tbl_oi %>% filter(id %in% lr_target_prior_cor_filtered$id)
@@ -3409,7 +3409,7 @@ make_lr_target_correlation_plot <- function(
 
   p2 <- lr_target_data %>%
     ggplot(aes(target, lr_interaction, color = prior_score, size = pearson)) +
-    geom_point() +
+    geom::geom_point() +
     facet_grid(
       sender_receiver ~ direction_regulation,
       scales = "free",
@@ -3457,8 +3457,8 @@ make_lr_target_correlation_plot <- function(
 
   p_lr_target <- p2 +
     custom_scale_color +
-    xlab("Correlated target genes\nsupported by prior knowledge") +
-    ylab("")
+    ggplot2::xlab("Correlated target genes\nsupported by prior knowledge") +
+    ggplot2::ylab("")
 
   ##### Target expression plot
   # Target expression
@@ -3478,8 +3478,8 @@ make_lr_target_correlation_plot <- function(
     target_regulation_df = target_regulation_df
   ) %>%
     .$pseudobulk_plot +
-    xlab("") +
-    ylab("")
+    ggplot2::xlab("") +
+    ggplot2::ylab("")
 
   ##### LR product plot
 
@@ -3494,7 +3494,7 @@ make_lr_target_correlation_plot <- function(
       color = scaled_LR_pb_prod,
       size = keep_sender_receiver
     )) +
-    geom_point() +
+    geom::geom_point() +
     facet_grid(
       sender_receiver ~ group,
       scales = "free",
@@ -3536,8 +3536,8 @@ make_lr_target_correlation_plot <- function(
 
   p_lr_exprs <- p1 +
     custom_scale_color +
-    xlab("Sample") +
-    ylab("Prioritized LR pairs")
+    ggplot2::xlab("Sample") +
+    ggplot2::ylab("Prioritized LR pairs")
 
   #### now combine all three plots
   # Combine the plots
@@ -3571,7 +3571,7 @@ make_lr_target_correlation_plot <- function(
         theme(axis.title.x = element_text()),
       B = p_lr_target +
         theme(legend.position = "none", axis.ticks = element_blank()) +
-        ylab(""),
+        ggplot2::ylab(""),
       C = p_target_exprs + theme(legend.position = "none"),
       nrow = 2,
       design = design,
@@ -3589,7 +3589,7 @@ make_lr_target_correlation_plot <- function(
         theme(axis.title.x = element_text()),
       B = p_lr_target +
         theme(legend.position = "none", axis.ticks = element_blank()) +
-        ylab(""),
+        ggplot2::ylab(""),
       C = p_target_exprs + theme(legend.position = "none"),
       L = legends,
       nrow = 2,
@@ -3646,8 +3646,8 @@ make_lr_target_correlation_plot <- function(
 #' lr_target_prior_cor_filtered <- output$lr_target_prior_cor %>% filter(scaled_prior_score > 0.50 & (pearson > 0.66 | spearman > 0.66))
 #' prioritized_tbl_oi <- output$prioritization_tables$group_prioritization_tbl %>%
 #'   distinct(id, ligand, receptor, sender, receiver, lr_interaction, group, ligand_receptor_lfc_avg, activity_scaled, fraction_expressing_ligand_receptor, prioritization_score) %>%
-#'   filter(fraction_expressing_ligand_receptor > 0 & ligand_receptor_lfc_avg > 0) %>%
-#'   filter(group == group_oi & receiver == receiver_oi) %>%
+#'   dplyr::filter(fraction_expressing_ligand_receptor > 0 & ligand_receptor_lfc_avg > 0) %>%
+#'   dplyr::filter(group == group_oi & receiver == receiver_oi) %>%
 #'   top_n(250, prioritization_score)
 #' prioritized_tbl_oi <- prioritized_tbl_oi %>% filter(id %in% lr_target_prior_cor_filtered$id)
 #' prioritized_tbl_oi <- prioritized_tbl_oi %>%
@@ -3788,7 +3788,7 @@ make_ggraph_ligand_target_links <- function(
     dplyr::group_by(node) %>%
     dplyr::count() %>%
     dplyr::filter(n > 1) %>%
-    pull(node)
+    dplyr::pull(node)
   nodes <- dplyr::bind_rows(
     nodes %>%
       dplyr::filter(node %in% double_nodes) %>%
@@ -3892,8 +3892,8 @@ make_ggraph_ligand_target_links <- function(
 #' lr_target_prior_cor_filtered <- output$lr_target_prior_cor %>% filter(scaled_prior_score > 0.50 & (pearson > 0.66 | spearman > 0.66))
 #' prioritized_tbl_oi <- output$prioritization_tables$group_prioritization_tbl %>%
 #'   distinct(id, ligand, receptor, sender, receiver, lr_interaction, group, ligand_receptor_lfc_avg, activity_scaled, fraction_expressing_ligand_receptor, prioritization_score) %>%
-#'   filter(fraction_expressing_ligand_receptor > 0 & ligand_receptor_lfc_avg > 0) %>%
-#'   filter(group == group_oi & receiver == receiver_oi) %>%
+#'   dplyr::filter(fraction_expressing_ligand_receptor > 0 & ligand_receptor_lfc_avg > 0) %>%
+#'   dplyr::filter(group == group_oi & receiver == receiver_oi) %>%
 #'   top_n(250, prioritization_score)
 #' prioritized_tbl_oi <- prioritized_tbl_oi %>% filter(id %in% lr_target_prior_cor_filtered$id)
 #' prioritized_tbl_oi <- prioritized_tbl_oi %>%
@@ -4120,8 +4120,8 @@ make_ggraph_signaling_path <- function(
 #' group_oi <- "High"
 #' receiver_oi <- "Malignant"
 #' prioritized_tbl_oi <- output$prioritization_tables$group_prioritization_tbl %>%
-#'   filter(fraction_expressing_ligand_receptor > 0) %>%
-#'   filter(group == group_oi & receiver == receiver_oi) %>%
+#'   dplyr::filter(fraction_expressing_ligand_receptor > 0) %>%
+#'   dplyr::filter(group == group_oi & receiver == receiver_oi) %>%
 #'   top_n(50, prioritization_score) %>%
 #'   top_n(25, activity_scaled) %>%
 #'   arrange(-activity_scaled)
@@ -4239,7 +4239,7 @@ make_ligand_activity_target_plot <- function(
 
   p_ligand_target_network <- vis_ligand_target_df %>%
     ggplot(aes(target, ligand, fill = score)) +
-    geom_tile(color = "whitesmoke", size = 0.5) +
+    geom::geom_tile(color = "whitesmoke", size = 0.5) +
     facet_grid(. ~ direction_regulation, scales = "free", space = "free") +
     scale_fill_gradient2(
       low = "white",
@@ -4273,8 +4273,8 @@ make_ligand_activity_target_plot <- function(
       )
     ) +
     labs(fill = "Regulatory Potential") +
-    xlab("Predicted target genes") +
-    ylab("Prioritized ligands")
+    ggplot2::xlab("Predicted target genes") +
+    ggplot2::ylab("Prioritized ligands")
 
   # custom_scale_fill = scale_fill_gradientn(colours = c("white", "plum1", "orchid2","orchid4","violetred"),values = c(0, 0.05, 0.50, 0.80, 1),  limits = c(0, max(ligand_target_matrix)))
   # custom_scale_fill = scale_fill_gradientn(colours = c("white", RColorBrewer::brewer.pal(n = 11, name = "PiYG") %>% .[1:5] %>% rev()),values = c(0, 0.025, 0.075, 0.25, 0.40, 0.55, 1),  limits = c(0, max(ligand_target_matrix)))
@@ -4303,7 +4303,7 @@ make_ligand_activity_target_plot <- function(
     # ggplot(aes(receiver, lr_interaction, color = activity_scaled, size = activity)) +
     # geom_point() +
     ggplot(aes(direction_regulation, ligand, fill = activity_scaled)) +
-    geom_tile(color = "whitesmoke") +
+    geom::geom_tile(color = "whitesmoke") +
     facet_grid(. ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     # xlab("Ligand activities in receiver cell types\n\n") +
@@ -4329,8 +4329,8 @@ make_ligand_activity_target_plot <- function(
       )
     ) +
     labs(fill = "Scaled Ligand\nActivity in Receiver") +
-    ylab("Prioritized ligands") +
-    xlab("Scaled ligand activity")
+    ggplot2::ylab("Prioritized ligands") +
+    ggplot2::xlab("Scaled ligand activity")
   max_activity <- abs(ligand_activity_df$activity_scaled) %>% max(na.rm = TRUE)
   custom_scale_fill <- scale_fill_gradientn(
     colours = c(
@@ -4356,7 +4356,7 @@ make_ligand_activity_target_plot <- function(
     # ggplot(aes(receiver, lr_interaction, color = activity_scaled, size = activity)) +
     # geom_point() +
     ggplot(aes(direction_regulation, ligand, fill = activity)) +
-    geom_tile(color = "whitesmoke") +
+    geom::geom_tile(color = "whitesmoke") +
     facet_grid(. ~ group, scales = "free", space = "free") +
     scale_x_discrete(position = "top") +
     # xlab("Ligand activities in receiver cell types\n\n") +
@@ -4382,8 +4382,8 @@ make_ligand_activity_target_plot <- function(
       )
     ) +
     labs(fill = "Ligand Activity\nin Receiver") +
-    ylab("Prioritized ligands") +
-    xlab("Ligand activity")
+    ggplot2::ylab("Prioritized ligands") +
+    ggplot2::xlab("Ligand activity")
   custom_scale_fill <- scale_fill_gradient2(
     low = "white",
     mid = "white",
@@ -4453,13 +4453,13 @@ make_ligand_activity_target_plot <- function(
         theme(axis.title.x = element_text()),
       a = p_ligand_activity +
         theme(legend.position = "none", axis.ticks = element_blank()) +
-        ylab(""),
+        ggplot2::ylab(""),
       B = p_ligand_target_network +
         theme(legend.position = "none", axis.ticks = element_blank()) +
-        ylab(""),
+        ggplot2::ylab(""),
       C = p_targets$pseudobulk_plot +
         theme(legend.position = "none") +
-        xlab(""),
+        ggplot2::xlab(""),
       nrow = 2,
       design = design,
       widths = widths,
@@ -4476,13 +4476,13 @@ make_ligand_activity_target_plot <- function(
         theme(axis.title.x = element_text()),
       a = p_ligand_activity +
         theme(legend.position = "none", axis.ticks = element_blank()) +
-        ylab(""),
+        ggplot2::ylab(""),
       B = p_ligand_target_network +
         theme(legend.position = "none", axis.ticks = element_blank()) +
-        ylab(""),
+        ggplot2::ylab(""),
       C = p_targets$pseudobulk_plot +
         theme(legend.position = "none") +
-        xlab(""),
+        ggplot2::xlab(""),
       L = legends,
       nrow = 2,
       design = design,
@@ -4539,9 +4539,9 @@ make_ligand_activity_target_plot <- function(
 #' )
 # prioritized_tbl_oi_prep = output$prioritization_tables$group_prioritization_tbl %>%
 #' #  distinct(id, sender, receiver, ligand, receptor, group, prioritization_score, ligand_receptor_lfc_avg, fraction_expressing_ligand_receptor) %>%
-#' #  filter(ligand_receptor_lfc_avg > 0 & fraction_expressing_ligand_receptor > 0) %>% top_n(30, prioritization_score)
+#' #  dplyr::filter(ligand_receptor_lfc_avg > 0 & fraction_expressing_ligand_receptor > 0) %>% top_n(30, prioritization_score)
 # prioritized_tbl_oi = output$prioritization_tables$group_prioritization_tbl %>%
-#' #  filter(id %in% prioritized_tbl_oi_prep$id) %>%
+#' #  dplyr::filter(id %in% prioritized_tbl_oi_prep$id) %>%
 #' #  distinct(id, sender, receiver, ligand, receptor, group) %>% left_join(prioritized_tbl_oi_prep)
 # prioritized_tbl_oi$prioritization_score[is.na(prioritized_tbl_oi$prioritization_score)] = 0
 # senders_receivers = union(prioritized_tbl_oi$sender %>% unique(), prioritized_tbl_oi$receiver %>% unique())
@@ -4794,8 +4794,8 @@ make_circos_group_comparison <- function(
     xaxt = "n",
     yaxt = "n",
     bty = "n",
-    ylab = "",
-    xlab = "",
+    ggplot2::ylab = "",
+    ggplot2::xlab = "",
     xlim = 0:1,
     ylim = 0:1
   )
@@ -5125,8 +5125,8 @@ make_circos_one_group <- function(
     xaxt = "n",
     yaxt = "n",
     bty = "n",
-    ylab = "",
-    xlab = "",
+    ggplot2::ylab = "",
+    ggplot2::xlab = "",
     xlim = 0:1,
     ylim = 0:1
   )
@@ -5264,7 +5264,7 @@ compare_normal_emp_pvals <- function(DE_info, DE_info_emp, adj_pval = FALSE) {
               cluster_id == celltype_oi
           ) %>%
           dplyr::group_by(cluster_id, contrast) %>%
-          mutate(normal = rank(p_val), empirical = rank(p_emp)) %>%
+          dplyr::mutate(normal = rank(p_val), empirical = rank(p_emp)) %>%
           dplyr::filter(normal != empirical) %>%
           dplyr::mutate(empirical_lower = empirical < normal) %>%
           tidyr::gather(rank_type, rank, normal:empirical) %>%
@@ -5277,7 +5277,7 @@ compare_normal_emp_pvals <- function(DE_info, DE_info_emp, adj_pval = FALSE) {
             empirical_lower
           ) %>%
           ggplot(aes(rank_type, rank, group = gene, color = empirical_lower)) +
-          geom_line(aes(group = gene)) +
+          geom::geom_line(aes(group = gene)) +
           facet_grid(cluster_id ~ contrast) +
           theme_bw()
 

@@ -10,7 +10,7 @@
 #'
 #' @import dplyr
 #' @import tibble
-#' @import ggplot2
+#' @import ggplot2::ggplot2
 #' @importFrom tidyr gather expand
 #' @importFrom SummarizedExperiment colData
 #'
@@ -38,7 +38,7 @@ get_abundance_info <- function(
   batches = NA
 ) {
   requireNamespace("dplyr")
-  requireNamespace("ggplot2")
+  requireNamespace("ggplot2::ggplot2")
 
   # if some of these are factors, and not all levels have syntactically valid names - prompt to change this
   if (is.factor(SummarizedExperiment::colData(sce)[, celltype_id])) {
@@ -172,81 +172,110 @@ get_abundance_info <- function(
     # celltype proportion per sample
     abund_barplot <- metadata_abundance |>
       dplyr::mutate(celltype_id = factor(celltype_id)) |>
-      ggplot() +
-      aes(x = sample_id, fill = celltype_id) +
-      geom_bar(position = "fill") +
-      facet_grid(. ~ group_id, scales = "free", space = "free_x") +
-      theme_light() +
-      theme(
-        axis.ticks = element_blank(),
-        axis.text.y = element_text(size = 9),
-        axis.text.x = element_text(size = 9, angle = 90, hjust = 0),
-        strip.text.x.top = element_text(angle = 0),
-        panel.spacing.x = unit(1.5, "lines"),
-        strip.text.x = element_text(size = 11, color = "black", face = "bold"),
-        strip.text.y = element_text(
+      ggplot2::ggplot() +
+      ggplot2::aes(x = sample_id, fill = celltype_id) +
+      ggplot2::geom_bar(position = "fill") +
+      ggplot2::facet_grid(. ~ group_id, scales = "free", space = "free_x") +
+      ggplot2::theme_light() +
+      ggplot2::theme(
+        axis.ticks = ggplot2::element_blank(),
+        axis.text.y = ggplot2::element_text(size = 9),
+        axis.text.x = ggplot2::element_text(size = 9, angle = 90, hjust = 0),
+        strip.text.x.top = ggplot2::element_text(angle = 0),
+        panel.spacing.x = grid::unit(1.5, "lines"),
+        strip.text.x = ggplot2::element_text(
+          size = 11,
+          color = "black",
+          face = "bold"
+        ),
+        strip.text.y = ggplot2::element_text(
           size = 9,
           color = "black",
           face = "bold",
           angle = 0
         ),
-        strip.background = element_rect(
+        strip.background = ggplot2::element_rect(
           color = "darkgrey",
           fill = "whitesmoke",
           size = 1.5,
           linetype = "solid"
         )
       ) +
-      ggtitle("Cell type proportions per sample") +
-      ylab("proportion") +
-      xlab("sample")
+      ggplot2::ggtitle("Cell type proportions per sample") +
+      ggplot2::ylab("proportion") +
+      ggplot2::xlab("sample")
 
     abund_plot <- abundance_data |>
-      ggplot(aes(sample_id, n, fill = keep)) +
-      geom_bar(stat = "identity") +
-      scale_fill_manual(values = c("royalblue", "lightcoral")) +
-      facet_grid(celltype_id ~ group_id, scales = "free", space = "free_x") +
+      ggplot2::ggplot(ggplot2::aes(sample_id, n, fill = keep)) +
+      ggplot2::geom_bar(stat = "identity") +
+      ggplot2::scale_fill_manual(values = c("royalblue", "lightcoral")) +
+      ggplot2::facet_grid(
+        celltype_id ~ group_id,
+        scales = "free",
+        space = "free_x"
+      ) +
       scale_x_discrete(position = "top") +
-      theme_light() +
-      theme(
-        axis.ticks = element_blank(),
-        axis.title.x = element_text(size = 0),
-        axis.text.y = element_text(size = 9),
-        axis.text.x = element_text(size = 9, angle = 90, hjust = 0),
-        strip.text.x.top = element_text(angle = 0),
-        panel.spacing.x = unit(0.5, "lines"),
-        panel.spacing.y = unit(0.5, "lines"),
-        strip.text.x = element_text(size = 11, color = "black", face = "bold"),
-        strip.text.y = element_text(
+      ggplot2::theme_light() +
+      ggplot2::theme(
+        axis.ticks = ggplot2::element_blank(),
+        axis.title.x = ggplot2::element_text(size = 0),
+        axis.text.y = ggplot2::element_text(size = 9),
+        axis.text.x = ggplot2::element_text(size = 9, angle = 90, hjust = 0),
+        strip.text.x.top = ggplot2::element_text(angle = 0),
+        panel.spacing.x = grid::unit(0.5, "lines"),
+        panel.spacing.y = grid::unit(0.5, "lines"),
+        strip.text.x = ggplot2::element_text(
+          size = 11,
+          color = "black",
+          face = "bold"
+        ),
+        strip.text.y = ggplot2::element_text(
           size = 9,
           color = "black",
           face = "bold",
           angle = 0
         ),
-        strip.background = element_rect(
+        strip.background = ggplot2::element_rect(
           color = "darkgrey",
           fill = "whitesmoke",
           size = 1.5,
           linetype = "solid"
         )
       ) +
-      geom_hline(yintercept = min_cells, color = "red", linetype = "longdash") +
-      ggtitle("Cell type abundances per sample") +
-      ylab("# cells per sample-celltype combination") +
-      xlab("")
+      ggplot2::geom_hline(
+        yintercept = min_cells,
+        color = "red",
+        linetype = "longdash"
+      ) +
+      ggplot2::ggtitle("Cell type abundances per sample") +
+      ggplot2::ylab("# cells per sample-celltype combination") +
+      ggplot2::xlab("")
 
     abund_plot_boxplot <- abundance_data |>
-      ggplot(aes(group_id, n, group = group_id, color = group_id)) +
-      geom_boxplot(outlier.shape = NA) +
-      geom_jitter(aes(alpha = keep), width = 0.15, height = 0.05) +
-      scale_alpha_manual(values = c(1, 0.30)) +
-      facet_wrap(~celltype_id, scales = "free") +
-      theme_bw() +
-      scale_color_discrete("tomato", "steelblue2") +
-      geom_hline(yintercept = min_cells, color = "red", linetype = "longdash") +
-      ggtitle("Cell type abundances per group") +
-      ylab("# cells per sample-celltype combination") +
-      xlab("Group")
+      ggplot2::ggplot(ggplot2::aes(
+        group_id,
+        n,
+        group = group_id,
+        color = group_id
+      )) +
+      ggplot2::geom_boxplot(outlier.shape = NA) +
+      ggplot2::geom_jitter(
+        ggplot2::aes(alpha = keep),
+        width = 0.15,
+        height = 0.05
+      ) +
+      ggplot2::scale_alpha_manual(values = c(1, 0.30)) +
+      ggplot2::facet_wrap(~celltype_id, scales = "free") +
+      ggplot2::theme_bw() +
+      ggplot2::scale_color_discrete("tomato", "steelblue2") +
+      ggplot2::geom_hline(
+        yintercept = min_cells,
+        color = "red",
+        linetype = "longdash"
+      ) +
+      ggplot2::ggtitle("Cell type abundances per group") +
+      ggplot2::ylab("# cells per sample-celltype combination") +
+      ggplot2::xlab("Group")
   } else {
     batch_oi <- batches[1]
     extra_metadata <- SummarizedExperiment::colData(sce) |>
@@ -324,90 +353,114 @@ get_abundance_info <- function(
     # celltype proportion per sample
     abund_barplot <- metadata_abundance |>
       dplyr::mutate(celltype_id = factor(celltype_id)) |>
-      ggplot() +
-      aes(x = sample_id, fill = celltype_id) +
-      geom_bar(position = "fill") +
-      facet_grid(. ~ group_batch_id, scales = "free", space = "free_x") +
-      theme_light() +
-      theme(
-        axis.ticks = element_blank(),
-        axis.text.y = element_text(size = 9),
-        axis.text.x = element_text(size = 9, angle = 90, hjust = 0),
-        strip.text.x.top = element_text(angle = 0),
-        panel.spacing.x = unit(1.5, "lines"),
-        strip.text.x = element_text(size = 11, color = "black", face = "bold"),
-        strip.text.y = element_text(
+      ggplot2::ggplot() +
+      ggplot2::aes(x = sample_id, fill = celltype_id) +
+      ggplot2::geom_bar(position = "fill") +
+      ggplot2::facet_grid(
+        . ~ group_batch_id,
+        scales = "free",
+        space = "free_x"
+      ) +
+      ggplot2::theme_light() +
+      ggplot2::theme(
+        axis.ticks = ggplot2::element_blank(),
+        axis.text.y = ggplot2::element_text(size = 9),
+        axis.text.x = ggplot2::element_text(size = 9, angle = 90, hjust = 0),
+        strip.text.x.top = ggplot2::element_text(angle = 0),
+        panel.spacing.x = grid::unit(1.5, "lines"),
+        strip.text.x = ggplot2::element_text(
+          size = 11,
+          color = "black",
+          face = "bold"
+        ),
+        strip.text.y = ggplot2::element_text(
           size = 9,
           color = "black",
           face = "bold",
           angle = 0
         ),
-        strip.background = element_rect(
+        strip.background = ggplot2::element_rect(
           color = "darkgrey",
           fill = "whitesmoke",
           size = 1.5,
           linetype = "solid"
         )
       ) +
-      ggtitle("Cell type proportions per sample") +
-      ylab("proportion") +
-      xlab("sample")
+      ggplot2::ggtitle("Cell type proportions per sample") +
+      ggplot2::ylab("proportion") +
+      ggplot2::xlab("sample")
 
     abund_plot <- abundance_data |>
-      ggplot(aes(sample_id, n, fill = keep)) +
-      geom_bar(stat = "identity") +
-      scale_fill_manual(values = c("royalblue", "lightcoral")) +
-      facet_grid(
+      ggplot2::ggplot(ggplot2::aes(sample_id, n, fill = keep)) +
+      ggplot2::geom_bar(stat = "identity") +
+      ggplot2::scale_fill_manual(values = c("royalblue", "lightcoral")) +
+      ggplot2::facet_grid(
         celltype_id ~ group_batch_id,
         scales = "free",
         space = "free_x"
       ) +
-      scale_x_discrete(position = "top") +
-      theme_light() +
-      theme(
-        axis.ticks = element_blank(),
-        axis.title.x = element_text(size = 0),
-        axis.text.y = element_text(size = 9),
-        axis.text.x = element_text(size = 9, angle = 90, hjust = 0),
-        strip.text.x.top = element_text(angle = 0),
-        panel.spacing.x = unit(0.5, "lines"),
-        panel.spacing.y = unit(0.5, "lines"),
-        strip.text.x = element_text(size = 11, color = "black", face = "bold"),
-        strip.text.y = element_text(
+      ggplot2::scale_x_discrete(position = "top") +
+      ggplot2::theme_light() +
+      ggplot2::theme(
+        axis.ticks = ggplot2::element_blank(),
+        axis.title.x = ggplot2::element_text(size = 0),
+        axis.text.y = ggplot2::element_text(size = 9),
+        axis.text.x = ggplot2::element_text(size = 9, angle = 90, hjust = 0),
+        strip.text.x.top = ggplot2::element_text(angle = 0),
+        panel.spacing.x = grid::unit(0.5, "lines"),
+        panel.spacing.y = grid::unit(0.5, "lines"),
+        strip.text.x = ggplot2::element_text(
+          size = 11,
+          color = "black",
+          face = "bold"
+        ),
+        strip.text.y = ggplot2::element_text(
           size = 9,
           color = "black",
           face = "bold",
           angle = 0
         ),
-        strip.background = element_rect(
+        strip.background = ggplot2::element_rect(
           color = "darkgrey",
           fill = "whitesmoke",
           size = 1.5,
           linetype = "solid"
         )
       ) +
-      geom_hline(yintercept = min_cells, color = "red", linetype = "longdash") +
-      ggtitle("Cell type abundances per sample") +
-      ylab("# cells per sample-celltype combination") +
-      xlab("")
+      ggplot2::geom_hline(
+        yintercept = min_cells,
+        color = "red",
+        linetype = "longdash"
+      ) +
+      ggplot2::ggtitle("Cell type abundances per sample") +
+      ggplot2::ylab("# cells per sample-celltype combination") +
+      ggplot2::xlab("")
 
     abund_plot_boxplot <- abundance_data |>
-      ggplot(aes(
+      ggplot2::ggplot(ggplot2::aes(
         group_batch_id,
         n,
         group = group_batch_id,
         color = group_batch_id
       )) +
-      geom_boxplot(outlier.shape = NA) +
-      geom_jitter(aes(alpha = keep), width = 0.15, height = 0.05) +
-      scale_alpha_manual(values = c(1, 0.30)) +
-      facet_wrap(~celltype_id, scales = "free") +
-      theme_bw() +
-      scale_color_discrete("tomato", "steelblue2") +
-      geom_hline(yintercept = min_cells, color = "red", linetype = "longdash") +
-      ggtitle("Cell type abundances per group") +
-      ylab("# cells per sample-celltype combination") +
-      xlab("Group")
+      ggplot2::geom_boxplot(outlier.shape = NA) +
+      ggplot2::geom_jitter(
+        ggplot2::aes(alpha = keep),
+        width = 0.15,
+        height = 0.05
+      ) +
+      ggplot2::scale_alpha_manual(values = c(1, 0.30)) +
+      ggplot2::facet_wrap(~celltype_id, scales = "free") +
+      ggplot2::theme_bw() +
+      ggplot2::scale_color_discrete("tomato", "steelblue2") +
+      ggplot2::geom_hline(
+        yintercept = min_cells,
+        color = "red",
+        linetype = "longdash"
+      ) +
+      ggplot2::ggtitle("Cell type abundances per group") +
+      ggplot2::ylab("# cells per sample-celltype combination") +
+      ggplot2::xlab("Group")
   }
 
   # calculate relative abundance
@@ -459,13 +512,13 @@ get_abundance_info <- function(
       rel_abundance_scaled = scale_quantile_adapted(rel_abundance_scaled)
     )
 
-  return(list(
+  list(
     abund_plot_sample = abund_plot,
     abund_plot_group = abund_plot_boxplot,
     abund_barplot = abund_barplot,
     abundance_data = abundance_data,
     rel_abundance_df = rel_abundance_df
-  ))
+  )
 }
 #' @title process_abundance_expression_info
 #'
@@ -481,7 +534,7 @@ get_abundance_info <- function(
 #'
 #' @import dplyr
 #' @import tibble
-#' @import ggplot2
+#' @import ggplot2::ggplot2
 #' @importFrom tidyr gather
 #' @importFrom SummarizedExperiment colData
 #'
@@ -517,9 +570,6 @@ process_abundance_expression_info <- function(
   frq_list,
   abundance_info
 ) {
-  requireNamespace("dplyr")
-  requireNamespace("ggplot2")
-
   # if some of these are factors, and not all levels have syntactically valid names - prompt to change this
   if (is.factor(SummarizedExperiment::colData(sce)[, celltype_id])) {
     is_make_names <- levels(SummarizedExperiment::colData(sce)[,
@@ -668,14 +718,14 @@ process_abundance_expression_info <- function(
         dplyr::distinct(ligand, receptor, sender, receiver)
     )
 
-  return(list(
+  list(
     abundance_data_receiver = abundance_data_receiver,
     abundance_data_sender = abundance_data_sender,
     celltype_info = celltype_info,
     receiver_info_ic = receiver_info_ic,
     sender_info_ic = sender_info_ic,
     sender_receiver_info = sender_receiver_info
-  ))
+  )
 }
 #' @title get_DE_info
 #'
@@ -691,7 +741,7 @@ process_abundance_expression_info <- function(
 #'
 #' @import dplyr
 #' @import muscat
-#' @import ggplot2
+#' @import ggplot2::ggplot2
 #' @importFrom scran findMarkers
 #'
 #' @examples
@@ -735,8 +785,6 @@ get_DE_info <- function(
   findMarkers = FALSE,
   contrast_tbl = NULL
 ) {
-  requireNamespace("dplyr")
-  requireNamespace("ggplot2")
   if (class(sce) != "SingleCellExperiment") {
     stop("sce should be a SingleCellExperiment object")
   }
@@ -1008,9 +1056,7 @@ get_DE_info <- function(
   }
   celltypes <- SummarizedExperiment::colData(sce)[, celltype_id] |>
     unique()
-  # DE_list <- celltypes |>
-  #   lapply(
-  #     function(celltype_oi, sce) {
+
   DE_list <- furrr::future_map(
     .x = celltypes,
     .f = \(celltype_oi) {
@@ -1043,8 +1089,8 @@ get_DE_info <- function(
           message(cond)
           message("")
           print(cond)
-          message(paste0(
-            "perform_muscat_de_analysis errored for celltype: ",
+          message(paste(
+            "perform_muscat_de_analysis errored for celltype:",
             celltype_oi
           ))
           message("")
@@ -1056,9 +1102,7 @@ get_DE_info <- function(
       )
     }
   )
-  #   },
-  #   sce
-  # )
+
   celltype_de <- list(
     de_output = c(DE_list |> purrr::map("de_output")),
     de_output_tidy = DE_list |> purrr::map("de_output_tidy") |> bind_rows()
@@ -1099,12 +1143,12 @@ get_DE_info <- function(
       )
     ) |>
     dplyr::mutate(`p-value <= 0.05` = p_val <= 0.05) |>
-    ggplot(aes(x = p_val, fill = `p-value <= 0.05`)) +
-    geom_histogram(binwidth = 0.05, boundary = 0, color = "grey35") +
-    scale_fill_manual(values = c("grey90", "lightsteelblue1")) +
-    facet_grid(contrast ~ cluster_id) +
-    ggtitle("P-value histograms") +
-    theme_bw()
+    ggplot2::ggplot(ggplot2::aes(x = p_val, fill = `p-value <= 0.05`)) +
+    ggplot2::geom_histogram(binwidth = 0.05, boundary = 0, color = "grey35") +
+    ggplot2::scale_fill_manual(values = c("grey90", "lightsteelblue1")) +
+    ggplot2::facet_grid(contrast ~ cluster_id) +
+    ggplot2::ggtitle("P-value histograms") +
+    ggplot2::theme_bw()
   if (findMarkers == TRUE) {
     celltypes <- celltype_de$de_output_tidy |>
       dplyr::pull(cluster_id) |>
@@ -1227,12 +1271,12 @@ get_DE_info <- function(
         )
       ) |>
       dplyr::mutate(`p-value <= 0.05` = p_adj <= 0.05) |>
-      ggplot(aes(x = p_val, fill = `p-value <= 0.05`)) +
-      geom_histogram(binwidth = 0.05, boundary = 0, color = "grey35") +
-      scale_fill_manual(values = c("grey90", "lightsteelblue1")) +
-      facet_grid(contrast ~ cluster_id) +
-      ggtitle("findMarker adj P-value histograms") +
-      theme_bw()
+      ggplot2::ggplot(ggplot2::aes(x = p_val, fill = `p-value <= 0.05`)) +
+      ggplot2::geom_histogram(binwidth = 0.05, boundary = 0, color = "grey35") +
+      ggplot2::scale_fill_manual(values = c("grey90", "lightsteelblue1")) +
+      ggplot2::facet_grid(contrast ~ cluster_id) +
+      ggplot2::ggtitle("findMarker adj P-value histograms") +
+      ggplot2::theme_bw()
   } else {
     celltype_de_findmarkers <- NA
     hist_pvals_findmarkers <- NA
@@ -1255,7 +1299,7 @@ get_DE_info <- function(
 #'
 #' @import dplyr
 #' @import muscat
-#' @import ggplot2
+#' @import ggplot2::ggplot2
 #' @importFrom scran findMarkers
 #'
 #' @examples
@@ -1291,8 +1335,6 @@ get_DE_info_sampleAgnostic <- function(
   min_cells = 10,
   contrast_tbl
 ) {
-  requireNamespace("dplyr")
-  requireNamespace("ggplot2")
   findMarkers <- TRUE
   if (class(sce) != "SingleCellExperiment") {
     stop("sce should be a SingleCellExperiment object")
@@ -1541,32 +1583,34 @@ get_DE_info_sampleAgnostic <- function(
         DE_tables_df
       }
     )
-
-    celltype_de_findmarkers <-
-      furrr::future_map(
-        .x = celltypes,
-        .f = outer_loop,
-        expressed_df = expressed_df,
-        sce = sce,
-        celltype_id = celltype_id,
-        group_id = group_id,
-        contrast_tbl = contrast_tbl
-      ) |>
-      dplyr::bind_rows() |>
-      dplyr::rename(
-        logFC = summary.logFC,
-        p_val = p.value,
-        p_adj = FDR
-      ) |>
-      dplyr::inner_join(contrast_tbl, by = "group") |>
-      dplyr::select(
-        gene,
-        cluster_id,
-        logFC,
-        p_val,
-        p_adj,
-        contrast
-      )
+    p <- progressr::progressor(steps = length(celltypes))
+    progressr::with_progress({
+      celltype_de_findmarkers <-
+        furrr::future_map(
+          .x = celltypes,
+          .f = outer_loop,
+          expressed_df = expressed_df,
+          sce = sce,
+          celltype_id = celltype_id,
+          group_id = group_id,
+          contrast_tbl = contrast_tbl
+        ) |>
+        dplyr::bind_rows() |>
+        dplyr::rename(
+          logFC = summary.logFC,
+          p_val = p.value,
+          p_adj = FDR
+        ) |>
+        dplyr::inner_join(contrast_tbl, by = "group") |>
+        dplyr::select(
+          gene,
+          cluster_id,
+          logFC,
+          p_val,
+          p_adj,
+          contrast
+        )
+    })
     hist_pvals_findmarkers <- celltype_de_findmarkers |>
       dplyr::inner_join(
         celltype_de_findmarkers |>
@@ -1588,20 +1632,21 @@ get_DE_info_sampleAgnostic <- function(
         )
       ) |>
       dplyr::mutate(`p-value <= 0.05` = p_adj <= 0.05) |>
-      ggplot(aes(x = p_val, fill = `p-value <= 0.05`)) +
-      geom_histogram(binwidth = 0.05, boundary = 0, color = "grey35") +
-      scale_fill_manual(values = c("grey90", "lightsteelblue1")) +
-      facet_grid(contrast ~ cluster_id) +
-      ggtitle("findMarker adj P-value histograms") +
-      theme_bw()
+      ggplot2::ggplot(ggplot2::aes(x = p_val, fill = `p-value <= 0.05`)) +
+      ggplot2::geom_histogram(binwidth = 0.05, boundary = 0, color = "grey35") +
+      ggplot2::scale_fill_manual(values = c("grey90", "lightsteelblue1")) +
+      ggplot2::facet_grid(contrast ~ cluster_id) +
+      ggplot2::ggtitle("findMarker adj P-value histograms") +
+      ggplot2::theme_bw()
   } else {
     celltype_de_findmarkers <- NA
     hist_pvals_findmarkers <- NA
   }
-  return(list(
+
+  list(
     celltype_de_findmarkers = celltype_de_findmarkers,
     hist_pvals_findmarkers = hist_pvals_findmarkers
-  ))
+  )
 }
 
 #' @title get_empirical_pvals
@@ -1614,7 +1659,7 @@ get_DE_info_sampleAgnostic <- function(
 #' @return `de_output_tidy`, but now 2 columns added with the empirical pvalues (normal and adjusted for multiple testing); Histogram plot of the empirical p-values is also returned.
 #'
 #' @import dplyr
-#' @import ggplot2
+#' @import ggplot2::ggplot2
 #'
 #' @examples
 #' \dontrun{
@@ -1646,7 +1691,7 @@ get_DE_info_sampleAgnostic <- function(
 #'
 get_empirical_pvals <- function(de_output_tidy) {
   requireNamespace("dplyr")
-  requireNamespace("ggplot2")
+  requireNamespace("ggplot2::ggplot2")
 
   de_output_tidy_emp <- add_empirical_pval_fdr(de_output_tidy, plot = FALSE)
   z_distr_plots_emp_pval <- get_FDR_empirical_plots_all(de_output_tidy)
@@ -1658,17 +1703,18 @@ get_empirical_pvals <- function(de_output_tidy) {
     ) |>
     dplyr::mutate(cluster_id = paste0(cluster_id, "\nnr of genes: ", n)) |>
     dplyr::mutate(`p-value <= 0.05` = p_emp <= 0.05) |>
-    ggplot(aes(x = p_emp, fill = `p-value <= 0.05`)) +
-    geom_histogram(binwidth = 0.05, boundary = 0, color = "grey35") +
-    scale_fill_manual(values = c("grey90", "lightsteelblue1")) +
-    facet_grid(contrast ~ cluster_id) +
-    ggtitle("Empirical P-value histograms") +
-    theme_bw()
-  return(list(
+    ggplot2::ggplot(ggplot2::aes(x = p_emp, fill = `p-value <= 0.05`)) +
+    ggplot2::geom_histogram(binwidth = 0.05, boundary = 0, color = "grey35") +
+    ggplot2::scale_fill_manual(values = c("grey90", "lightsteelblue1")) +
+    ggplot2::facet_grid(contrast ~ cluster_id) +
+    ggplot2::ggtitle("Empirical P-value histograms") +
+    ggplot2::theme_bw()
+
+  list(
     de_output_tidy_emp = de_output_tidy_emp,
     z_distr_plots_emp_pval = z_distr_plots_emp_pval,
     hist_pvals_emp = hist_pvals_emp
-  ))
+  )
 }
 #' @title make_lite_output
 #'
@@ -1692,8 +1738,6 @@ get_empirical_pvals <- function(de_output_tidy) {
 #'
 #'
 make_lite_output <- function(multinichenet_output, top_n_LR = 2500) {
-  requireNamespace("dplyr")
-
   if ("celltype_info" %in% names(multinichenet_output)) {
     gene_subset <- generics::union(
       ## to filter the output, keep only genes that are expressed ligands, receptors and/or DE genes
@@ -1749,8 +1793,8 @@ make_lite_output <- function(multinichenet_output, top_n_LR = 2500) {
           id,
           prioritization_score
         ) |>
-        ungroup() |>
-        top_n(top_n_LR, prioritization_score) |>
+        dplyr::ungroup() |>
+        dplyr::slice_max(order_by = prioritization_score, n = top_n_LR) |>
         dplyr::distinct(ligand, receptor, sender, receiver)
     }
 
@@ -2192,5 +2236,5 @@ make_lite_output_condition_specific <- function(
     }
   }
 
-  return(multinichenet_output)
+  multinichenet_output
 }
