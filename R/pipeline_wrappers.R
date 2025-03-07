@@ -159,7 +159,7 @@ get_abundance_info <- function(
   # Add group_id information
   abundance_data <- abundance_data |>
     dplyr::left_join(
-      metadata_abundance |> distinct(sample_id, group_id),
+      metadata_abundance |> dplyr::distinct(sample_id, group_id),
       by = "sample_id"
     )
 
@@ -171,7 +171,7 @@ get_abundance_info <- function(
     ## barplots
     # celltype proportion per sample
     abund_barplot <- metadata_abundance |>
-      mutate(celltype_id = factor(celltype_id)) |>
+      dplyr::mutate(celltype_id = factor(celltype_id)) |>
       ggplot() +
       aes(x = sample_id, fill = celltype_id) +
       geom_bar(position = "fill") +
@@ -257,7 +257,7 @@ get_abundance_info <- function(
     colnames(extra_metadata) <- c("sample_id", "batch_oi")
     metadata_abundance <- metadata_abundance |>
       dplyr::inner_join(extra_metadata, by = "sample_id") |>
-      mutate(group_batch_id = paste(group_id, batch_oi, sep = "_"))
+      dplyr::mutate(group_batch_id = paste(group_id, batch_oi, sep = "_"))
 
     # abundance_data = metadata_abundance |> tibble::as_tibble() |> dplyr::group_by(sample_id , celltype_id) |> dplyr::count() |> dplyr::inner_join(metadata_abundance |> tibble::as_tibble() |> dplyr::distinct(sample_id , group_batch_id), by = "sample_id")
 
@@ -274,7 +274,7 @@ get_abundance_info <- function(
     # Add group_id information
     abundance_data <- abundance_data |>
       dplyr::left_join(
-        metadata_abundance |> distinct(sample_id, group_batch_id),
+        metadata_abundance |> dplyr::distinct(sample_id, group_batch_id),
         by = "sample_id"
       )
 
@@ -283,14 +283,14 @@ get_abundance_info <- function(
       dplyr::mutate(keep = factor(keep, levels = c(TRUE, FALSE)))
     abundance_data <- abundance_data |>
       dplyr::inner_join(
-        metadata_abundance |> distinct(sample_id, group_id, batch_oi),
+        metadata_abundance |> dplyr::distinct(sample_id, group_id, batch_oi),
         by = "sample_id"
       )
 
     for (celltype_oi in unique(abundance_data$celltype_id)) {
       n_group_batch_id <- abundance_data |>
         dplyr::filter(keep == TRUE & celltype_id == celltype_oi) |>
-        pull(group_batch_id) |>
+        dplyr::pull(group_batch_id) |>
         unique() |>
         length()
       n_groups <- abundance_data |>
@@ -323,7 +323,7 @@ get_abundance_info <- function(
     ## barplots
     # celltype proportion per sample
     abund_barplot <- metadata_abundance |>
-      mutate(celltype_id = factor(celltype_id)) |>
+      dplyr::mutate(celltype_id = factor(celltype_id)) |>
       ggplot() +
       aes(x = sample_id, fill = celltype_id) +
       geom_bar(position = "fill") +
@@ -1508,11 +1508,11 @@ get_DE_info_sampleAgnostic <- function(
         contrast_tbl
       ) {
         genes_expressed <-
-          filter(
+          dplyr::filter(
             .data = expressed_df,
             celltype == celltype_oi & expressed == TRUE
           ) |>
-          pull(gene) |>
+          dplyr::pull(gene) |>
           unique()
         sce_oi <- sce[
           intersect(rownames(sce), genes_expressed),
@@ -1652,12 +1652,12 @@ get_empirical_pvals <- function(de_output_tidy) {
   z_distr_plots_emp_pval <- get_FDR_empirical_plots_all(de_output_tidy)
 
   hist_pvals_emp <- de_output_tidy_emp |>
-    inner_join(
+    dplyr::inner_join(
       de_output_tidy_emp |> group_by(contrast, cluster_id) |> count(),
       by = c("cluster_id", "contrast")
     ) |>
-    mutate(cluster_id = paste0(cluster_id, "\nnr of genes: ", n)) |>
-    mutate(`p-value <= 0.05` = p_emp <= 0.05) |>
+    dplyr::mutate(cluster_id = paste0(cluster_id, "\nnr of genes: ", n)) |>
+    dplyr::mutate(`p-value <= 0.05` = p_emp <= 0.05) |>
     ggplot(aes(x = p_emp, fill = `p-value <= 0.05`)) +
     geom_histogram(binwidth = 0.05, boundary = 0, color = "grey35") +
     scale_fill_manual(values = c("grey90", "lightsteelblue1")) +
