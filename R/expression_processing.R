@@ -127,61 +127,6 @@ get_muscat_exprs_frac <- function(sce, sample_id, celltype_id, group_id) {
 }
 
 
-#' inner_get_muscat_exprs_frac_loop_1
-#'
-#' @param celltype_oi
-#' @param frq
-#' @param all_genes
-#' @param samples
-#'
-#' @import SingleCellExperiment
-#' @importFrom dplyr mutate
-#' @importFrom tibble rownames_to_column as_tibble
-#' @importFrom tidyr gather
-#' @returns
-#' @export
-#'
-#' @examples
-inner_get_muscat_exprs_frac_loop_1 <- function(
-  celltype_oi,
-  frq,
-  all_genes,
-  samples
-) {
-  frq_celltype <- frq@assays@data[[celltype_oi]]
-
-  celltype_genes <- rownames(frq_celltype)
-  if (sum(celltype_genes == all_genes) != length(all_genes)) {
-    warning(paste0(
-      "For Celltype ",
-      celltype_oi,
-      " gene names got lost while calculating the fraction of expression of each gene with muscat::calcExprFreqs (due to a bug in this function). We temporality fixed this ourselves for the moment."
-    ))
-    rownames(frq_celltype) <- all_genes
-  }
-
-  frq_celltype_samples <- frq_celltype[, samples]
-  frq_celltype_samples <- frq_celltype_samples |>
-    data.frame() |>
-    tibble::rownames_to_column("gene") |>
-    tidyr::gather(sample, fraction_sample, -gene) |>
-    tibble::as_tibble() |>
-    dplyr::mutate(celltype = celltype_oi)
-
-  frq_celltype_groups <- frq_celltype[, groups]
-  frq_celltype_groups <- frq_celltype_groups |>
-    data.frame() |>
-    tibble::rownames_to_column("gene") |>
-    tidyr::gather(group, fraction_group, -gene) |>
-    tibble::as_tibble() |>
-    dplyr::mutate(celltype = celltype_oi)
-
-  list(
-    frq_celltype_samples = frq_celltype_samples,
-    frq_celltype_groups = frq_celltype_groups
-  )
-}
-
 #' @title get_muscat_exprs_avg
 #'
 #' @description \code{get_muscat_exprs_avg}  Calculate sample- and group-average of gene expression per cell type.
@@ -415,7 +360,7 @@ get_pseudobulk_logCPM_exprs <- function(
             )
 
             pseudobulk_counts_celltype_df <- dplyr::inner_join(
-              pseudobulk_counts_celltype$sample %>%
+              pseudobulk_counts_celltype$sample |>
                 data.frame() |>
                 tibble::rownames_to_column("sample") |>
                 dplyr::mutate(effective_library_size = lib.size * norm.factors),
@@ -1475,28 +1420,29 @@ process_info_to_ic <- function(info_object, ic_type = "sender", lr_network) {
 process_abund_info <- function(abund_data, ic_type = "sender") {
   requireNamespace("dplyr")
 
-  abund_data <- abund_data |> rename(sample = sample_id, group = group_id)
+  abund_data <- abund_data |>
+    dplyr::rename(sample = sample_id, group = group_id)
 
   if (ic_type == "sender") {
     if ("celltype_id_sender" %in% colnames(abund_data)) {
-      abund_data <- abund_data |> rename(sender = celltype_id_sender)
+      abund_data <- abund_data |> dplyr::rename(sender = celltype_id_sender)
     } else {
-      abund_data <- abund_data |> rename(sender = celltype_id)
+      abund_data <- abund_data |> dplyr::rename(sender = celltype_id)
     }
 
     abund_data <- abund_data |>
-      rename(keep_sender = keep, n_cells_sender = n) |>
+      dplyr::rename(keep_sender = keep, n_cells_sender = n) |>
       dplyr::mutate(keep_sender = as.double(as.logical(keep_sender)))
   }
   if (ic_type == "receiver") {
     if ("celltype_id_receiver" %in% colnames(abund_data)) {
-      abund_data <- abund_data |> rename(receiver = celltype_id_receiver)
+      abund_data <- abund_data |> dplyr::rename(receiver = celltype_id_receiver)
     } else {
-      abund_data <- abund_data |> rename(receiver = celltype_id)
+      abund_data <- abund_data |> dplyr::rename(receiver = celltype_id)
     }
 
     abund_data <- abund_data |>
-      rename(keep_receiver = keep, n_cells_receiver = n) |>
+      dplyr::rename(keep_receiver = keep, n_cells_receiver = n) |>
       dplyr::mutate(keep_receiver = as.double(as.logical(keep_receiver)))
   }
 

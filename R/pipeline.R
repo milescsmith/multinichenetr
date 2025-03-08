@@ -26,7 +26,7 @@
 #' Note that the groups A, B, ... should be present in the meta data column 'group_id'.
 #' @param contrast_tbl Data frame providing names for each of the contrasts in contrasts_oi in the 'contrast' column, and the corresponding group of interest in the 'group' column. Entries in the 'group' column should thus be present in the group_id column in the metadata.
 #' Example for `contrasts_oi = c("'A-(B+C+D)/3', 'B-(A+C+D)/3'")`:
-#' `contrast_tbl = tibble(contrast = c("A-(B+C+D)/3","B-(A+C+D)/3"), group = c("A","B"))`
+#' `contrast_tbl = tibble::tibble(contrast = c("A-(B+C+D)/3","B-(A+C+D)/3"), group = c("A","B"))`
 #' @param fraction_cutoff Cutoff indicating the minimum fraction of cells of a cell type in a specific sample that are necessary to consider a gene (e.g. ligand/receptor) as expressed in a sample.
 #' @param min_sample_prop Parameter to define the minimal required nr of samples in which a gene should be expressed in more than `fraction_cutoff` of cells in that sample (per cell type). This nr of samples is calculated as the `min_sample_prop` fraction of the nr of samples of the smallest group (after considering samples with n_cells >= `min_cells`. Default: `min_sample_prop = 0.50`. Examples: if there are 8 samples in the smallest group, there should be min_sample_prop*8 (= 4 in this example) samples with sufficient fraction of expressing cells.
 #' @param scenario Character vector indicating which prioritization weights should be used during the MultiNicheNet analysis. Currently 3 settings are implemented: "regular" (default),  "lower_DE", and "no_frac_LR_expr". The setting "regular" is strongly recommended and gives each criterion equal weight. The setting "lower_DE" is recommended in cases your hypothesis is that the differential CCC patterns in your data are less likely to be driven by DE (eg in cases of differential migration into a niche). It halves the weight for DE criteria, and doubles the weight for ligand activity. "no_frac_LR_expr" is the scenario that will exclude the criterion "fraction of samples expressing the LR pair'. This may be beneficial in case of few samples per group.
@@ -80,7 +80,7 @@
 #' batches <- NA
 #' covariates <- NA
 #' contrasts_oi <- c("'High-Low','Low-High'")
-#' contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+#' contrast_tbl <- tibble::tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
 #' output <- multi_nichenet_analysis(
 #'   sce = sce,
 #'   celltype_id = celltype_id,
@@ -488,8 +488,8 @@ multi_nichenet_analysis <- function(
   ## check for condition-specific cell types
   abundance_df_summarized <- abundance_info$abundance_data %>%
     dplyr::mutate(keep = as.logical(keep)) %>%
-    group_by(group_id, celltype_id) %>%
-    summarise(samples_present = sum((keep)))
+    dplyr::group_by(group_id, celltype_id) %>%
+    dplyr::summarise(samples_present = sum((keep)))
   celltypes_absent_one_condition <- abundance_df_summarized %>%
     dplyr::filter(samples_present == 0) %>%
     dplyr::pull(celltype_id) %>%
@@ -805,15 +805,15 @@ multi_nichenet_analysis <- function(
       ligand_activity_down = ligand_activity_down
     )
     combined_prioritization_tables <- list(
-      group_prioritization_tbl = bind_rows(
+      group_prioritization_tbl = dplyr::bind_rows(
         prioritization_tables_with_condition_specific_celltype_receiver$group_prioritization_tbl %>%
           dplyr::filter(receiver %in% condition_specific_celltypes),
         prioritization_tables_with_condition_specific_celltype_sender$group_prioritization_tbl %>%
           dplyr::filter(sender %in% condition_specific_celltypes)
       ) %>%
-        bind_rows(prioritization_tables$group_prioritization_tbl) %>%
+        dplyr::bind_rows(prioritization_tables$group_prioritization_tbl) %>%
         arrange(-prioritization_score) %>%
-        distinct()
+        dplyr::distinct()
     )
 
     multinichenet_output <- list(
@@ -899,7 +899,7 @@ multi_nichenet_analysis <- function(
 #' batches <- NA
 #' covariates <- NA
 #' contrasts_oi <- c("'High-Low','Low-High'")
-#' contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+#' contrast_tbl <- tibble::tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
 #' output <- multi_nichenet_analysis_sampleAgnostic(
 #'   sce = sce,
 #'   celltype_id = celltype_id,
@@ -1310,19 +1310,21 @@ multi_nichenet_analysis_sampleAgnostic <- function(
   sample_group_celltype_df <- abundance_info$abundance_data %>%
     dplyr::filter(n > min_cells) %>%
     dplyr::ungroup() %>%
-    distinct(sample_id, group_id) %>%
-    cross_join(
-      abundance_info$abundance_data %>% ungroup() %>% distinct(celltype_id)
+    dplyr::distinct(sample_id, group_id) %>%
+    dplyr::cross_join(
+      abundance_info$abundance_data %>%
+        ungroup() %>%
+        dplyr::distinct(celltype_id)
     ) %>%
     arrange(sample_id)
   abundance_df <- sample_group_celltype_df %>%
-    left_join(abundance_info$abundance_data %>% ungroup())
+    dplyr::left_join(abundance_info$abundance_data %>% ungroup())
   abundance_df$n[is.na(abundance_df$n)] <- 0
   abundance_df$keep[is.na(abundance_df$keep)] <- FALSE
   abundance_df_summarized <- abundance_df %>%
     dplyr::mutate(keep = as.logical(keep)) %>%
-    group_by(group_id, celltype_id) %>%
-    summarise(samples_present = sum((keep)))
+    dplyr::group_by(group_id, celltype_id) %>%
+    dplyr::summarise(samples_present = sum((keep)))
   celltypes_absent_one_condition <- abundance_df_summarized %>%
     dplyr::filter(samples_present == 0) %>%
     dplyr::pull(celltype_id) %>%
@@ -1451,7 +1453,7 @@ multi_nichenet_analysis_sampleAgnostic <- function(
       tibble::as_tibble() %>%
       dplyr::distinct()
     colnames(grouping_tbl) <- c("group", batches)
-    grouping_tbl <- grouping_tbl %>% mutate(sample = group)
+    grouping_tbl <- grouping_tbl %>% dplyr::mutate(sample = group)
     grouping_tbl <- grouping_tbl %>% tibble::as_tibble()
   } else {
     grouping_tbl <- metadata_combined[, c(group_id)] %>%
@@ -1460,7 +1462,7 @@ multi_nichenet_analysis_sampleAgnostic <- function(
     colnames(grouping_tbl) <- c("group")
     grouping_tbl <- grouping_tbl %>%
       dplyr::mutate(sample = group) %>%
-      select(sample, group)
+      dplyr::select(sample, group)
   }
 
   rm(sce)
@@ -1507,7 +1509,7 @@ multi_nichenet_analysis_sampleAgnostic <- function(
   if (verbose == TRUE) {
     print("Calculate correlation between LR pairs and target genes")
   }
-  lr_target_prior_cor <- tibble()
+  lr_target_prior_cor <- tibble::tibble()
   ## save output
 
   if (length(condition_specific_celltypes) > 0) {
@@ -1542,15 +1544,15 @@ multi_nichenet_analysis_sampleAgnostic <- function(
       ligand_activity_down = ligand_activity_down
     )
     combined_prioritization_tables <- list(
-      group_prioritization_tbl = bind_rows(
+      group_prioritization_tbl = dplyr::bind_rows(
         prioritization_tables_with_condition_specific_celltype_receiver$group_prioritization_tbl %>%
           dplyr::filter(receiver %in% condition_specific_celltypes),
         prioritization_tables_with_condition_specific_celltype_sender$group_prioritization_tbl %>%
           dplyr::filter(sender %in% condition_specific_celltypes)
       ) %>%
-        bind_rows(prioritization_tables$group_prioritization_tbl) %>%
+        dplyr::bind_rows(prioritization_tables$group_prioritization_tbl) %>%
         arrange(-prioritization_score) %>%
-        distinct()
+        dplyr::distinct()
     )
 
     multinichenet_output <- list(
@@ -1564,7 +1566,7 @@ multi_nichenet_analysis_sampleAgnostic <- function(
       prioritization_tables_with_condition_specific_celltype_receiver = prioritization_tables_with_condition_specific_celltype_receiver,
       combined_prioritization_tables = combined_prioritization_tables,
       grouping_tbl = grouping_tbl,
-      lr_target_prior_cor = tibble()
+      lr_target_prior_cor = tibble::tibble()
     )
 
     multinichenet_output <- make_lite_output_condition_specific(
@@ -1583,7 +1585,7 @@ multi_nichenet_analysis_sampleAgnostic <- function(
       ligand_activities_targets_DEgenes = ligand_activities_targets_DEgenes,
       prioritization_tables = prioritization_tables,
       grouping_tbl = grouping_tbl,
-      lr_target_prior_cor = tibble()
+      lr_target_prior_cor = tibble::tibble()
     )
     multinichenet_output <- make_lite_output(
       multinichenet_output,

@@ -196,31 +196,31 @@ perform_muscat_de_analysis <- function(
   }
 
   # conditions of interest in the contrast should be present in the in the group column of the metadata
-  groups_oi <- SummarizedExperiment::colData(sce)[, group_id] %>% unique()
-  conditions_oi <- stringr::str_split(contrasts, "'") %>%
-    unlist() %>%
-    unique() %>%
-    # stringr::str_split("[:digit:]") %>% unlist() %>% unique() %>%
-    stringr::str_split("\\)") %>%
-    unlist() %>%
-    unique() %>%
-    stringr::str_split("\\(") %>%
-    unlist() %>%
-    unique() %>%
-    stringr::str_split("-") %>%
-    unlist() %>%
-    unique() %>%
-    stringr::str_split("\\+") %>%
-    unlist() %>%
-    unique() %>%
-    stringr::str_split("\\*") %>%
-    unlist() %>%
-    unique() %>%
-    stringr::str_split("\\/") %>%
-    unlist() %>%
-    unique() %>%
-    generics::setdiff(c("", ",", " ,", ", ")) %>%
-    unlist() %>%
+  groups_oi <- SummarizedExperiment::colData(sce)[, group_id] |> unique()
+  conditions_oi <- stringr::str_split(contrasts, "'") |>
+    unlist() |>
+    unique() |>
+    # stringr::str_split("[:digit:]") |> unlist() |> unique() |>
+    stringr::str_split("\\)") |>
+    unlist() |>
+    unique() |>
+    stringr::str_split("\\(") |>
+    unlist() |>
+    unique() |>
+    stringr::str_split("-") |>
+    unlist() |>
+    unique() |>
+    stringr::str_split("\\+") |>
+    unlist() |>
+    unique() |>
+    stringr::str_split("\\*") |>
+    unlist() |>
+    unique() |>
+    stringr::str_split("\\/") |>
+    unlist() |>
+    unique() |>
+    generics::setdiff(c("", ",", " ,", ", ")) |>
+    unlist() |>
     unique()
   conditions_oi <- conditions_oi[is.na(suppressWarnings(as.numeric(
     conditions_oi
@@ -233,14 +233,14 @@ perform_muscat_de_analysis <- function(
   }
 
   # conditions of interest in the contrast should be present in the in the contrast_tbl
-  contrasts_simplified <- stringr::str_split(contrasts, "'") %>%
-    unlist() %>%
-    unique() %>%
-    stringr::str_split(",") %>%
-    unlist() %>%
-    unique() %>%
-    generics::setdiff(c("", ",")) %>%
-    unlist() %>%
+  contrasts_simplified <- stringr::str_split(contrasts, "'") |>
+    unlist() |>
+    unique() |>
+    stringr::str_split(",") |>
+    unlist() |>
+    unique() |>
+    generics::setdiff(c("", ",")) |>
+    unlist() |>
     unique()
 
   if (sum(conditions_oi %in% groups_oi) != length(conditions_oi)) {
@@ -324,7 +324,7 @@ perform_muscat_de_analysis <- function(
   # test to see whether sample_ids are unique
   if (
     sum(
-      table(sce$sample_id, sce$group_id) %>%
+      table(sce$sample_id, sce$group_id) |>
         apply(1, function(row_oi) {
           sum(row_oi > 0)
         }) >
@@ -365,16 +365,16 @@ perform_muscat_de_analysis <- function(
   }
 
   if (batches_present) {
-    extra_metadata <- SummarizedExperiment::colData(sce) %>%
-      tibble::as_tibble() %>%
-      dplyr::select(all_of(sample_id), all_of(batches)) %>%
-      dplyr::distinct() %>%
+    extra_metadata <- SummarizedExperiment::colData(sce) |>
+      tibble::as_tibble() |>
+      dplyr::select(all_of(sample_id), all_of(batches)) |>
+      dplyr::distinct() |>
       dplyr::mutate_all(factor)
   } else {
-    extra_metadata <- SummarizedExperiment::colData(sce) %>%
-      tibble::as_tibble() %>%
-      dplyr::select(all_of(sample_id)) %>%
-      dplyr::distinct() %>%
+    extra_metadata <- SummarizedExperiment::colData(sce) |>
+      tibble::as_tibble() |>
+      dplyr::select(all_of(sample_id)) |>
+      dplyr::distinct() |>
       dplyr::mutate_all(factor)
   }
   if ("sample_id" != sample_id) {
@@ -382,7 +382,7 @@ perform_muscat_de_analysis <- function(
   }
   ei <- S4Vectors::metadata(sce)$experiment_info
 
-  ei <- ei %>% dplyr::inner_join(extra_metadata, by = "sample_id")
+  ei <- ei |> dplyr::inner_join(extra_metadata, by = "sample_id")
 
   # prepare the experiment info (ei) table if covariates present
   if (length(covariates) > 1) {
@@ -396,15 +396,15 @@ perform_muscat_de_analysis <- function(
   }
 
   if (covariates_present) {
-    extra_metadata <- SummarizedExperiment::colData(sce) %>%
-      tibble::as_tibble() %>%
-      dplyr::select(all_of(sample_id), all_of(covariates)) %>%
+    extra_metadata <- SummarizedExperiment::colData(sce) |>
+      tibble::as_tibble() |>
+      dplyr::select(all_of(sample_id), all_of(covariates)) |>
       dplyr::distinct() ## no factorization of the continuous covariates!
   } else {
-    extra_metadata <- SummarizedExperiment::colData(sce) %>%
-      tibble::as_tibble() %>%
-      dplyr::select(all_of(sample_id)) %>%
-      dplyr::distinct() %>%
+    extra_metadata <- SummarizedExperiment::colData(sce) |>
+      tibble::as_tibble() |>
+      dplyr::select(all_of(sample_id)) |>
+      dplyr::distinct() |>
       dplyr::mutate_all(factor)
   }
   if ("sample_id" != sample_id) {
@@ -414,12 +414,12 @@ perform_muscat_de_analysis <- function(
     ei <- S4Vectors::metadata(sce)$experiment_info
   }
 
-  ei <- ei %>% dplyr::inner_join(extra_metadata, by = "sample_id")
+  ei <- ei |> dplyr::inner_join(extra_metadata, by = "sample_id")
 
   # prepare the design and contrast matrix for the muscat DE analysis
 
   if (batches_present == TRUE & covariates_present == FALSE) {
-    batches_string <- paste0("ei$", batches) %>% paste(collapse = " + ")
+    batches_string <- paste0("ei$", batches) |> paste(collapse = " + ")
     design <- eval(parse(
       text = paste(
         "model.matrix(~ 0 + ei$group_id + ",
@@ -438,7 +438,7 @@ perform_muscat_de_analysis <- function(
       )
     )
   } else if (batches_present == FALSE & covariates_present == TRUE) {
-    covariates_string <- paste0("ei$", covariates) %>% paste(collapse = " + ")
+    covariates_string <- paste0("ei$", covariates) |> paste(collapse = " + ")
     design <- eval(parse(
       text = paste(
         "model.matrix(~ 0 + ei$group_id + ",
@@ -457,8 +457,8 @@ perform_muscat_de_analysis <- function(
       )
     )
   } else if (batches_present == TRUE & covariates_present == TRUE) {
-    batches_string <- paste0("ei$", batches) %>% paste(collapse = " + ")
-    covariates_string <- paste0("ei$", covariates) %>% paste(collapse = " + ")
+    batches_string <- paste0("ei$", batches) |> paste(collapse = " + ")
+    covariates_string <- paste0("ei$", covariates) |> paste(collapse = " + ")
 
     design <- eval(parse(
       text = paste(
@@ -497,9 +497,9 @@ perform_muscat_de_analysis <- function(
 
   # filter genes
   celltype_oi <- SummarizedExperiment::assayNames(pb) %>% .[1]
-  genes_to_keep <- expressed_df %>%
-    dplyr::filter(celltype == celltype_oi & expressed == TRUE) %>%
-    dplyr::pull(gene) %>%
+  genes_to_keep <- expressed_df |>
+    dplyr::filter(celltype == celltype_oi & expressed == TRUE) |>
+    dplyr::pull(gene) |>
     unique()
   pb <- pb[genes_to_keep, ]
 
@@ -519,16 +519,16 @@ perform_muscat_de_analysis <- function(
     bind = "row",
     cpm = FALSE,
     frq = FALSE
-  ) %>%
-    tibble::as_tibble() %>%
+  ) |>
+    tibble::as_tibble() |>
     dplyr::rename(p_adj = p_adj.glb)
 
   # # check which cell types were excluded
   celltypes <- SummarizedExperiment::assayNames(pb)
   names(celltypes) <- celltypes
 
-  excluded_celltypes <- celltypes %>%
-    generics::setdiff(de_output_tidy$cluster_id) %>%
+  excluded_celltypes <- celltypes |>
+    generics::setdiff(de_output_tidy$cluster_id) |>
     unique()
 
   if (length(excluded_celltypes) > 0) {
@@ -575,8 +575,8 @@ perform_muscat_de_analysis <- function(
 #' celltype_id <- "celltype"
 #' batches <- NA
 #' contrasts_oi <- c("'High-Low','Low-High'")
-#' senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>% unique()
-#' receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>% unique()
+#' senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] |> unique()
+#' receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] |> unique()
 #' celltype_de <- perform_muscat_de_analysis(
 #'   sce = sce,
 #'   sample_id = sample_id,
@@ -585,8 +585,8 @@ perform_muscat_de_analysis <- function(
 #'   batches = batches,
 #'   contrasts = contrasts_oi
 #' )
-#' de_output_tidy <- muscat::resDS(celltype_de$sce, celltype_de$de_output, bind = "row", cpm = FALSE, frq = FALSE) %>% tibble::as_tibble()
-#' emp_res <- p.adjust_empirical(de_output_tidy %>% pull(p_val), de_output_tidy %>% pull(p_val), plot = T)
+#' de_output_tidy <- muscat::resDS(celltype_de$sce, celltype_de$de_output, bind = "row", cpm = FALSE, frq = FALSE) |> tibble::as_tibble()
+#' emp_res <- p.adjust_empirical(de_output_tidy |> dplyr::pull(p_val), de_output_tidy |> dplyr::pull(p_val), plot = T)
 #' }
 #'
 #' @export
@@ -671,16 +671,18 @@ p.adjust_empirical <- function(
     zzz <- pmax(pmin(zval_empirical, up), lo) # do not plot extreme zvals
 
     gg_data <- as.data.frame(zzz)
-    gg_plot <- ggplot(data = gg_data, aes(x = zzz)) +
-      geom::geom_histogram(
-        aes(y = ..density..),
+    gg_plot <- ggplot2::ggplot(data = gg_data, ggplot2::aes(x = zzz)) +
+      ggplot2::geom_histogram(
+        ggplot2::aes(y = ..density..),
         breaks = breaks,
         color = "black",
         fill = "grey84"
       ) +
-      theme_bw() +
+      ggplot2::theme_bw() +
       ggplot2::ggtitle("Empirical Z-scores") +
-      theme(plot.title = element_text(size = 14, face = "bold")) +
+      ggplot2::theme(
+        plot.title = ggplot2::element_text(size = 14, face = "bold")
+      ) +
       ggplot2::xlab("Empirical Z-scores")
 
     # add standard-normal density
@@ -690,9 +692,9 @@ p.adjust_empirical <- function(
     colnames(dens_theor) <- "standardNormal"
     dens_theor$range <- xfit
     gg_plot <- gg_plot +
-      geom::geom_line(
+      ggplot2::geom_line(
         data = dens_theor,
-        aes(x = range, y = standardNormal),
+        ggplot2::aes(x = range, y = standardNormal),
         color = "darkgreen",
         lwd = 1
       ) +
@@ -736,16 +738,17 @@ get_FDR_empirical <- function(
   contrast_oi,
   plot = FALSE
 ) {
-  de_oi <- de_output_tidy %>%
+  de_oi <- de_output_tidy |>
     dplyr::filter(cluster_id == cluster_id_oi & contrast == contrast_oi)
   emp_res <- p.adjust_empirical(
-    de_oi %>% pull(p_val),
-    de_oi %>% pull(logFC),
+    de_oi |> dplyr::pull(p_val),
+    de_oi |> dplyr::pull(logFC),
     plot = plot,
     celltype = cluster_id_oi,
     contrast = contrast_oi
   )
-  de_oi <- de_oi %>% mutate(p_emp = emp_res$pval, p_adj_emp = emp_res$FDR)
+  de_oi <- de_oi |>
+    dplyr::mutate(p_emp = emp_res$pval, p_adj_emp = emp_res$FDR)
 }
 
 #' @title Add empirical p-values and adjusted p-values to the DE output table.
@@ -770,8 +773,8 @@ get_FDR_empirical <- function(
 #' celltype_id <- "celltype"
 #' batches <- NA
 #' contrasts_oi <- c("'High-Low','Low-High'")
-#' senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>% unique()
-#' receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] %>% unique()
+#' senders_oi <- SummarizedExperiment::colData(sce)[, celltype_id] |> unique()
+#' receivers_oi <- SummarizedExperiment::colData(sce)[, celltype_id] |> unique()
 #' celltype_de <- perform_muscat_de_analysis(
 #'   sce = sce,
 #'   sample_id = sample_id,
@@ -780,7 +783,7 @@ get_FDR_empirical <- function(
 #'   batches = batches,
 #'   contrasts = contrasts_oi
 #' )
-#' de_output_tidy <- muscat::resDS(celltype_de$sce, celltype_de$de_output, bind = "row", cpm = FALSE, frq = FALSE) %>% tibble::as_tibble()
+#' de_output_tidy <- muscat::resDS(celltype_de$sce, celltype_de$de_output, bind = "row", cpm = FALSE, frq = FALSE) |> tibble::as_tibble()
 #' de_output_tidy <- add_empirical_pval_fdr(de_output_tidy)
 #' }
 #'
@@ -789,15 +792,13 @@ get_FDR_empirical <- function(
 add_empirical_pval_fdr <- function(de_output_tidy, plot = FALSE) {
   requireNamespace("dplyr")
 
-  all_celltypes <- de_output_tidy$cluster_id %>% unique()
-  all_contrasts <- de_output_tidy$contrast %>% unique()
+  all_celltypes <- de_output_tidy$cluster_id |> unique()
+  all_contrasts <- de_output_tidy$contrast |> unique()
 
-  inner_loop
-
-  de_output_tidy_new <- all_celltypes %>%
+  de_output_tidy_new <- all_celltypes |>
     lapply(
       function(cluster_id_oi, de_output_tidy) {
-        all_contrasts %>%
+        all_contrasts |>
           lapply(
             function(contrast_oi, de_output_tidy) {
               de_output_subset <- get_FDR_empirical(
@@ -808,12 +809,12 @@ add_empirical_pval_fdr <- function(de_output_tidy, plot = FALSE) {
               )
             },
             de_output_tidy
-          ) %>%
-          bind_rows()
+          ) |>
+          dplyr::bind_rows()
       },
       de_output_tidy
-    ) %>%
-    bind_rows()
+    ) |>
+    dplyr::bind_rows()
   return(de_output_tidy_new)
 }
 #' @title Get diagnostic plots of the empirical null.
@@ -832,11 +833,11 @@ get_FDR_empirical_plots <- function(
   cluster_id_oi,
   contrast_oi
 ) {
-  de_oi <- de_output_tidy %>%
+  de_oi <- de_output_tidy |>
     dplyr::filter(cluster_id == cluster_id_oi & contrast == contrast_oi)
   emp_res <- p.adjust_empirical(
-    de_oi %>% pull(p_val),
-    de_oi %>% pull(logFC),
+    de_oi |> dplyr::pull(p_val),
+    de_oi |> dplyr::pull(logFC),
     plot = TRUE,
     celltype = cluster_id_oi,
     contrast = contrast_oi
@@ -856,13 +857,13 @@ get_FDR_empirical_plots <- function(
 get_FDR_empirical_plots_all <- function(de_output_tidy) {
   requireNamespace("dplyr")
 
-  all_celltypes <- de_output_tidy$cluster_id %>% unique()
-  all_contrasts <- de_output_tidy$contrast %>% unique()
+  all_celltypes <- de_output_tidy$cluster_id |> unique()
+  all_contrasts <- de_output_tidy$contrast |> unique()
 
-  all_plots <- all_celltypes %>%
+  all_plots <- all_celltypes |>
     lapply(
       function(cluster_id_oi, de_output_tidy) {
-        all_contrasts %>%
+        all_contrasts |>
           lapply(
             function(contrast_oi, de_output_tidy) {
               de_output_subset <- get_FDR_empirical_plots(
@@ -872,13 +873,13 @@ get_FDR_empirical_plots_all <- function(de_output_tidy) {
               )
             },
             de_output_tidy
-          ) %>%
+          ) |>
           magrittr::set_names(all_contrasts)
       },
       de_output_tidy
-    ) %>%
+    ) |>
     magrittr::set_names(all_celltypes)
-  return(all_plots %>% unlist(recursive = F))
+  return(all_plots |> unlist(recursive = F))
   # plots = get_FDR_empirical_plots_all(output$receiver_de)
   # for(plot_oi in plots) {
   #   #dev.control("enable")

@@ -214,7 +214,7 @@ get_abundance_info <- function(
         scales = "free",
         space = "free_x"
       ) +
-      scale_x_discrete(position = "top") +
+      ggplot2::scale_x_discrete(position = "top") +
       ggplot2::theme_light() +
       ggplot2::theme(
         axis.ticks = ggplot2::element_blank(),
@@ -1105,7 +1105,9 @@ get_DE_info <- function(
 
   celltype_de <- list(
     de_output = c(DE_list |> purrr::map("de_output")),
-    de_output_tidy = DE_list |> purrr::map("de_output_tidy") |> bind_rows()
+    de_output_tidy = DE_list |>
+      purrr::map("de_output_tidy") |>
+      dplyr::bind_rows()
   )
   print("DE analysis is done:")
   print("included cell types are:")
@@ -1311,7 +1313,7 @@ get_DE_info <- function(
 #' batches <- NA
 #' covariates <- NA
 #' contrasts_oi <- c("'High-Low','Low-High'")
-#' contrast_tbl <- tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
+#' contrast_tbl <- tibble::tibble(contrast = c("High-Low", "Low-High"), group = c("High", "Low"))
 #' frq_list <- get_frac_exprs_sampleAgnostic(sce = sce, sample_id = sample_id, celltype_id = celltype_id, group_id = group_id)
 #' DE_info <- get_DE_info_sampleAgnostic(
 #'   sce = sce,
@@ -1698,7 +1700,9 @@ get_empirical_pvals <- function(de_output_tidy) {
 
   hist_pvals_emp <- de_output_tidy_emp |>
     dplyr::inner_join(
-      de_output_tidy_emp |> group_by(contrast, cluster_id) |> count(),
+      de_output_tidy_emp |>
+        dplyr::group_by(contrast, cluster_id) |>
+        dplyr::count(),
       by = c("cluster_id", "contrast")
     ) |>
     dplyr::mutate(cluster_id = paste0(cluster_id, "\nnr of genes: ", n)) |>
@@ -1832,7 +1836,7 @@ make_lite_output <- function(multinichenet_output, top_n_LR = 2500) {
         ) |>
         dplyr::filter(target %in% gene_subset)
     } else {
-      multinichenet_output$lr_target_prior_cor <- tibble()
+      multinichenet_output$lr_target_prior_cor <- tibble::tibble()
     }
   } else {
     if ("receiver_info" %in% names(multinichenet_output)) {
@@ -1945,7 +1949,7 @@ make_lite_output <- function(multinichenet_output, top_n_LR = 2500) {
           ) |>
           dplyr::filter(target %in% gene_subset)
       } else {
-        multinichenet_output$lr_target_prior_cor <- tibble()
+        multinichenet_output$lr_target_prior_cor <- tibble::tibble()
       }
     }
   }
@@ -2232,7 +2236,7 @@ make_lite_output_condition_specific <- function(
         ) |>
         dplyr::filter(target %in% gene_subset)
     } else {
-      multinichenet_output$lr_target_prior_cor <- tibble()
+      multinichenet_output$lr_target_prior_cor <- tibble::tibble()
     }
   }
 
